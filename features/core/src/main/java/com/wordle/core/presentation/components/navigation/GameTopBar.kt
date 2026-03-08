@@ -28,12 +28,12 @@ import com.wordle.core.presentation.theme.LocalWordleColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameTopBar(
+    modifier: Modifier = Modifier,
     title: String? = null,
     startIcon: ImageVector? = null,
     endIcon: ImageVector? = null,
     onStartIconClicked: Action? = null,
-    onEndIconClicked: Action? = null,
-    modifier: Modifier = Modifier
+    onEndIconClicked: Action? = null
 ) {
     val colors = LocalWordleColors.current
 
@@ -86,8 +86,8 @@ fun GameTopBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor             = colors.topBar,
-            scrolledContainerColor     = colors.topBar,
+            containerColor             = colors.background,
+            scrolledContainerColor     = colors.background,
             titleContentColor          = colors.title,
             navigationIconContentColor = colors.body,
             actionIconContentColor     = colors.body

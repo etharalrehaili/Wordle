@@ -39,34 +39,34 @@ abstract class BaseMviViewModel<I : UiIntent, S : UiState, E : UiEffect>(
         }
     }
 
-//    protected fun sendNetworkError(
-//        networkError: NetworkError,
-//        handelValidationError: Boolean = true,
-//        onError: (String) -> Unit
-//    ) {
-//        if (!handelValidationError && networkError.hasValidationError) return
-//        viewModelScope.launch {
-//            val errorMessage = when {
-//                networkError.hasValidationError && networkError.networkValidation != null -> {
-//                    // Handle validation errors
-//                    networkError.remoteMessage ?: "Validation error occurred"
-//                }
-//                networkError.networkFailure != null -> {
-//                    when (networkError.networkFailure) {
-//                        is NetworkFailure.Connection,
-//                        is NetworkFailure.Connectivity -> "Connection error. Please check your internet."
-//                        is NetworkFailure.Timeout -> "Request timeout. Please try again."
-//                        is NetworkFailure.Client -> networkError.remoteMessage ?: "Client error occurred"
-//                        is NetworkFailure.Server -> "Server error. Please try again later."
-//                        is NetworkFailure.Unauthorized -> "Unauthorized. Please login again."
-//                        is NetworkFailure.Unexpected -> networkError.remoteMessage ?: "Unexpected error occurred"
-//                    }
-//                }
-//                else -> networkError.remoteMessage ?: "An error occurred"
-//            }
-//            onError(errorMessage)
-//        }
-//    }
+    protected fun sendNetworkError(
+        networkError: NetworkError,
+        handelValidationError: Boolean = true,
+        onError: (String) -> Unit
+    ) {
+        if (!handelValidationError && networkError.hasValidationError) return
+        viewModelScope.launch {
+            val errorMessage = when {
+                networkError.hasValidationError && networkError.networkValidation != null -> {
+                    // Handle validation errors
+                    networkError.remoteMessage ?: "Validation error occurred"
+                }
+                networkError.networkFailure != null -> {
+                    when (networkError.networkFailure) {
+                        is NetworkFailure.Connection,
+                        is NetworkFailure.Connectivity -> "Connection error. Please check your internet."
+                        is NetworkFailure.Timeout -> "Request timeout. Please try again."
+                        is NetworkFailure.Client -> networkError.remoteMessage ?: "Client error occurred"
+                        is NetworkFailure.Server -> "Server error. Please try again later."
+                        is NetworkFailure.Unauthorized -> "Unauthorized. Please login again."
+                        is NetworkFailure.Unexpected -> networkError.remoteMessage ?: "Unexpected error occurred"
+                    }
+                }
+                else -> networkError.remoteMessage ?: "An error occurred"
+            }
+            onError(errorMessage)
+        }
+    }
 }
 
 // MVI Interfaces

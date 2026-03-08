@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Box
@@ -32,87 +33,93 @@ import com.wordle.core.presentation.components.enums.AppLanguage
 import com.wordle.core.presentation.components.enums.Types
 import com.wordle.core.presentation.theme.LocalWordleColors
 
+// ─── English layout ───────────────────────────────────────────────────────────
 private val ROW_1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
 private val ROW_2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
 private val ROW_3 = listOf('Z', 'X', 'C', 'V', 'B', 'N', 'M')
 
+// ─── Arabic layout ────────────────────────────────────────────────────────────
 private val AR_ROW_1 = listOf('ض', 'ص', 'ث', 'ق', 'ف', 'غ', 'ع', 'ه', 'خ', 'ح')
-private val AR_ROW_2 = listOf('ش', 'س', 'ي', 'ب', 'ل', 'ا', 'ت', 'ن', 'م')
-private val AR_ROW_3 = listOf('ئ', 'ء', 'ؤ', 'ر', 'و', 'ز', 'ظ', 'ط', 'د')
+private val AR_ROW_2 = listOf('ش', 'س', 'ي', 'ب', 'ل', 'ا', 'ت', 'ن', 'م', 'ك')
+private val AR_ROW_3 = listOf('ئ', 'ء', 'ؤ', 'ر', 'و', 'ز', 'ظ', 'ط', 'د', 'ذ')
+private val AR_ROW_4 = listOf('ج', 'ة', 'ى', 'أ', 'إ', 'آ')
 
-private val KEY_HEIGHT = 58.dp
-private val KEY_SHAPE  = RoundedCornerShape(8.dp)
+private val KEY_HEIGHT_EN = 58.dp
+private val KEY_HEIGHT_AR = 44.dp
+private val KEY_SHAPE = RoundedCornerShape(8.dp)
 
 @Composable
 fun GameKeyboard(
+    modifier: Modifier = Modifier,
     keyStates: Map<Char, Types> = emptyMap(),
     onKey: (Char) -> Unit = {},
     onEnter: Action,
     onBackspace: Action,
-    language: AppLanguage = AppLanguage.ENGLISH,
-    modifier: Modifier = Modifier
+    language: AppLanguage = AppLanguage.ENGLISH
 ) {
-
     val colors = LocalWordleColors.current
-
-    val row1 = if (language == AppLanguage.ARABIC) AR_ROW_1 else ROW_1
-    val row2 = if (language == AppLanguage.ARABIC) AR_ROW_2 else ROW_2
-    val row3 = if (language == AppLanguage.ARABIC) AR_ROW_3 else ROW_3
+    val isArabic = language == AppLanguage.ARABIC
+    val keyHeight = if (isArabic) KEY_HEIGHT_AR else KEY_HEIGHT_EN
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
-//            .background(colors.background)
             .padding(horizontal = 8.dp, vertical = 8.dp)
     ) {
-        // ── Row 1: Q W E R T Y U I O P ───────────────────────────────────────
+        // ── Row 1 ─────────────────────────────────────────────────────────────
         KeyRow {
-            row1.forEach { letter ->
-                LetterKey(
-                    letter = letter,
-                    type = keyStates[letter] ?: Types.DEFAULT,
-                    onClick = { onKey(letter) }
+            (if (isArabic) AR_ROW_1 else ROW_1).forEach { letter ->
+                LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
+            }
+        }
+
+        // ── Row 2 ─────────────────────────────────────────────────────────────
+        KeyRow {
+            (if (isArabic) AR_ROW_2 else ROW_2).forEach { letter ->
+                LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
+            }
+        }
+
+        // ── Row 3 ─────────────────────────────────────────────────────────────
+        KeyRow {
+            if (!isArabic) {
+                LabelKey(label = "ENTER", weight = 1.5f, keyHeight = keyHeight, onClick = onEnter)
+            }
+
+            (if (isArabic) AR_ROW_3 else ROW_3).forEach { letter ->
+                LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
+            }
+
+            if (!isArabic) {
+                IconKey(
+                    icon = Icons.AutoMirrored.Filled.Backspace,
+                    contentDescription = "Backspace",
+                    weight = 1.5f,
+                    keyHeight = keyHeight,
+                    onClick = onBackspace
                 )
             }
         }
 
-        // ── Row 2: A S D F G H J K L ─────────────────────────────────────────
-        KeyRow {
-            row2.forEach { letter ->
-                LetterKey(
-                    letter = letter,
-                    type = keyStates[letter] ?: Types.DEFAULT,
-                    onClick = { onKey(letter) }
+        // ── Row 4: Arabic only — remaining letters + ENTER + ⌫ ───────────────
+        if (isArabic) {
+            KeyRow {
+                LabelKey(label = "ENTER", weight = 1.5f, keyHeight = keyHeight, onClick = onEnter)
+
+                AR_ROW_4.forEach { letter ->
+                    LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
+                }
+
+                IconKey(
+                    icon = Icons.AutoMirrored.Filled.Backspace,
+                    contentDescription = "Backspace",
+                    weight = 1.5f,
+                    keyHeight = keyHeight,
+                    onClick = onBackspace
                 )
             }
-        }
-
-        // ── Row 3: ENTER  Z X C V B N M  ⌫ ────────────────────────────────────
-        KeyRow {
-            // ENTER — 1.5× wide
-            LabelKey(
-                label = "ENTER",
-                weight = 1.5f,
-                onClick = onEnter
-            )
-
-            row3.forEach { letter ->
-                LetterKey(
-                    letter = letter,
-                    type = keyStates[letter] ?: Types.DEFAULT,
-                    onClick = { onKey(letter) }
-                )
-            }
-
-            // Backspace — 1.5× wide
-            IconKey(
-                icon = Icons.AutoMirrored.Filled.Backspace,
-                contentDescription = "Backspace",
-                weight = 1.5f,
-                onClick = onBackspace
-            )
         }
     }
 }
@@ -124,34 +131,27 @@ private fun KeyRow(content: @Composable RowScope.() -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()  // ← fills screen width; weight() divides this
+        modifier = Modifier.fillMaxWidth()
     ) { content() }
 }
 
 // ─── Key variants ─────────────────────────────────────────────────────────────
 
-/** Standard letter key — takes equal weight in the row. */
 @Composable
 private fun RowScope.LetterKey(
     letter: Char,
     type: Types,
+    keyHeight: Dp,
     onClick: () -> Unit
 ) {
-
     val colors = LocalWordleColors.current
-
     val bgColor = when (type) {
         Types.CORRECT -> colors.correct
         Types.PRESENT -> colors.present
         Types.ABSENT  -> colors.absent
         Types.DEFAULT -> colors.key
     }
-
-    KeyContainer(
-        bgColor = bgColor,
-        weight = 1f,
-        onClick = onClick
-    ) {
+    KeyContainer(bgColor = bgColor, weight = 1f, keyHeight = keyHeight, onClick = onClick) {
         Text(
             text = letter.toString(),
             color = colors.title,
@@ -163,21 +163,15 @@ private fun RowScope.LetterKey(
     }
 }
 
-/** Text label key (ENTER). */
 @Composable
 private fun RowScope.LabelKey(
     label: String,
     weight: Float,
+    keyHeight: Dp,
     onClick: () -> Unit
 ) {
-
     val colors = LocalWordleColors.current
-
-    KeyContainer(
-        bgColor = colors.key,
-        weight = weight,
-        onClick = onClick
-    ) {
+    KeyContainer(bgColor = colors.key, weight = weight, keyHeight = keyHeight, onClick = onClick) {
         Text(
             text = label,
             color = colors.title,
@@ -194,39 +188,33 @@ private fun RowScope.IconKey(
     icon: ImageVector,
     contentDescription: String?,
     weight: Float,
+    keyHeight: Dp,
     onClick: () -> Unit
 ) {
-
     val colors = LocalWordleColors.current
-
-    KeyContainer(
-        bgColor = colors.key,
-        weight = weight,
-        onClick = onClick
-    ) {
+    KeyContainer(bgColor = colors.key, weight = weight, keyHeight = keyHeight, onClick = onClick) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = colors.title,
-            modifier = Modifier
-                .height(22.dp)         // fixed icon height; width scales naturally
+            modifier = Modifier.height(22.dp)
         )
     }
 }
 
-/** Shared Box that every key variant renders inside. */
 @Composable
 private fun RowScope.KeyContainer(
     bgColor: Color,
     weight: Float,
+    keyHeight: Dp,
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .weight(weight)            // ← distributes width proportionally
-            .height(KEY_HEIGHT)
+            .weight(weight)
+            .height(keyHeight)
             .clip(KEY_SHAPE)
             .background(bgColor, KEY_SHAPE)
             .noRippleClickable(onClick)
@@ -245,19 +233,27 @@ private fun Modifier.noRippleClickable(onClick: () -> Unit): Modifier = this.cli
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
 
-@Preview(showBackground = true, backgroundColor = 0xFF121213, name = "GameKeyboard")
+@Preview(showBackground = true, backgroundColor = 0xFF121213, name = "GameKeyboard – English")
 @Composable
-private fun PreviewGameKeyboard() {
+private fun PreviewGameKeyboardEn() {
     GameKeyboard(
         keyStates = mapOf(
-            'T' to Types.PRESENT,
-            'O' to Types.CORRECT,
-            'S' to Types.CORRECT,
-            'A' to Types.ABSENT,
-            'D' to Types.ABSENT,
-            'N' to Types.ABSENT,
-            'L' to Types.ABSENT,
+            'T' to Types.PRESENT, 'O' to Types.CORRECT,
+            'S' to Types.CORRECT, 'A' to Types.ABSENT,
         ),
+        onEnter = {},
+        onBackspace = {}
+    )
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF121213, name = "GameKeyboard – Arabic")
+@Composable
+private fun PreviewGameKeyboardAr() {
+    GameKeyboard(
+        keyStates = mapOf(
+            'ا' to Types.CORRECT, 'ل' to Types.PRESENT, 'م' to Types.ABSENT,
+        ),
+        language = AppLanguage.ARABIC,
         onEnter = {},
         onBackspace = {}
     )

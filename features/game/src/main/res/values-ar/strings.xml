@@ -1,6 +1,17 @@
 <resources>
     <string name="welcome_to">مرحبا بك في</string>
+    <string name="hurof">حروف</string>
     <string name="quick_play">لعب سريع</string>
     <string name="take_challenge">تحدي</string>
     <string name="leaderboard">لوحة الصدارة</string>
+    <string name="made_with_love">صُنع بـ ❤️ بواسطة إيثار</string>
+    <string name="home_description">خمّن الكلمة المخفية</string>
+    <string name="wordle_letters">كلمة</string>
+    <string name="result_win_title">رائع! 🎉</string>
+    <string name="result_lose_title">حظاً أوفر في المرة القادمة!</string>
+    <string name="filter_all_time">كل الأوقات</string>
+    <string name="filter_this_week">هذا الأسبوع</string>
+    <string name="filter_today">اليوم</string>
+    <string name="challenge_next_word_label">الكلمة الجديدة ستكون متاحة خلال</string>
+    <string name="result_answer_label">كانت الكلمة: %1$s</string>
 </resources>

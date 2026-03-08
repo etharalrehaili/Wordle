@@ -1,5 +1,7 @@
 package com.wordle.core.presentation.components.buttons
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,18 +26,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.alias.Action
 
 @Composable
 fun GameButton(
-    label: String = "Leaderboard",
-    icon: ImageVector = Icons.Default.BarChart,
+    modifier: Modifier = Modifier,
+    label: String,
+    icon: ImageVector? = null,
     backgroundColor: Color? = null,
     contentColor: Color = Color.White,
-    onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
-    ) {
+    onClick: Action,
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = tween(durationMillis = 100),
+        label = "buttonScale"
+    )
 
     val defaultBrush = Brush.linearGradient(
         colors = listOf(Color(0xFF1A2535), Color(0xFF0F1923))
@@ -46,7 +55,6 @@ fun GameButton(
         Modifier.background(brush = defaultBrush, shape = RoundedCornerShape(16.dp))
 
     val borderColor = if (isPressed) Color(0xFF4A6080) else Color(0xFF2A3A50)
-    val scale = if (isPressed) 0.97f else 1f
 
     Box(
         modifier = modifier
@@ -71,12 +79,14 @@ fun GameButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(22.dp)
-            )
+            icon?.let {
+                Icon(
+                    imageVector = it,
+                    contentDescription = null,
+                    tint = contentColor,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
             Text(
                 text = label,
                 color = contentColor,
@@ -93,6 +103,12 @@ fun GameButton(
 @Composable
 fun GameButtonPreview() {
     Box(modifier = Modifier.padding(24.dp)) {
-        GameButton()
+        GameButton(
+            label = "Leaderboard",
+            icon = Icons.Default.BarChart,
+            contentColor = Color.White,
+            backgroundColor = Color(0xFF2A3A50),
+            onClick = {}
+        )
     }
 }

@@ -6,7 +6,11 @@ import com.wordle.core.presentation.components.MAX_GUESSES
 import com.wordle.core.presentation.components.WORD_LENGTH
 import com.wordle.core.util.Resource
 import com.wordle.game.domain.usecases.GetWordsUseCase
-import com.wordle.game.presentation.*
+import com.wordle.game.presentation.contract.GameEffect
+import com.wordle.game.presentation.contract.GameIntent
+import com.wordle.game.presentation.contract.GameUiState
+import com.wordle.game.presentation.contract.Tile
+import com.wordle.game.presentation.contract.TileState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -175,19 +179,13 @@ class GameViewModel @Inject constructor(
         return guessArr.mapIndexed { i, ch -> Tile(letter = ch, state = result[i]) }
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    /** Returns a new board with one tile replaced. */
     private fun List<List<Tile>>.updateTile(row: Int, col: Int, tile: Tile): List<List<Tile>> =
         mapIndexed { r, rowList ->
             if (r != row) rowList
             else rowList.mapIndexed { c, t -> if (c == col) tile else t }
         }
 
-    /**
-     * Merges keyboard states so that the "best" state always wins:
-     * CORRECT > MISPLACED > WRONG > FILLED > EMPTY
-     */
+
     private fun Map<Char, TileState>.mergeWith(row: List<Tile>): Map<Char, TileState> {
         val priority = mapOf(
             TileState.CORRECT   to 4,

@@ -1,22 +1,39 @@
 package com.wordle.game.presentation.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wordle.onboarding.OnboardingScreen
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import com.wordle.authentication.presentation.contract.AuthIntent
+import com.wordle.authentication.presentation.login.LoginScreen
+import com.wordle.authentication.presentation.signup.SignUpScreen
+import com.wordle.authentication.presentation.vm.AuthViewModel
 import com.wordle.core.presentation.components.enums.AppColorTheme
 import com.wordle.core.presentation.components.enums.AppLanguage
 import com.wordle.game.presentation.ChallengeScreen
 import com.wordle.game.presentation.GameScreen
 import com.wordle.game.presentation.HomeScreen
 import com.wordle.game.presentation.LeaderboardScreen
+import com.wordle.game.presentation.ProfileScreen
+import com.wordle.game.presentation.SettingsScreen
+import com.wordle.game.presentation.viewmodel.SettingsViewModel
+import com.wordle.game.presentation.contract.ProfileIntent
+import com.wordle.game.presentation.contract.SettingsIntent
+import com.wordle.game.presentation.viewmodel.ProfileViewModel
 import kotlinx.serialization.Serializable
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.navGraph(
     navController: NavHostController,
     onThemeChanged: (AppColorTheme) -> Unit,
     onLanguageChanged: (AppLanguage) -> Unit,
-    currentLanguage: () -> AppLanguage
+    currentLanguage: () -> AppLanguage,
+    currentTheme: () -> AppColorTheme
 ) {
 
     composable<Route.OnboardingScreen> {
@@ -31,11 +48,14 @@ fun NavGraphBuilder.navGraph(
 
     composable<Route.HomeScreen> {
         HomeScreen(
-            onPlayClick = { navController.navigate(Route.GameScreen) },
-            onChallengeClick = { navController.navigate(Route.ChallengeScreen)},
-            onLeaderboardClick = { navController.navigate(Route.LeaderboardScreen)},
-            onThemeChanged = onThemeChanged,
-            onLanguageChanged = onLanguageChanged
+            onPlayClick        = { navController.navigate(Route.GameScreen) },
+            onChallengeClick   = { navController.navigate(Route.ChallengeScreen) },
+            onLeaderboardClick = { navController.navigate(Route.LeaderboardScreen) },
+            onThemeChanged     = onThemeChanged,
+            onLanguageChanged  = onLanguageChanged,
+            onProfileClick     = { navController.navigate(Route.ProfileScreen) },
+            onLoginWithEmail   = { navController.navigate(Route.LoginScreen) },
+            onSignUpClick      = { navController.navigate(Route.SignUpScreen) },
         )
     }
 
@@ -48,7 +68,8 @@ fun NavGraphBuilder.navGraph(
 
     composable<Route.ChallengeScreen> {
         ChallengeScreen(
-            onClose = { navController.popBackStack() }
+            onClose = { navController.popBackStack() },
+            currentLanguage = currentLanguage(),
         )
     }
 
@@ -57,6 +78,99 @@ fun NavGraphBuilder.navGraph(
             onClose = { navController.popBackStack() }
         )
     }
+
+    composable<Route.ProfileScreen> {
+        val viewModel: ProfileViewModel = hiltViewModel()
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+        ProfileScreen(
+            name               = state.name,
+            avatarUrl          = state.avatarUrl,
+            gamesPlayed        = state.gamesPlayed,
+            wordsSolved        = state.wordsSolved,
+            winPercentage      = state.winPercentage,
+            currentPoints      = state.currentPoints,
+            isEditMode         = state.isEditMode,
+            editName           = state.editName,
+            onBack             = { navController.popBackStack() },
+            onEditProfileClick = { viewModel.onEvent(ProfileIntent.OnEditProfileClick) },
+            onSaveProfileClick = { viewModel.onEvent(ProfileIntent.OnSaveProfileClick) },
+            onCancelEditClick  = { viewModel.onEvent(ProfileIntent.OnCancelEditClick) },
+            onNameChanged      = { viewModel.onEvent(ProfileIntent.OnNameChanged(it)) },
+            onAvatarChanged    = { viewModel.onEvent(ProfileIntent.OnAvatarChanged(it)) },
+            onSettingsClick    = { navController.navigate(Route.SettingsScreen) },
+        )
+    }
+
+    composable<Route.SettingsScreen> {
+        val viewModel: SettingsViewModel = hiltViewModel()
+
+        SettingsScreen(
+            onBack                = { navController.popBackStack() },
+            onChangeEmailClick    = { viewModel.onEvent(SettingsIntent.OnChangeEmailClick) },
+            onChangePasswordClick = { viewModel.onEvent(SettingsIntent.OnChangePasswordClick) },
+            onSignOutClick        = { viewModel.onEvent(SettingsIntent.OnSignOutClick) },
+            uiEffect              = viewModel.uiEffect,
+            onSignOutSuccess      = {
+                navController.navigate(Route.HomeScreen) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+        )
+    }
+
+    composable<Route.LoginScreen> {
+        val viewModel: AuthViewModel = hiltViewModel()
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+        LoginScreen(
+            email             = state.email,
+            password          = state.password,
+            emailError        = state.emailError,
+            passwordError     = state.passwordError,
+            isLoading         = state.isLoading,
+            uiEffect          = viewModel.uiEffect,
+            onBack            = { navController.popBackStack() },
+            onEmailChanged    = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
+            onPasswordChanged = { viewModel.onEvent(AuthIntent.OnPasswordChanged(it)) },
+            onLoginClick      = { viewModel.onEvent(AuthIntent.OnLoginClick) },
+            onNavigateToHome  = {
+                navController.navigate(Route.HomeScreen) {
+                    popUpTo(Route.LoginScreen) { inclusive = true }
+                }
+            },
+        )
+    }
+
+    composable<Route.SignUpScreen> {
+        val viewModel: AuthViewModel = hiltViewModel()
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+        SignUpScreen(
+            name                     = state.name,
+            email                    = state.email,
+            password                 = state.password,
+            confirmPassword          = state.confirmPassword,
+            isLoading                = state.isLoading,
+            nameError                = state.nameError,
+            emailError               = state.emailError,
+            passwordError            = state.passwordError,
+            confirmPasswordError     = state.confirmPasswordError,
+            uiEffect                 = viewModel.uiEffect,
+            onBack                   = { navController.popBackStack() },
+            onNameChanged            = { viewModel.onEvent(AuthIntent.OnNameChanged(it)) },
+            onEmailChanged           = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
+            onPasswordChanged        = { viewModel.onEvent(AuthIntent.OnPasswordChanged(it)) },
+            onConfirmPasswordChanged = { viewModel.onEvent(AuthIntent.OnConfirmPasswordChanged(it)) },
+            onSignUpClick            = { viewModel.onEvent(AuthIntent.OnSignUpClick) },
+            onNavigateToLogin        = {
+                navController.navigate(Route.LoginScreen) {
+                    popUpTo(Route.SignUpScreen) { inclusive = true }
+                }
+            },
+        )
+    }
+
 }
 
 @Serializable
@@ -75,5 +189,17 @@ sealed interface Route {
 
     @Serializable
     data object OnboardingScreen : Route
-}
 
+    @Serializable
+    data object ProfileScreen : Route
+
+    @Serializable
+    data object SettingsScreen : Route
+
+    @Serializable
+    data object LoginScreen : Route
+
+    @Serializable
+    data object SignUpScreen : Route
+
+}

@@ -1,9 +1,12 @@
 package com.wordle.app
 
 import android.app.Activity
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,17 +22,29 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.wordle.core.presentation.components.enums.AppLanguage
 import com.wordle.core.presentation.theme.WordleTheme
+import com.wordle.core.util.LocaleHelper
 import com.wordle.game.presentation.navigation.Route
 import com.wordle.game.presentation.navigation.navGraph
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Locale
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Restore saved language before setContent
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        val savedLang = prefs.getString("language", Locale.getDefault().language) ?: "en"
+        LocaleHelper.setLocale(this, savedLang)
+
         setContent {
-            var appColorTheme by remember { mutableStateOf(AppColorTheme.DARK) }
-            var appLanguage by remember { mutableStateOf(AppLanguage.ENGLISH) }
+
+            val deviceLanguage = if (Locale.getDefault().language == "ar") AppLanguage.ARABIC else AppLanguage.ENGLISH
+            var appLanguage by remember { mutableStateOf(deviceLanguage) }
+            val systemInDarkTheme = isSystemInDarkTheme()
+            var appColorTheme by remember { mutableStateOf(if (systemInDarkTheme) AppColorTheme.DARK else AppColorTheme.LIGHT) }
 
             val isLightTheme = appColorTheme == AppColorTheme.LIGHT
             val view = LocalView.current
@@ -52,8 +67,14 @@ class MainActivity : ComponentActivity() {
                         navGraph(
                             navController,
                             onThemeChanged = { appColorTheme = it },
-                            onLanguageChanged = { appLanguage = it },
-                            currentLanguage = { appLanguage }
+                            onLanguageChanged = { language ->
+                                val code = if (language == AppLanguage.ARABIC) "ar" else "en"
+                                prefs.edit().putString("language", code).apply()
+                                LocaleHelper.setLocale(this@MainActivity, code)
+                                recreate()
+                            },
+                            currentLanguage = { appLanguage },
+                            currentTheme = { appColorTheme }
                         )
                     }
                 }

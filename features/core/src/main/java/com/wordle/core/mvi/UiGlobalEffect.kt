@@ -4,7 +4,7 @@ import com.wordle.core.alias.Action
 
 sealed interface UiGlobalEffect {
     data class GlobalNetworkError(
-//        val networkError: NetworkError? = null,
+        val networkError: NetworkError? = null,
         val actions: GlobalEffectAction = GlobalEffectAction()
     ) : UiGlobalEffect
 

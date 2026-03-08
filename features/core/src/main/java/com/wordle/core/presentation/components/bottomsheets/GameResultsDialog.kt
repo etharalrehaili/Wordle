@@ -56,14 +56,8 @@ fun GameResultsDialog(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
         containerColor   = colors.surface,
-        dragHandle       = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .size(width = 40.dp, height = 4.dp)
-                    .background(colors.divider, RoundedCornerShape(2.dp))
-            )
-        },
+        dragHandle       = null,
+        shape = RoundedCornerShape(0.dp),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

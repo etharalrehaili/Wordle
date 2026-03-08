@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,7 +50,9 @@ import com.wordle.core.presentation.theme.LocalWordleColors
 fun GameMenuDrawerSheet(
     selectedLanguage: AppLanguage = AppLanguage.ENGLISH,
     selectedTheme: AppColorTheme = AppColorTheme.DARK,
+    isLoggedIn: Boolean = true,
     onClose: Action,
+    onProfile: Action,
     onLanguageSelected: (AppLanguage) -> Unit,
     onThemeSelected: (AppColorTheme) -> Unit
 ) {
@@ -85,8 +88,10 @@ fun GameMenuDrawerSheet(
                     onLanguage = {
                         isNavigatingForward = true
                         currentScreen = DrawerScreen.LANGUAGE
-                    }
-                )
+                    },
+                    onProfile  = onProfile,
+                    isLoggedIn  = isLoggedIn,
+                    )
 
                 DrawerScreen.LANGUAGE -> LanguageScreen(
                     selectedLanguage = selectedLanguage,
@@ -118,15 +123,18 @@ fun GameMenuDrawerSheet(
 @Composable
 private fun MenuScreen(
     onClose: Action,
+    isLoggedIn: Boolean,
     onTheme: Action,
-    onLanguage: Action
+    onLanguage: Action,
+    onProfile: Action,
 ) {
     data class Entry(val icon: ImageVector, val label: String, val action: () -> Unit)
 
-    val items = listOf(
-        Entry(Icons.Filled.Palette,  "Theme",    onTheme),
-        Entry(Icons.Filled.Language, "Language", onLanguage),
-    )
+    val items = buildList {
+        if (isLoggedIn) add(Entry(Icons.Filled.Person, "Profile", onProfile))
+        add(Entry(Icons.Filled.Palette,  "Theme",    onTheme))
+        add(Entry(Icons.Filled.Language, "Language", onLanguage))
+    }
 
     val colors = LocalWordleColors.current
 

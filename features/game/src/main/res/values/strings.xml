@@ -1,6 +1,17 @@
 <resources>
     <string name="welcome_to">WELCOME TO</string>
+    <string name="hurof">HUROF</string>
     <string name="quick_play">Quick Play</string>
     <string name="take_challenge">Take Challenge</string>
     <string name="leaderboard">Leaderboard</string>
+    <string name="made_with_love">MADE WITH ❤️ BY ETHAR</string>
+    <string name="home_description">Get a chance to guess the hidden word</string>
+    <string name="wordle_letters">WORD</string>
+    <string name="result_win_title">Brilliant! 🎉</string>
+    <string name="result_lose_title">Better Luck Next Time!</string>
+    <string name="filter_all_time">All Time</string>
+    <string name="filter_this_week">This Week</string>
+    <string name="filter_today">Today</string>
+    <string name="challenge_next_word_label">New word available in</string>
+    <string name="result_answer_label">The answer was: %1$s</string>
 </resources>

@@ -47,6 +47,7 @@ fun WordleInfoBottomSheet(
         sheetState = sheetState,
         containerColor = colors.surface,
         dragHandle = null,
+        shape = RoundedCornerShape(0.dp),
     ) {
         Column(
             modifier = Modifier

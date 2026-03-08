@@ -1,8 +1,6 @@
 package com.wordle.game.domain.usecases
 
 import com.wordle.game.domain.repository.GameRepository
-
-// GetWordsUseCase — fetches words from API, filters by WORD_LENGTH, handles errors
 import com.wordle.core.util.Resource
 import javax.inject.Inject
 
