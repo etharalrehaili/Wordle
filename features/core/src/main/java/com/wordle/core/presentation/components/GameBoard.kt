@@ -17,12 +17,9 @@ import com.wordle.core.presentation.theme.LocalWordleColors
 const val WORD_LENGTH = 4
 const val MAX_GUESSES = 6
 
-/**
- * Represents a single revealed/in-progress row on the board.
- */
 data class GuessRow(
-    val letters: List<Char?> = List(WORD_LENGTH) { null },
-    val types: List<Types>   = List(WORD_LENGTH) { Types.DEFAULT }
+    val letters: List<Char?> = emptyList(),
+    val types: List<Types>   = emptyList()
 )
 
 @Composable
@@ -30,8 +27,11 @@ fun GameBoard(
     modifier: Modifier = Modifier,
     guesses: List<GuessRow> = List(MAX_GUESSES) { GuessRow() },
     currentRow: Int = 0,
-    currentCol: Int = 0
+    currentCol: Int = 0,
+    wordLength: Int = WORD_LENGTH
 ) {
+    android.util.Log.d("GameBoard", "wordLength=$wordLength, guesses[0].letters.size=${guesses.firstOrNull()?.letters?.size}")
+
     val colors = LocalWordleColors.current
 
     Column(
@@ -44,13 +44,15 @@ fun GameBoard(
     ) {
         repeat(MAX_GUESSES) { rowIndex ->
             val guess = guesses.getOrNull(rowIndex) ?: GuessRow()
+            val colCount = if (guess.letters.isEmpty()) wordLength else guess.letters.size  // ← fix this
+            android.util.Log.d("GameBoard", "row=$rowIndex colCount=$colCount (letters.size=${guess.letters.size})")
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                repeat(WORD_LENGTH) { colIndex ->
+                repeat(colCount) { colIndex ->
                     val letter   = guess.letters.getOrNull(colIndex)
                     val type     = guess.types.getOrNull(colIndex) ?: Types.DEFAULT
                     val isActive = rowIndex == currentRow && colIndex == currentCol
@@ -68,7 +70,6 @@ fun GameBoard(
         }
     }
 }
-
 // ─── Preview ──────────────────────────────────────────────────────────────────
 
 @Preview(showBackground = true, backgroundColor = 0xFF121213, name = "GameBoard")

@@ -1,4 +1,14 @@
 package com.wordle.game.data.remote.api
 
-class GameApiService {
+import com.wordle.game.data.remote.model.WordResponse
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+interface GameApiService {
+    @GET("words")
+    suspend fun getWords(
+        @Query("filters[language][\$eq]") language: String,
+        @Query("filters[length][\$eq]") length: Int,
+        @Query("fields[0]") field: String = "text"
+    ): WordResponse
 }

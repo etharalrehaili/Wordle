@@ -1,16 +1,19 @@
 package com.wordle.game.data.repository
 
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.presentation.components.MAX_GUESSES
-import com.wordle.core.presentation.components.WORD_LENGTH
+import com.wordle.game.data.remote.datasource.challenge.ChallengeRemoteDataSource
 import com.wordle.game.domain.repository.ChallengeRepository
-import com.wordle.game.presentation.contract.Tile
-import com.wordle.game.presentation.contract.TileState
+import com.wordle.game.presentation.game.contract.Tile
+import com.wordle.game.presentation.game.contract.TileState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
@@ -21,10 +24,12 @@ private val Context.challengeDataStore by preferencesDataStore(name = "challenge
 
 @Singleton
 class ChallengeRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val remote: ChallengeRemoteDataSource,
 ) : ChallengeRepository {
 
     companion object {
+        private val KEY_UID          = stringPreferencesKey("challenge_uid")
         private val KEY_DATE         = stringPreferencesKey("challenge_date")
         private val KEY_TARGET       = stringPreferencesKey("challenge_target")
         private val KEY_CURRENT_ROW  = intPreferencesKey("challenge_current_row")
@@ -35,10 +40,24 @@ class ChallengeRepositoryImpl @Inject constructor(
         private val KEY_KEYBOARD     = stringPreferencesKey("challenge_keyboard")
     }
 
+    override suspend fun getDailyChallenge(date: String, language: String): String? {
+        return remote.getDailyChallenge(date, language)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun loadTodayState(): SavedChallengeState? {
-        val prefs     = context.challengeDataStore.data.first()
-        val savedDate = prefs[KEY_DATE] ?: return null
-        if (savedDate != LocalDate.now().toString()) return null
+        val prefs      = context.challengeDataStore.data.first()
+        val savedDate  = prefs[KEY_DATE] ?: run { android.util.Log.d("ChallengeRepo", "❌ No saved date"); return null }
+        val savedUid   = prefs[KEY_UID]  ?: run { android.util.Log.d("ChallengeRepo", "❌ No saved UID"); return null }
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: run { android.util.Log.d("ChallengeRepo", "❌ No current user"); return null }
+
+        android.util.Log.d("ChallengeRepo", "savedDate=$savedDate, today=${LocalDate.now()}")
+        android.util.Log.d("ChallengeRepo", "savedUid=$savedUid, currentUid=$currentUid")
+
+        if (savedUid != currentUid) { android.util.Log.d("ChallengeRepo", "❌ UID mismatch"); return null }
+        if (savedDate != LocalDate.now().toString()) { android.util.Log.d("ChallengeRepo", "❌ Date mismatch"); return null }
+
+        android.util.Log.d("ChallengeRepo", "✅ Valid saved state found")
 
         val target     = prefs[KEY_TARGET]       ?: return null
         val currentRow = prefs[KEY_CURRENT_ROW]  ?: 0
@@ -50,7 +69,7 @@ class ChallengeRepositoryImpl @Inject constructor(
 
         return SavedChallengeState(
             targetWord     = target,
-            board          = decodeBoard(boardStr),
+            board          = decodeBoard(boardStr, target.length),
             keyboardStates = decodeKeyboard(keyboardStr),
             currentRow     = currentRow,
             currentCol     = currentCol,
@@ -59,6 +78,7 @@ class ChallengeRepositoryImpl @Inject constructor(
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun saveState(
         targetWord: String,
         board: List<List<Tile>>,
@@ -68,7 +88,9 @@ class ChallengeRepositoryImpl @Inject constructor(
         isGameOver: Boolean,
         isWin: Boolean,
     ) {
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         context.challengeDataStore.edit { prefs ->
+            prefs[KEY_UID]          = currentUid
             prefs[KEY_DATE]         = LocalDate.now().toString()
             prefs[KEY_TARGET]       = targetWord
             prefs[KEY_CURRENT_ROW]  = currentRow
@@ -80,19 +102,16 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
-    // ─── Encode / Decode ─────────────────────────────────────────────────────
-
     private fun encodeBoard(board: List<List<Tile>>): String =
         board.flatten().joinToString(",") { "${it.letter}:${it.state.name}" }
+    private fun encodeKeyboard(map: Map<Char, TileState>): String =
+        map.entries.joinToString(",") { "${it.key}:${it.value.name}" }
 
-    private fun decodeBoard(raw: String): List<List<Tile>> =
+    private fun decodeBoard(raw: String, wordLength: Int): List<List<Tile>> =
         raw.split(",").map { token ->
             val parts = token.split(":")
             Tile(letter = parts[0].first(), state = TileState.valueOf(parts[1]))
-        }.chunked(WORD_LENGTH).take(MAX_GUESSES)
-
-    private fun encodeKeyboard(map: Map<Char, TileState>): String =
-        map.entries.joinToString(",") { "${it.key}:${it.value.name}" }
+        }.chunked(wordLength).take(MAX_GUESSES)
 
     private fun decodeKeyboard(raw: String): Map<Char, TileState> {
         if (raw.isBlank()) return emptyMap()

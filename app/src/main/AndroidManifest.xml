@@ -14,7 +14,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:localeConfig="@xml/locales_config"
-        android:theme="@style/Theme.Wordle">
+        android:theme="@style/Theme.Wordle"
+        android:usesCleartextTraffic="true">>
         <activity
             android:name=".MainActivity"
             android:exported="true"

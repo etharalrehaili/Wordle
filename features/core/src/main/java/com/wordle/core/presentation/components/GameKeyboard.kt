@@ -39,10 +39,10 @@ private val ROW_2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
 private val ROW_3 = listOf('Z', 'X', 'C', 'V', 'B', 'N', 'M')
 
 // ─── Arabic layout ────────────────────────────────────────────────────────────
-private val AR_ROW_1 = listOf('ض', 'ص', 'ث', 'ق', 'ف', 'غ', 'ع', 'ه', 'خ', 'ح')
-private val AR_ROW_2 = listOf('ش', 'س', 'ي', 'ب', 'ل', 'ا', 'ت', 'ن', 'م', 'ك')
-private val AR_ROW_3 = listOf('ئ', 'ء', 'ؤ', 'ر', 'و', 'ز', 'ظ', 'ط', 'د', 'ذ')
-private val AR_ROW_4 = listOf('ج', 'ة', 'ى', 'أ', 'إ', 'آ')
+private val AR_ROW_1 = listOf('ج', 'ح', 'خ', 'ه', 'ع', 'غ', 'ف', 'ق', 'ث', 'ص', 'ض')
+private val AR_ROW_2 = listOf('ط', 'ك', 'م', 'ن', 'ت', 'ا', 'ل', 'ب', 'ي', 'س', 'ش')
+private val AR_ROW_3 = listOf('د', 'ظ', 'ز', 'و', 'ة', 'ى', 'ر', 'ؤ', 'ء', 'ذ', 'ل')
+
 
 private val KEY_HEIGHT_EN = 58.dp
 private val KEY_HEIGHT_AR = 44.dp
@@ -53,7 +53,6 @@ fun GameKeyboard(
     modifier: Modifier = Modifier,
     keyStates: Map<Char, Types> = emptyMap(),
     onKey: (Char) -> Unit = {},
-    onEnter: Action,
     onBackspace: Action,
     language: AppLanguage = AppLanguage.ENGLISH
 ) {
@@ -84,42 +83,18 @@ fun GameKeyboard(
 
         // ── Row 3 ─────────────────────────────────────────────────────────────
         KeyRow {
-            if (!isArabic) {
-                LabelKey(label = "ENTER", weight = 1.5f, keyHeight = keyHeight, onClick = onEnter)
-            }
-
             (if (isArabic) AR_ROW_3 else ROW_3).forEach { letter ->
                 LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
             }
 
-            if (!isArabic) {
-                IconKey(
-                    icon = Icons.AutoMirrored.Filled.Backspace,
-                    contentDescription = "Backspace",
-                    weight = 1.5f,
-                    keyHeight = keyHeight,
-                    onClick = onBackspace
-                )
-            }
-        }
-
-        // ── Row 4: Arabic only — remaining letters + ENTER + ⌫ ───────────────
-        if (isArabic) {
-            KeyRow {
-                LabelKey(label = "ENTER", weight = 1.5f, keyHeight = keyHeight, onClick = onEnter)
-
-                AR_ROW_4.forEach { letter ->
-                    LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
-                }
-
-                IconKey(
-                    icon = Icons.AutoMirrored.Filled.Backspace,
-                    contentDescription = "Backspace",
-                    weight = 1.5f,
-                    keyHeight = keyHeight,
-                    onClick = onBackspace
-                )
-            }
+            // Backspace for both languages
+            IconKey(
+                icon               = Icons.AutoMirrored.Filled.Backspace,
+                contentDescription = "Backspace",
+                weight             = 1.5f,
+                keyHeight          = keyHeight,
+                onClick            = onBackspace
+            )
         }
     }
 }
@@ -241,7 +216,6 @@ private fun PreviewGameKeyboardEn() {
             'T' to Types.PRESENT, 'O' to Types.CORRECT,
             'S' to Types.CORRECT, 'A' to Types.ABSENT,
         ),
-        onEnter = {},
         onBackspace = {}
     )
 }
@@ -254,7 +228,6 @@ private fun PreviewGameKeyboardAr() {
             'ا' to Types.CORRECT, 'ل' to Types.PRESENT, 'م' to Types.ABSENT,
         ),
         language = AppLanguage.ARABIC,
-        onEnter = {},
         onBackspace = {}
     )
 }

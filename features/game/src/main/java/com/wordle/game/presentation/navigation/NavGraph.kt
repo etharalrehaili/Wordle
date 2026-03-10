@@ -9,22 +9,23 @@ import com.wordle.onboarding.OnboardingScreen
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.wordle.authentication.presentation.contract.AuthIntent
 import com.wordle.authentication.presentation.login.LoginScreen
 import com.wordle.authentication.presentation.signup.SignUpScreen
 import com.wordle.authentication.presentation.vm.AuthViewModel
 import com.wordle.core.presentation.components.enums.AppColorTheme
 import com.wordle.core.presentation.components.enums.AppLanguage
-import com.wordle.game.presentation.ChallengeScreen
-import com.wordle.game.presentation.GameScreen
-import com.wordle.game.presentation.HomeScreen
-import com.wordle.game.presentation.LeaderboardScreen
-import com.wordle.game.presentation.ProfileScreen
-import com.wordle.game.presentation.SettingsScreen
-import com.wordle.game.presentation.viewmodel.SettingsViewModel
-import com.wordle.game.presentation.contract.ProfileIntent
-import com.wordle.game.presentation.contract.SettingsIntent
-import com.wordle.game.presentation.viewmodel.ProfileViewModel
+import com.wordle.game.presentation.challenge.screen.ChallengeScreen
+import com.wordle.game.presentation.game.screen.GameScreen
+import com.wordle.game.presentation.home.screen.HomeScreen
+import com.wordle.game.presentation.leaderboard.screen.LeaderboardScreen
+import com.wordle.game.presentation.profile.screen.ProfileScreen
+import com.wordle.game.presentation.settings.screen.SettingsScreen
+import com.wordle.game.presentation.settings.vm.SettingsViewModel
+import com.wordle.game.presentation.profile.contract.ProfileIntent
+import com.wordle.game.presentation.settings.contract.SettingsIntent
+import com.wordle.game.presentation.profile.vm.ProfileViewModel
 import kotlinx.serialization.Serializable
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -48,7 +49,7 @@ fun NavGraphBuilder.navGraph(
 
     composable<Route.HomeScreen> {
         HomeScreen(
-            onPlayClick        = { navController.navigate(Route.GameScreen) },
+            onPlayClick = { length -> navController.navigate(Route.GameScreen(length)) },
             onChallengeClick   = { navController.navigate(Route.ChallengeScreen) },
             onLeaderboardClick = { navController.navigate(Route.LeaderboardScreen) },
             onThemeChanged     = onThemeChanged,
@@ -59,10 +60,12 @@ fun NavGraphBuilder.navGraph(
         )
     }
 
-    composable<Route.GameScreen> {
+    composable<Route.GameScreen> { backStackEntry ->
+        val route = backStackEntry.toRoute<Route.GameScreen>()
         GameScreen(
-            onClose = { navController.popBackStack() },
+            onClose         = { navController.popBackStack() },
             currentLanguage = currentLanguage(),
+            wordLength      = route.wordLength,
         )
     }
 
@@ -86,6 +89,7 @@ fun NavGraphBuilder.navGraph(
         ProfileScreen(
             name               = state.name,
             avatarUrl          = state.avatarUrl,
+            pendingAvatarUri   = state.pendingAvatarUri,
             gamesPlayed        = state.gamesPlayed,
             wordsSolved        = state.wordsSolved,
             winPercentage      = state.winPercentage,
@@ -104,8 +108,10 @@ fun NavGraphBuilder.navGraph(
 
     composable<Route.SettingsScreen> {
         val viewModel: SettingsViewModel = hiltViewModel()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         SettingsScreen(
+            email                 = uiState.email,
             onBack                = { navController.popBackStack() },
             onChangeEmailClick    = { viewModel.onEvent(SettingsIntent.OnChangeEmailClick) },
             onChangePasswordClick = { viewModel.onEvent(SettingsIntent.OnChangePasswordClick) },
@@ -179,7 +185,7 @@ sealed interface Route {
     data object HomeScreen : Route
 
     @Serializable
-    data object GameScreen : Route
+    data class GameScreen(val wordLength: Int) : Route
 
     @Serializable
     data object ChallengeScreen : Route

@@ -1,20 +1,17 @@
 package com.wordle.game.data.di
 
-import android.content.Context
-import com.wordle.game.data.remote.datasource.GameRemoteDataSource
-import com.wordle.game.data.remote.datasource.GameRemoteDataSourceImpl
-import com.wordle.game.data.repository.ChallengeRepositoryImpl
+import com.wordle.game.data.remote.api.GameApiService
+import com.wordle.game.data.remote.datasource.game.GameRemoteDataSource
+import com.wordle.game.data.remote.datasource.game.GameRemoteDataSourceImpl
 import com.wordle.game.data.repository.GameRepositoryImpl
-import com.wordle.game.domain.repository.ChallengeRepository
 import com.wordle.game.domain.repository.GameRepository
-import com.wordle.game.domain.usecases.GetWordsUseCase
-import com.wordle.game.domain.usecases.LoadTodayChallengeUseCase
-import com.wordle.game.domain.usecases.SaveChallengeStateUseCase
+import com.wordle.game.domain.usecases.game.GetWordsUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
@@ -24,8 +21,8 @@ object GameModule {
     @Provides
     @Singleton
     fun provideGameRemoteDataSource(
-        @ApplicationContext context: Context
-    ): GameRemoteDataSource = GameRemoteDataSourceImpl(context)
+        api: GameApiService
+    ): GameRemoteDataSource = GameRemoteDataSourceImpl(api)
 
     @Provides
     @Singleton
@@ -41,19 +38,15 @@ object GameModule {
 
     @Provides
     @Singleton
-    fun provideChallengeRepository(
-        @ApplicationContext context: Context
-    ): ChallengeRepository = ChallengeRepositoryImpl(context)
+    fun provideRetrofit(): Retrofit = Retrofit.Builder()
+//        .baseUrl("http://192.168.100.168:1337/api/")
+        .baseUrl("http://10.0.2.2:1337/api/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
 
     @Provides
     @Singleton
-    fun provideLoadTodayChallengeUseCase(
-        repository: ChallengeRepository
-    ): LoadTodayChallengeUseCase = LoadTodayChallengeUseCase(repository)
+    fun provideGameApiService(retrofit: Retrofit): GameApiService =
+        retrofit.create(GameApiService::class.java)
 
-    @Provides
-    @Singleton
-    fun provideSaveChallengeStateUseCase(
-        repository: ChallengeRepository
-    ): SaveChallengeStateUseCase = SaveChallengeStateUseCase(repository)
 }
