@@ -88,6 +88,7 @@ fun NavGraphBuilder.navGraph(
 
         ProfileScreen(
             name               = state.name,
+            email             = state.email,
             avatarUrl          = state.avatarUrl,
             pendingAvatarUri   = state.pendingAvatarUri,
             gamesPlayed        = state.gamesPlayed,
@@ -111,7 +112,6 @@ fun NavGraphBuilder.navGraph(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         SettingsScreen(
-            email                 = uiState.email,
             onBack                = { navController.popBackStack() },
             onChangeEmailClick    = { viewModel.onEvent(SettingsIntent.OnChangeEmailClick) },
             onChangePasswordClick = { viewModel.onEvent(SettingsIntent.OnChangePasswordClick) },

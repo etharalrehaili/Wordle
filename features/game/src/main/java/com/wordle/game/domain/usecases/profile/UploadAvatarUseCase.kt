@@ -6,6 +6,7 @@ import com.wordle.core.util.Resource
 import com.wordle.game.domain.repository.ProfileRepository
 import javax.inject.Inject
 
+/** Uploads a profile avatar image to Strapi and returns the hosted URL. */
 class UploadAvatarUseCase @Inject constructor(
     private val repo: ProfileRepository
 ) {

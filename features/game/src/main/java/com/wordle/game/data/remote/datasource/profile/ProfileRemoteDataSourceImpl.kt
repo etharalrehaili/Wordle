@@ -13,20 +13,27 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
+/**
+ * Concrete implementation of [ProfileRemoteDataSource].
+ * Communicates with the Strapi backend via [ProfileApiService].
+ */
 class ProfileRemoteDataSourceImpl @Inject constructor(
     private val api: ProfileApiService
 ) : ProfileRemoteDataSource {
 
+    /** Queries Strapi for a profile with matching firebaseUid. Returns first result or null. */
     override suspend fun getProfile(firebaseUid: String): ProfileItem? {
         return api.getProfile(firebaseUid).data.firstOrNull()
     }
 
+    /** Creates a new profile in Strapi with the user's Firebase UID and display name. */
     override suspend fun createProfile(firebaseUid: String, name: String): ProfileItem {
         return api.createProfile(
             CreateProfileRequest(CreateProfileData(firebaseUid, name))
         ).data
     }
 
+    /** Sends a PUT request to Strapi to update the profile document. */
     override suspend fun updateProfile(
         documentId: String,
         name: String,
@@ -38,10 +45,16 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
     ): ProfileItem {
         return api.updateProfile(
             documentId,
-            UpdateProfileRequest(UpdateProfileData(name, avatarUrl, gamesPlayed, wordsSolved, winPercentage, currentPoints))
+            UpdateProfileRequest(
+                UpdateProfileData(name, avatarUrl, gamesPlayed, wordsSolved, winPercentage, currentPoints)
+            )
         ).data
     }
 
+    /**
+     * Reads the image from the device, converts it to a multipart request,
+     * uploads it to Strapi's media library, and returns the full image URL.
+     */
     override suspend fun uploadAvatar(imageUri: Uri, context: Context): String {
         val contentResolver = context.contentResolver
         val inputStream = contentResolver.openInputStream(imageUri)
@@ -60,10 +73,11 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
 
         val response = api.uploadAvatar(part)
         val relativePath = response.first().url
-
-        return "http://10.0.2.2:1337$relativePath"
+//        return "http://10.0.2.2:1337$relativePath"
+        return "http://192.168.100.168:1337$relativePath"
     }
 
+    /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */
     override suspend fun getLeaderboard(limit: Int): List<ProfileItem> {
         return api.getLeaderboard(limit = limit).data
     }

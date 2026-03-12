@@ -1,13 +1,13 @@
 package com.wordle.game.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "challenge_table")
+@Entity(
+    tableName = "challenge_table",
+    primaryKeys = ["date", "language"]
+)
 data class ChallengeEntity(
-    @PrimaryKey val id: Int,
-    val documentId: String,
-    val word: String,
-    val language: String,
     val date: String,
+    val language: String,
+    val word: String,
 )

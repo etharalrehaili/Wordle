@@ -1,7 +1,6 @@
 package com.wordle.game.presentation.challenge.vm
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -37,10 +36,10 @@ class ChallengeViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onEvent(intent: ChallengeIntent) {
         when (intent) {
-            is ChallengeIntent.LoadWords   -> loadWords(intent.language)
-            is ChallengeIntent.EnterLetter -> enterLetter(intent.letter)
+            is ChallengeIntent.LoadWords    -> loadWords(intent.language)
+            is ChallengeIntent.EnterLetter  -> enterLetter(intent.letter)
             is ChallengeIntent.DeleteLetter -> deleteLetter()
-            is ChallengeIntent.SubmitGuess -> submitGuess()
+            is ChallengeIntent.SubmitGuess  -> submitGuess()
         }
     }
 
@@ -49,11 +48,8 @@ class ChallengeViewModel @Inject constructor(
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
             val today = LocalDate.now().toString()
-            Log.d("ChallengeVM", "🔄 loadWords called: language=$language, today=$today")
 
             val saved = loadTodayChallengeUseCase()
-            Log.d("ChallengeVM", "💾 saved state: ${if (saved != null) "FOUND word=${saved.targetWord}" else "NULL"}")
-
             if (saved != null) {
                 setState {
                     copy(
@@ -71,35 +67,17 @@ class ChallengeViewModel @Inject constructor(
                     sendEffect { ChallengeEffect.ShowGameDialog(isWin = saved.isWin, targetWord = saved.targetWord) }
                 }
             } else {
-                Log.d("ChallengeVM", "🌐 Fetching from API...")
                 when (val result = getDailyChallengeUseCase(today, language)) {
-                    is Resource.Success -> {
-                        Log.d(
-                            "ChallengeVM",
-                            "✅ API success: word=${result.data}, length=${result.data.length}"
-                        )
-                        setState {
-                            copy(
-                                isLoading = false,
-                                targetWord = result.data,
-                                wordLength = result.data.length,
-                                board = List(MAX_GUESSES) { List(result.data.length) { Tile() } }
-                            )
-                        }
-                        Log.d(
-                            "ChallengeVM",
-                            "✅ State updated: wordLength=${uiState.value.wordLength}"
+                    is Resource.Success -> setState {
+                        copy(
+                            isLoading  = false,
+                            targetWord = result.data,
+                            wordLength = result.data.length,
+                            board      = List(MAX_GUESSES) { List(result.data.length) { Tile() } }
                         )
                     }
-
-                    is Resource.Error -> {
-                        Log.e("ChallengeVM", "❌ API error: ${result.message}")
-                        setState { copy(isLoading = false, error = result.message) }
-                    }
-
-                    is Resource.Loading -> {
-                        Log.d("ChallengeVM", "⏳ API loading...")
-                    }
+                    is Resource.Error   -> setState { copy(isLoading = false, error = result.message) }
+                    is Resource.Loading -> Unit
                 }
             }
         }
@@ -112,15 +90,13 @@ class ChallengeViewModel @Inject constructor(
         if (state.currentCol >= state.wordLength) return
 
         val newBoard = state.board.updateTile(
-            row = state.currentRow,
-            col = state.currentCol,
+            row  = state.currentRow,
+            col  = state.currentCol,
             tile = Tile(letter = letter.uppercaseChar(), state = TileState.FILLED)
         )
         setState { copy(board = newBoard, currentCol = currentCol + 1) }
 
-        if (state.currentCol == state.wordLength - 1) {
-            submitGuess()
-        }
+        if (state.currentCol == state.wordLength - 1) submitGuess()
     }
 
     private fun deleteLetter() {
@@ -146,10 +122,9 @@ class ChallengeViewModel @Inject constructor(
             return
         }
 
-        val guess = state.board[state.currentRow].map { it.letter }.joinToString("")
+        val guess        = state.board[state.currentRow].map { it.letter }.joinToString("")
         val evaluatedRow = evaluateGuess(guess, state.targetWord)
-        val newBoard = state.board.toMutableList()
-            .also { it[state.currentRow] = evaluatedRow }.toList()
+        val newBoard     = state.board.toMutableList().also { it[state.currentRow] = evaluatedRow }.toList()
         val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
 
         val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
@@ -179,12 +154,7 @@ class ChallengeViewModel @Inject constructor(
         }
 
         if (isWin || isLast) {
-            sendEffect {
-                ChallengeEffect.ShowGameDialog(
-                    isWin = isWin,
-                    targetWord = state.targetWord
-                )
-            }
+            sendEffect { ChallengeEffect.ShowGameDialog(isWin = isWin, targetWord = state.targetWord) }
             updateProfileStats(isWin = isWin, guessCount = state.currentRow + 1)
         }
     }
@@ -192,27 +162,24 @@ class ChallengeViewModel @Inject constructor(
     private fun updateProfileStats(isWin: Boolean, guessCount: Int) {
         viewModelScope.launch {
             val user = FirebaseAuth.getInstance().currentUser ?: return@launch
-
             val profile = when (val result = getProfileUseCase(user.uid)) {
                 is Resource.Success -> result.data ?: return@launch
                 else -> return@launch
             }
 
-            val pointsEarned = if (isWin) {
-                when (guessCount) {
-                    1    -> 100
-                    2    -> 80
-                    3    -> 60
-                    4    -> 40
-                    5    -> 20
-                    else -> 10
-                }
+            val pointsEarned = if (isWin) when (guessCount) {
+                1    -> 100
+                2    -> 80
+                3    -> 60
+                4    -> 40
+                5    -> 20
+                else -> 10
             } else 0
 
             val newGamesPlayed = profile.gamesPlayed + 1
             val newWordsSolved = profile.wordsSolved + if (isWin) 1 else 0
             val newWinRate     = if (newGamesPlayed > 0) (newWordsSolved * 100.0 / newGamesPlayed) else 0.0
-            val newPoints      = profile.currentPoints + pointsEarned  // ← add
+            val newPoints      = profile.currentPoints + pointsEarned
 
             updateProfileUseCase(
                 documentId    = profile.documentId,
@@ -221,20 +188,20 @@ class ChallengeViewModel @Inject constructor(
                 gamesPlayed   = newGamesPlayed,
                 wordsSolved   = newWordsSolved,
                 winPercentage = newWinRate,
-                currentPoints = newPoints,  // ← was profile.currentPoints
+                currentPoints = newPoints,
             )
         }
     }
 
     private fun evaluateGuess(guess: String, target: String): List<Tile> {
-        val result    = Array(target.length) { TileState.WRONG }
-        val targetArr = target.toCharArray()
-        val guessArr  = guess.toCharArray()
-
+        val result          = Array(target.length) { TileState.WRONG }
+        val targetArr       = target.toCharArray()
+        val guessArr        = guess.toCharArray()
         val remainingTarget = targetArr.toMutableList()
+
         for (i in guessArr.indices) {
             if (guessArr[i] == targetArr[i]) {
-                result[i] = TileState.CORRECT
+                result[i]          = TileState.CORRECT
                 remainingTarget[i] = '\u0000'
             }
         }
@@ -242,7 +209,7 @@ class ChallengeViewModel @Inject constructor(
             if (result[i] == TileState.CORRECT) continue
             val idx = remainingTarget.indexOf(guessArr[i])
             if (idx != -1) {
-                result[i] = TileState.MISPLACED
+                result[i]            = TileState.MISPLACED
                 remainingTarget[idx] = '\u0000'
             }
         }

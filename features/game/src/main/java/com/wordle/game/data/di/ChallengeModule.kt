@@ -1,6 +1,7 @@
 package com.wordle.game.data.di
 
 import android.content.Context
+import com.wordle.game.data.local.db.AppDatabase
 import com.wordle.game.data.remote.api.ChallengeApiService
 import com.wordle.game.data.remote.datasource.challenge.ChallengeRemoteDataSource
 import com.wordle.game.data.remote.datasource.challenge.ChallengeRemoteDataSourceImpl
@@ -32,7 +33,8 @@ object ChallengeModule {
     @Singleton
     fun provideChallengeRepository(
         @ApplicationContext context: Context,
-        remote: ChallengeRemoteDataSource
-    ): ChallengeRepository = ChallengeRepositoryImpl(context, remote)
+        remote: ChallengeRemoteDataSource,
+        db: AppDatabase,
+    ): ChallengeRepository = ChallengeRepositoryImpl(context, remote, db)
 
 }

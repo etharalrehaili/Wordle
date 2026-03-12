@@ -5,6 +5,7 @@ import com.wordle.game.data.remote.model.ProfileItem
 import com.wordle.game.domain.repository.ProfileRepository
 import javax.inject.Inject
 
+/** Fetches a user profile by Firebase UID. Returns cached data if available. */
 class GetProfileUseCase @Inject constructor(
     private val repo: ProfileRepository
 ) {

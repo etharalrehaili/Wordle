@@ -5,6 +5,7 @@ import com.wordle.game.data.remote.model.ProfileItem
 import com.wordle.game.domain.repository.ProfileRepository
 import javax.inject.Inject
 
+/** Updates profile display info and game statistics (stats, points, win rate). */
 class UpdateProfileUseCase @Inject constructor(private val repository: ProfileRepository) {
     suspend operator fun invoke(
         documentId: String,

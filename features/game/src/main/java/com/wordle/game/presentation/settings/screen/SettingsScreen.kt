@@ -41,7 +41,6 @@ import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun SettingsScreen(
-    email: String,
     onBack: Action,
     onChangeEmailClick: Action,
     onChangePasswordClick: Action,
@@ -90,7 +89,6 @@ fun SettingsScreen(
             SettingsItem(
                 label    = "Change Email",
                 icon     = Icons.Filled.Email,
-                subtitle = email,
                 onClick  = onChangeEmailClick,
             )
 
@@ -171,7 +169,6 @@ private fun SettingsItem(
 @Composable
 private fun PreviewSettingsScreenDark() {
     SettingsScreen(
-        email                 = "",
         onBack                = {},
         onChangeEmailClick    = {},
         onChangePasswordClick = {},

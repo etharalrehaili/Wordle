@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.presentation.components.MAX_GUESSES
+import com.wordle.game.data.local.db.AppDatabase
+import com.wordle.game.data.local.entity.ChallengeEntity
 import com.wordle.game.data.remote.datasource.challenge.ChallengeRemoteDataSource
 import com.wordle.game.domain.repository.ChallengeRepository
 import com.wordle.game.presentation.game.contract.Tile
@@ -26,6 +28,7 @@ private val Context.challengeDataStore by preferencesDataStore(name = "challenge
 class ChallengeRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val remote: ChallengeRemoteDataSource,
+    private val db: AppDatabase,
 ) : ChallengeRepository {
 
     companion object {
@@ -41,23 +44,26 @@ class ChallengeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getDailyChallenge(date: String, language: String): String? {
-        return remote.getDailyChallenge(date, language)
+        val cached = db.challengeDao().getChallenge(date, language)
+        if (cached != null) return cached.word
+
+        val word = remote.getDailyChallenge(date, language) ?: return null
+        db.challengeDao().insertChallenge(
+            ChallengeEntity(date = date, language = language, word = word)
+        )
+        db.challengeDao().deleteOldChallenges(date)
+        return word
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun loadTodayState(): SavedChallengeState? {
         val prefs      = context.challengeDataStore.data.first()
-        val savedDate  = prefs[KEY_DATE] ?: run { android.util.Log.d("ChallengeRepo", "❌ No saved date"); return null }
-        val savedUid   = prefs[KEY_UID]  ?: run { android.util.Log.d("ChallengeRepo", "❌ No saved UID"); return null }
-        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: run { android.util.Log.d("ChallengeRepo", "❌ No current user"); return null }
+        val savedDate  = prefs[KEY_DATE] ?: return null
+        val savedUid   = prefs[KEY_UID]  ?: return null
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
 
-        android.util.Log.d("ChallengeRepo", "savedDate=$savedDate, today=${LocalDate.now()}")
-        android.util.Log.d("ChallengeRepo", "savedUid=$savedUid, currentUid=$currentUid")
-
-        if (savedUid != currentUid) { android.util.Log.d("ChallengeRepo", "❌ UID mismatch"); return null }
-        if (savedDate != LocalDate.now().toString()) { android.util.Log.d("ChallengeRepo", "❌ Date mismatch"); return null }
-
-        android.util.Log.d("ChallengeRepo", "✅ Valid saved state found")
+        if (savedUid != currentUid) return null
+        if (savedDate != LocalDate.now().toString()) return null
 
         val target     = prefs[KEY_TARGET]       ?: return null
         val currentRow = prefs[KEY_CURRENT_ROW]  ?: 0
@@ -104,6 +110,7 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     private fun encodeBoard(board: List<List<Tile>>): String =
         board.flatten().joinToString(",") { "${it.letter}:${it.state.name}" }
+
     private fun encodeKeyboard(map: Map<Char, TileState>): String =
         map.entries.joinToString(",") { "${it.key}:${it.value.name}" }
 

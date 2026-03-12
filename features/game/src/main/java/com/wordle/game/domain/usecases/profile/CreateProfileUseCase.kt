@@ -5,6 +5,7 @@ import com.wordle.game.data.remote.model.ProfileItem
 import com.wordle.game.domain.repository.ProfileRepository
 import javax.inject.Inject
 
+/** Creates a new Strapi profile on first login using Firebase UID and email username. */
 class CreateProfileUseCase @Inject constructor(
     private val repo: ProfileRepository
 ) {

@@ -68,6 +68,7 @@ class ProfileViewModel @Inject constructor(
                     profileId = profile.id,
                     documentId = profile.documentId,
                     name = displayName,
+                    email         = email,
                     avatarUrl = profile.avatarUrl,
                     gamesPlayed = profile.gamesPlayed,
                     wordsSolved = profile.wordsSolved,

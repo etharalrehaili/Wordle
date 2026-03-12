@@ -9,6 +9,7 @@ data class ProfileUiState(
     val profileId: Int = 0,
     val documentId: String = "",
     val name: String          = "",
+    val email: String = "",
     val avatarUrl: String?    = null,
     val pendingAvatarUri: Uri? = null,
     val gamesPlayed: Int      = 0,

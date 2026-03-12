@@ -2,22 +2,18 @@ package com.wordle.game.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.wordle.game.data.local.entity.ChallengeEntity
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChallengeDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChallenge(challenge: ChallengeEntity)
 
-    @Update
-    suspend fun updateChallenge(challenge: ChallengeEntity)
+    @Query("SELECT * FROM challenge_table WHERE date = :date AND language = :language")
+    suspend fun getChallenge(date: String, language: String): ChallengeEntity?
 
-    @Query("SELECT * FROM challenge_table WHERE id = :id")
-    fun getChallengeById(id: Int): Flow<ChallengeEntity?>
-
-    @Query("SELECT * FROM challenge_table")
-    fun getAllChallenges(): Flow<List<ChallengeEntity>>
+    @Query("DELETE FROM challenge_table WHERE date < :date")
+    suspend fun deleteOldChallenges(date: String)
 }
