@@ -290,9 +290,11 @@ fun HomeContent(
 
                 Spacer(modifier = Modifier.height(GameDesignTheme.spacing.sm))
 
-                NextWordCountdownRow(
-                    countdownSeconds = countdownSeconds
-                )
+                if (isLoggedIn) {
+                    NextWordCountdownRow(
+                        countdownSeconds = countdownSeconds
+                    )
+                }
             }
 
             WordleText(

@@ -23,9 +23,14 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wordle.core.alias.Action
+import com.wordle.core.presentation.components.bottomsheets.SignOutConfirmationBottomSheet
 import com.wordle.core.presentation.components.enums.AppColorTheme
 import com.wordle.core.presentation.components.navigation.GameTopBar
 import com.wordle.core.presentation.components.text.WordleText
@@ -47,6 +53,7 @@ import com.wordle.game.presentation.settings.contract.SettingsEffect
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: Action,
@@ -58,6 +65,7 @@ fun SettingsScreen(
 ) {
 
     val colors = LocalWordleColors.current
+    var showSignOutSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         uiEffect.collect { effect ->
@@ -110,6 +118,7 @@ fun SettingsScreen(
                 label    = "Change Email",
                 icon     = Icons.Filled.Email,
                 accent = colors.buttonTeal,
+                backgroundColor = colors.countdownBackground,
                 onClick  = onChangeEmailClick,
             )
 
@@ -118,7 +127,8 @@ fun SettingsScreen(
             SettingsItem(
                 label    = "Change Password",
                 icon     = Icons.Filled.Lock,
-                accent = colors.buttonPink,
+                accent = colors.buttonTeal,
+                backgroundColor = colors.countdownBackground,
                 onClick  = onChangePasswordClick,
             )
 
@@ -130,7 +140,8 @@ fun SettingsScreen(
             SettingsItem(
                 label    = "Notifications",
                 icon     = Icons.Filled.Notifications,
-                accent   = colors.buttonTaupe,
+                accent = colors.buttonTeal,
+                backgroundColor = colors.countdownBackground,
                 onClick  = onChangeEmailClick,
             )
 
@@ -138,24 +149,34 @@ fun SettingsScreen(
             SectionLabel("Support")
 
             SettingsItem(
-                label    = "Support",
-                icon     = Icons.Filled.QuestionMark,
+                label           = "Support",
+                icon            = Icons.Filled.QuestionMark,
                 accent = colors.buttonTeal,
-                onClick  = onChangeEmailClick,
+                backgroundColor = colors.countdownBackground,
+                onClick         = onChangeEmailClick,
             )
 
             Spacer(Modifier.height(24.dp))
 
             // Sign out
-
             SettingsItem(
-                label    = "Sign Out",
-                icon     = Icons.AutoMirrored.Filled.ExitToApp,
-                accent   = colors.error,
-                onClick  = onSignOutClick,
+                label         = "Sign Out",
+                icon          = Icons.AutoMirrored.Filled.ExitToApp,
+                accent        = colors.error,
+                onClick       = { showSignOutSheet = true },
                 isDestructive = true,
-                showArrow     = false
+                showArrow     = false,
             )
+
+            if (showSignOutSheet) {
+                SignOutConfirmationBottomSheet(
+                    onDismiss = { showSignOutSheet = false },
+                    onConfirm = {
+                        showSignOutSheet = false
+                        onSignOutClick()
+                    }
+                )
+            }
         }
     }
 }
@@ -181,7 +202,8 @@ private fun SettingsItem(
     onClick: Action,
     subtitle: String? = null,
     isDestructive: Boolean = false,
-    showArrow: Boolean = true
+    showArrow: Boolean = true,
+    backgroundColor: Color? = null
 ) {
 
     val colors = LocalWordleColors.current
@@ -191,8 +213,11 @@ private fun SettingsItem(
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
             .background(
-                if (isDestructive) accent.copy(alpha = 0.12f)
-                else colors.surface
+                when {
+                    isDestructive        -> accent.copy(alpha = 0.12f)
+                    backgroundColor != null -> backgroundColor
+                    else                 -> colors.surface
+                }
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),

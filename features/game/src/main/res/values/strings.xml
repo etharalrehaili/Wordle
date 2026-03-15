@@ -14,4 +14,71 @@
     <string name="filter_today">Today</string>
     <string name="challenge_next_word_label">New word available in</string>
     <string name="result_answer_label">The answer was: %1$s</string>
+
+    <!-- Auth -->
+    <string name="login_title">Welcome back</string>
+    <string name="login_subtitle">Sign in to continue playing</string>
+    <string name="login_email_label">Email</string>
+    <string name="login_email_placeholder">your@email.com</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_button">Login</string>
+    <string name="login_loading">Signing in…</string>
+    <string name="signup_title">Create Account</string>
+    <string name="signup_confirm_password_label">Confirm Password</string>
+    <string name="signup_button">Sign Up</string>
+    <string name="signup_success">Account created successfully</string>
+
+    <!-- Auth Bottom Sheet -->
+    <string name="auth_sheet_title">Join the Challenge</string>
+    <string name="auth_sheet_subtitle">Sign in to compete with players\naround the world</string>
+    <string name="auth_sheet_divider">continue with</string>
+    <string name="auth_sheet_login_button">Login with Email</string>
+    <string name="auth_sheet_signup_button">Create an Account</string>
+
+    <!-- Sign Out -->
+    <string name="sign_out_title">Sign Out</string>
+    <string name="sign_out_subtitle">Are you sure you want to sign out?</string>
+    <string name="sign_out_confirm">Yes, Sign Out</string>
+    <string name="sign_out_cancel">Cancel</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_account_section">Account Settings</string>
+    <string name="settings_app_section">App Settings</string>
+    <string name="settings_support_section">Support</string>
+    <string name="settings_change_email">Change Email</string>
+    <string name="settings_change_password">Change Password</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_support">Support</string>
+    <string name="settings_sign_out">Sign Out</string>
+
+    <!-- Game Result -->
+    <string name="result_the_word_was">The word was</string>
+    <string name="result_play_again">Play Again</string>
+    <string name="result_close">Close</string>
+
+    <!-- Countdown -->
+    <string name="countdown_next_word">Next word available in</string>
+
+    <!-- Word Length Sheet -->
+    <string name="word_length_title">How long?</string>
+    <string name="word_length_subtitle">Choose your word length to start</string>
+    <string name="word_length_easy">Easy</string>
+    <string name="word_length_classic">Classic</string>
+    <string name="word_length_hard">Hard</string>
+
+    <!-- Leaderboard -->
+    <string name="leaderboard_rankings">Rankings</string>
+    <string name="leaderboard_your_position">Your position</string>
+
+    <!-- Drawer -->
+    <string name="drawer_app_name">Kalimati</string>
+    <string name="drawer_word_game">Word Game</string>
+    <string name="drawer_profile">Profile</string>
+    <string name="drawer_profile_desc">View your stats</string>
+    <string name="drawer_theme">Theme</string>
+    <string name="drawer_theme_desc">Change appearance</string>
+    <string name="drawer_language">Language</string>
+    <string name="drawer_language_desc">Switch language</string>
+    <string name="drawer_made_with_love">Made with ♥</string>
 </resources>

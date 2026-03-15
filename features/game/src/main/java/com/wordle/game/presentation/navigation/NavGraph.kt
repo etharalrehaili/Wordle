@@ -87,16 +87,7 @@ fun NavGraphBuilder.navGraph(
         val state by viewModel.uiState.collectAsStateWithLifecycle()
 
         ProfileScreen(
-            name               = state.name,
-            email             = state.email,
-            avatarUrl          = state.avatarUrl,
-            pendingAvatarUri   = state.pendingAvatarUri,
-            gamesPlayed        = state.gamesPlayed,
-            wordsSolved        = state.wordsSolved,
-            winPercentage      = state.winPercentage,
-            currentPoints      = state.currentPoints,
-            isEditMode         = state.isEditMode,
-            editName           = state.editName,
+            uiState            = state,
             onBack             = { navController.popBackStack() },
             onEditProfileClick = { viewModel.onEvent(ProfileIntent.OnEditProfileClick) },
             onSaveProfileClick = { viewModel.onEvent(ProfileIntent.OnSaveProfileClick) },

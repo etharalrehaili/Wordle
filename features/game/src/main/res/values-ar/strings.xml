@@ -14,4 +14,76 @@
     <string name="filter_today">اليوم</string>
     <string name="challenge_next_word_label">الكلمة الجديدة ستكون متاحة خلال</string>
     <string name="result_answer_label">كانت الكلمة: %1$s</string>
+
+    <!-- Auth -->
+    <string name="login_title">مرحباً بعودتك</string>
+    <string name="login_subtitle">سجّل دخولك لمتابعة اللعب</string>
+    <string name="login_email_label">البريد الإلكتروني</string>
+    <string name="login_email_placeholder">example@email.com</string>
+    <string name="login_password_label">كلمة المرور</string>
+    <string name="login_button">تسجيل الدخول</string>
+    <string name="login_loading">جارٍ تسجيل الدخول…</string>
+    <string name="signup_title">إنشاء حساب</string>
+    <string name="signup_confirm_password_label">تأكيد كلمة المرور</string>
+    <string name="signup_button">إنشاء حساب</string>
+    <string name="signup_success">تم إنشاء الحساب بنجاح</string>
+
+    <!-- Auth Bottom Sheet -->
+    <string name="auth_sheet_title">انضم إلى التحدي</string>
+    <string name="auth_sheet_subtitle">سجّل دخولك للتنافس مع اللاعبين\nحول العالم</string>
+    <string name="auth_sheet_divider">تابع باستخدام</string>
+    <string name="auth_sheet_login_button">تسجيل الدخول بالبريد</string>
+    <string name="auth_sheet_signup_button">إنشاء حساب جديد</string>
+
+    <!-- Sign Out -->
+    <string name="sign_out_title">تسجيل الخروج</string>
+    <string name="sign_out_subtitle">هل أنت متأكد من تسجيل الخروج؟</string>
+    <string name="sign_out_confirm">نعم، سجّل الخروج</string>
+    <string name="sign_out_cancel">إلغاء</string>
+
+    <!-- Settings -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_account_section">إعدادات الحساب</string>
+    <string name="settings_app_section">إعدادات التطبيق</string>
+    <string name="settings_support_section">الدعم</string>
+    <string name="settings_change_email">تغيير البريد الإلكتروني</string>
+    <string name="settings_change_password">تغيير كلمة المرور</string>
+    <string name="settings_notifications">الإشعارات</string>
+    <string name="settings_support">الدعم</string>
+    <string name="settings_sign_out">تسجيل الخروج</string>
+
+    <!-- Game Result -->
+    <string name="result_the_word_was">كانت الكلمة</string>
+    <string name="result_play_again">العب مجدداً</string>
+    <string name="result_close">إغلاق</string>
+
+    <!-- Countdown -->
+    <string name="countdown_next_word">الكلمة التالية متاحة خلال</string>
+
+    <!-- Word Length Sheet -->
+    <string name="word_length_title">كم طول الكلمة؟</string>
+    <string name="word_length_subtitle">اختر طول الكلمة للبدء</string>
+    <string name="word_length_easy">سهل</string>
+    <string name="word_length_classic">كلاسيكي</string>
+    <string name="word_length_hard">صعب</string>
+
+    <!-- Leaderboard -->
+    <string name="leaderboard_rankings">الترتيب</string>
+    <string name="leaderboard_your_position">مرتبتك</string>
+
+    <!-- Drawer -->
+    <string name="drawer_app_name">كلمتي</string>
+    <string name="drawer_word_game">لعبة الكلمات</string>
+    <string name="drawer_profile">الملف الشخصي</string>
+    <string name="drawer_profile_desc">عرض إحصائياتك</string>
+    <string name="drawer_theme">المظهر</string>
+    <string name="drawer_theme_desc">تغيير المظهر</string>
+    <string name="drawer_language">اللغة</string>
+    <string name="drawer_language_desc">تغيير اللغة</string>
+    <string name="drawer_made_with_love">صُنع بـ ♥</string>
+
+    <!-- Error Messages -->
+    <string name="error_name_empty">يرجى إدخال الاسم</string>
+    <string name="error_upload_failed">فشل الرفع</string>
+    <string name="error_generic">خطأ</string>
 </resources>

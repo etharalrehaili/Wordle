@@ -41,7 +41,7 @@ private val ROW_3 = listOf('Z', 'X', 'C', 'V', 'B', 'N', 'M')
 // ─── Arabic layout ────────────────────────────────────────────────────────────
 private val AR_ROW_1 = listOf('ج', 'ح', 'خ', 'ه', 'ع', 'غ', 'ف', 'ق', 'ث', 'ص', 'ض')
 private val AR_ROW_2 = listOf('ط', 'ك', 'م', 'ن', 'ت', 'ا', 'ل', 'ب', 'ي', 'س', 'ش')
-private val AR_ROW_3 = listOf('د', 'ظ', 'ز', 'و', 'ة', 'ى', 'ر', 'ؤ', 'ء', 'ذ', 'ل')
+private val AR_ROW_3 = listOf('د', 'ظ', 'ز', 'و', 'ة', 'ى', 'ر', 'ؤ', 'ء', 'ذ')
 
 
 private val KEY_HEIGHT_EN = 58.dp
@@ -56,7 +56,6 @@ fun GameKeyboard(
     onBackspace: Action,
     language: AppLanguage = AppLanguage.ENGLISH
 ) {
-    val colors = LocalWordleColors.current
     val isArabic = language == AppLanguage.ARABIC
     val keyHeight = if (isArabic) KEY_HEIGHT_AR else KEY_HEIGHT_EN
 
@@ -70,31 +69,59 @@ fun GameKeyboard(
         // ── Row 1 ─────────────────────────────────────────────────────────────
         KeyRow {
             (if (isArabic) AR_ROW_1 else ROW_1).forEach { letter ->
-                LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
+                LetterKey(
+                    letter = letter,
+                    type = keyStates[letter] ?: Types.DEFAULT,
+                    keyHeight = keyHeight,
+                    onClick = { onKey(letter) })
             }
         }
 
         // ── Row 2 ─────────────────────────────────────────────────────────────
         KeyRow {
             (if (isArabic) AR_ROW_2 else ROW_2).forEach { letter ->
-                LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
+                LetterKey(
+                    letter = letter,
+                    type = keyStates[letter] ?: Types.DEFAULT,
+                    keyHeight = keyHeight,
+                    onClick = { onKey(letter) })
             }
         }
 
         // ── Row 3 ─────────────────────────────────────────────────────────────
         KeyRow {
-            (if (isArabic) AR_ROW_3 else ROW_3).forEach { letter ->
-                LetterKey(letter = letter, type = keyStates[letter] ?: Types.DEFAULT, keyHeight = keyHeight, onClick = { onKey(letter) })
+            if (isArabic) {
+                // Backspace first → renders on the right in RTL
+                IconKey(
+                    icon = Icons.AutoMirrored.Filled.Backspace,
+                    contentDescription = "Backspace",
+                    weight = 1.5f,
+                    keyHeight = keyHeight,
+                    onClick = onBackspace
+                )
+                AR_ROW_3.forEach { letter ->
+                    LetterKey(
+                        letter = letter,
+                        type = keyStates[letter] ?: Types.DEFAULT,
+                        keyHeight = keyHeight,
+                        onClick = { onKey(letter) })
+                }
+            } else {
+                ROW_3.forEach { letter ->
+                    LetterKey(
+                        letter = letter,
+                        type = keyStates[letter] ?: Types.DEFAULT,
+                        keyHeight = keyHeight,
+                        onClick = { onKey(letter) })
+                }
+                IconKey(
+                    icon = Icons.AutoMirrored.Filled.Backspace,
+                    contentDescription = "Backspace",
+                    weight = 1.5f,
+                    keyHeight = keyHeight,
+                    onClick = onBackspace
+                )
             }
-
-            // Backspace for both languages
-            IconKey(
-                icon               = Icons.AutoMirrored.Filled.Backspace,
-                contentDescription = "Backspace",
-                weight             = 1.5f,
-                keyHeight          = keyHeight,
-                onClick            = onBackspace
-            )
         }
     }
 }
