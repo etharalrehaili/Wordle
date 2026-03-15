@@ -14,6 +14,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,9 +34,11 @@ fun GameTopBar(
     startIcon: ImageVector? = null,
     endIcon: ImageVector? = null,
     onStartIconClicked: Action? = null,
-    onEndIconClicked: Action? = null
+    onEndIconClicked: Action? = null,
+    containerColor: Color? = null,
 ) {
     val colors = LocalWordleColors.current
+    val appBarColor = containerColor ?: colors.background
 
     TopAppBar(
         title = {
@@ -86,8 +89,8 @@ fun GameTopBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor             = colors.background,
-            scrolledContainerColor     = colors.background,
+            containerColor             = appBarColor,
+            scrolledContainerColor     = appBarColor,
             titleContentColor          = colors.title,
             navigationIconContentColor = colors.body,
             actionIconContentColor     = colors.body

@@ -153,18 +153,15 @@ fun NavGraphBuilder.navGraph(
         val state by viewModel.uiState.collectAsStateWithLifecycle()
 
         SignUpScreen(
-            name                     = state.name,
             email                    = state.email,
             password                 = state.password,
             confirmPassword          = state.confirmPassword,
             isLoading                = state.isLoading,
-            nameError                = state.nameError,
             emailError               = state.emailError,
             passwordError            = state.passwordError,
             confirmPasswordError     = state.confirmPasswordError,
             uiEffect                 = viewModel.uiEffect,
             onBack                   = { navController.popBackStack() },
-            onNameChanged            = { viewModel.onEvent(AuthIntent.OnNameChanged(it)) },
             onEmailChanged           = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
             onPasswordChanged        = { viewModel.onEvent(AuthIntent.OnPasswordChanged(it)) },
             onConfirmPasswordChanged = { viewModel.onEvent(AuthIntent.OnConfirmPasswordChanged(it)) },

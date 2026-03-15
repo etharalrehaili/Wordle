@@ -61,7 +61,6 @@ fun CustomSnackbar(
 ) {
     val style = snackbarStyleFor(type)
 
-    // Animate progress from 1f → 0f over durationMillis
     var started by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (started) 1f else 0f,
@@ -163,7 +162,8 @@ fun CustomSnackbarHost(
     Box(
         modifier        = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .padding(bottom = 48.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
         CustomSnackbar(

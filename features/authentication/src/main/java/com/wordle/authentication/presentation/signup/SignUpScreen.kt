@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -53,18 +56,15 @@ import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun SignUpScreen(
-    name: String,
     email: String,
     password: String,
     confirmPassword: String,
     isLoading: Boolean,
-    nameError: String?,
     emailError: String?,
     passwordError: String?,
     confirmPasswordError: String?,
     uiEffect: SharedFlow<AuthEffect>,
     onBack: Action,
-    onNameChanged: (String) -> Unit,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onConfirmPasswordChanged: (String) -> Unit,
@@ -81,7 +81,7 @@ fun SignUpScreen(
         uiEffect.collect { effect ->
             when (effect) {
                 AuthEffect.SignUpSuccess -> {
-                    snackbarState = SnackbarState("Account created successfully!", SnackbarType.SUCCESS)
+                    snackbarState = SnackbarState("Account created successfully", SnackbarType.SUCCESS)
                     navigateAfterSnackbar = true
                 }
                 is AuthEffect.ShowError ->
@@ -111,27 +111,6 @@ fun SignUpScreen(
                     .padding(horizontal = 24.dp, vertical = 32.dp)
             ) {
 
-                // ── Name ──────────────────────────────────────────────────────
-                Text("Name", color = colors.body, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value         = name,
-                    onValueChange = onNameChanged,
-                    placeholder   = { Text("Your display name", color = colors.body.copy(alpha = 0.5f)) },
-                    leadingIcon   = { Icon(Icons.Filled.Person, null, tint = colors.body) },
-                    singleLine    = true,
-                    isError       = nameError != null,
-                    modifier      = Modifier.fillMaxWidth(),
-                    colors        = textFieldColors(colors),
-                    shape         = RoundedCornerShape(12.dp),
-                )
-                if (nameError != null) {
-                    Text(nameError, color = MaterialTheme.colorScheme.error, fontSize = 12.sp,
-                        modifier = Modifier.padding(start = 4.dp, top = 4.dp))
-                }
-
-                Spacer(Modifier.height(20.dp))
-
                 // ── Email ─────────────────────────────────────────────────────
                 Text("Email", color = colors.body, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(8.dp))
@@ -139,7 +118,14 @@ fun SignUpScreen(
                     value         = email,
                     onValueChange = onEmailChanged,
                     placeholder   = { Text("your@email.com", color = colors.body.copy(alpha = 0.5f)) },
-                    leadingIcon   = { Icon(Icons.Filled.Email, null, tint = colors.body) },
+                    leadingIcon   = {
+                        Icon(
+                            Icons.Filled.Email,
+                            null,
+                            tint     = if (email.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
                     singleLine    = true,
                     isError       = emailError != null,
                     modifier      = Modifier.fillMaxWidth(),
@@ -160,11 +146,22 @@ fun SignUpScreen(
                     value                = password,
                     onValueChange        = onPasswordChanged,
                     placeholder          = { Text("••••••••", color = colors.body.copy(alpha = 0.5f)) },
-                    leadingIcon          = { Icon(Icons.Filled.Lock, null, tint = colors.body) },
+                    leadingIcon          = {
+                        Icon(
+                            Icons.Filled.Lock,
+                            null,
+                            tint     = if (password.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
                     trailingIcon         = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                null, tint = colors.body)
+                            Icon(
+                                imageVector        = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = null,
+                                tint               = colors.body.copy(alpha = 0.4f),
+                                modifier           = Modifier.size(20.dp)
+                            )
                         }
                     },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -188,11 +185,22 @@ fun SignUpScreen(
                     value                = confirmPassword,
                     onValueChange        = onConfirmPasswordChanged,
                     placeholder          = { Text("••••••••", color = colors.body.copy(alpha = 0.5f)) },
-                    leadingIcon          = { Icon(Icons.Filled.Lock, null, tint = colors.body) },
+                    leadingIcon          = {
+                        Icon(
+                            Icons.Filled.Lock,
+                            null,
+                            tint     = if (confirmPassword.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
                     trailingIcon         = {
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                            Icon(if (confirmPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                null, tint = colors.body)
+                            Icon(
+                                imageVector        = if (confirmPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = null,
+                                tint               = colors.body.copy(alpha = 0.4f),
+                                modifier           = Modifier.size(20.dp)
+                            )
                         }
                     },
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -209,13 +217,28 @@ fun SignUpScreen(
 
                 Spacer(Modifier.height(32.dp))
 
-                GameButton(
-                    label           = "Create Account",
-                    icon            = Icons.Filled.Login,
-                    backgroundColor = colors.correct,
-                    onClick         = onSignUpClick,
-                    modifier        = Modifier.fillMaxWidth()
-                )
+                // ── SignUp button ──────────────────────────────────────
+                if (isLoading) {
+                    Box(
+                        modifier          = Modifier.fillMaxWidth(),
+                        contentAlignment  = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color       = colors.buttonTeal,
+                            strokeWidth = 2.dp,
+                            modifier    = Modifier.size(36.dp)
+                        )
+                    }
+                } else {
+                    GameButton(
+                        label           = "Sign Up",
+                        backgroundColor = colors.buttonTeal,
+                        contentColor    = colors.title,
+                        showBorder      = false,
+                        onClick         = onSignUpClick,
+                        modifier        = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
 
@@ -239,11 +262,12 @@ fun SignUpScreen(
 @Composable
 private fun textFieldColors(colors: WordleColors) =
     OutlinedTextFieldDefaults.colors(
-        focusedBorderColor   = colors.title,
+        focusedBorderColor   = colors.buttonTeal,
         unfocusedBorderColor = colors.border,
         focusedTextColor     = colors.title,
         unfocusedTextColor   = colors.title,
-        cursorColor          = colors.title,
+        cursorColor          = colors.buttonTeal,
+        errorBorderColor     = MaterialTheme.colorScheme.error,
     )
 
 // ── Previews ──────────────────────────────────────────────────────────────────
@@ -252,18 +276,15 @@ private fun textFieldColors(colors: WordleColors) =
 @Composable
 private fun PreviewSignUpScreenDark() {
     SignUpScreen(
-        name                     = "",
         email                    = "",
         password                 = "",
         confirmPassword          = "",
         isLoading                = false,
-        nameError                = null,
         emailError               = null,
         passwordError            = null,
         confirmPasswordError     = null,
         uiEffect                 = MutableSharedFlow(),
         onBack                   = {},
-        onNameChanged            = {},
         onEmailChanged           = {},
         onPasswordChanged        = {},
         onConfirmPasswordChanged = {},

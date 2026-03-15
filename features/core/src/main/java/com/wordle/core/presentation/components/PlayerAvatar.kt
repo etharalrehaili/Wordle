@@ -1,5 +1,6 @@
 package com.wordle.core.presentation.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -41,7 +42,9 @@ fun PlayerAvatar(
                 contentDescription = "$name avatar",
                 contentScale       = ContentScale.Crop,
                 modifier           = Modifier
-                    .clip(CircleShape)
+                    .clip(CircleShape),
+                onError   = { Log.e("ProfileAvatar", "PlayerAvatar onError url=$avatarUrl", it.result.throwable) },
+                onSuccess = { Log.d("ProfileAvatar", "PlayerAvatar onSuccess url=$avatarUrl") }
             )
         } else {
             val initials = name

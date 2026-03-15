@@ -2,6 +2,7 @@ package com.wordle.game.data.remote.datasource.profile
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.wordle.game.data.remote.api.CreateProfileData
 import com.wordle.game.data.remote.api.CreateProfileRequest
 import com.wordle.game.data.remote.api.ProfileApiService
@@ -43,12 +44,15 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         winPercentage: Double,
         currentPoints: Int,
     ): ProfileItem {
-        return api.updateProfile(
+        Log.d("ProfileAvatar", "updateProfile: documentId=$documentId avatarUrl=$avatarUrl")
+        val updated = api.updateProfile(
             documentId,
             UpdateProfileRequest(
                 UpdateProfileData(name, avatarUrl, gamesPlayed, wordsSolved, winPercentage, currentPoints)
             )
         ).data
+        Log.d("ProfileAvatar", "updateProfile response: avatarUrl=${updated.avatarUrl}")
+        return updated
     }
 
     /**
@@ -74,7 +78,9 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         val response = api.uploadAvatar(part)
         val relativePath = response.first().url
 //        return "http://10.0.2.2:1337$relativePath"
-        return "http://192.168.100.168:1337$relativePath"
+        val fullUrl = "http://192.168.0.140:1337$relativePath"
+        Log.d("ProfileAvatar", "uploadAvatar: imageUri=$imageUri relativePath=$relativePath fullUrl=$fullUrl")
+        return fullUrl
     }
 
     /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */

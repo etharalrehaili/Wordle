@@ -22,10 +22,6 @@ class AuthViewModel @Inject constructor(
 
     override fun onEvent(intent: AuthIntent) {
         when (intent) {
-            is AuthIntent.OnNameChanged -> {
-                setState { copy(name = intent.name, nameError = null) }
-            }
-
             is AuthIntent.OnEmailChanged -> {
                 setState { copy(email = intent.email, emailError = null) }
             }
@@ -65,7 +61,6 @@ class AuthViewModel @Inject constructor(
                 setState { copy(isLoading = true) }
                 viewModelScope.launch {
                     signUpUseCase(
-                        name     = uiState.value.name,
                         email    = uiState.value.email,
                         password = uiState.value.password,
                     ).fold(
@@ -104,10 +99,6 @@ class AuthViewModel @Inject constructor(
         val state = uiState.value
         var valid = true
 
-        if (state.name.isBlank()) {
-            setState { copy(nameError = "Name cannot be empty") }
-            valid = false
-        }
         if (state.email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches()) {
             setState { copy(emailError = "Please enter a valid email") }
             valid = false

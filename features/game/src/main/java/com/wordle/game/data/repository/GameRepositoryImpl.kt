@@ -23,10 +23,10 @@ class GameRepositoryImpl @Inject constructor(
         db.wordDao().insertWords(
             items.map {
                 WordEntity(
-                    id = it.id,
-                    text = it.text,
-                    language = it.language,
-                    length = it.length
+                    id       = it.id,
+                    text     = it.text,
+                    language = language,
+                    length   = wordLength,
                 )
             }
         )

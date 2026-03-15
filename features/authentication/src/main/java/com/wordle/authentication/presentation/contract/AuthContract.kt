@@ -5,7 +5,6 @@ import com.wordle.core.mvi.UiIntent
 import com.wordle.core.mvi.UiState
 
 data class AuthUiState(
-    val name: String            = "",
     val email: String           = "",
     val password: String        = "",
     val confirmPassword: String = "",
@@ -17,7 +16,6 @@ data class AuthUiState(
 ) : UiState
 
 sealed interface AuthIntent : UiIntent {
-    data class OnNameChanged(val name: String)                   : AuthIntent
     data class OnEmailChanged(val email: String)                 : AuthIntent
     data class OnPasswordChanged(val password: String)           : AuthIntent
     data class OnConfirmPasswordChanged(val password: String)    : AuthIntent

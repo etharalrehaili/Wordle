@@ -34,17 +34,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Restore saved language before setContent
-        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-        val savedLang = prefs.getString("language", Locale.getDefault().language) ?: "en"
+        val prefs      = getSharedPreferences("settings", MODE_PRIVATE)
+        val savedLang  = prefs.getString("language", Locale.getDefault().language) ?: "en"
+        val savedTheme = prefs.getString("theme", "DARK") ?: "DARK"
         LocaleHelper.setLocale(this, savedLang)
 
         setContent {
-
             val deviceLanguage = if (Locale.getDefault().language == "ar") AppLanguage.ARABIC else AppLanguage.ENGLISH
-            var appLanguage by remember { mutableStateOf(deviceLanguage) }
-            val systemInDarkTheme = isSystemInDarkTheme()
-            var appColorTheme by remember { mutableStateOf(if (systemInDarkTheme) AppColorTheme.DARK else AppColorTheme.LIGHT) }
+            var appLanguage   by remember { mutableStateOf(deviceLanguage) }
+            var appColorTheme by remember { mutableStateOf(AppColorTheme.valueOf(savedTheme)) }
 
             val isLightTheme = appColorTheme == AppColorTheme.LIGHT
             val view = LocalView.current
@@ -61,12 +59,15 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
                     val navController = rememberNavController()
                     NavHost(
-                        navController = navController,
+                        navController    = navController,
                         startDestination = Route.HomeScreen
                     ) {
                         navGraph(
                             navController,
-                            onThemeChanged = { appColorTheme = it },
+                            onThemeChanged = { theme ->
+                                appColorTheme = theme
+                                prefs.edit().putString("theme", theme.name).apply()
+                            },
                             onLanguageChanged = { language ->
                                 val code = if (language == AppLanguage.ARABIC) "ar" else "en"
                                 prefs.edit().putString("language", code).apply()
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
                                 recreate()
                             },
                             currentLanguage = { appLanguage },
-                            currentTheme = { appColorTheme }
+                            currentTheme    = { appColorTheme }
                         )
                     }
                 }

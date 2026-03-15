@@ -15,14 +15,13 @@ class AuthRemoteDataSourceImpl @Inject constructor(
             Unit
         }
 
-    override suspend fun signUp(name: String, email: String, password: String): Result<Unit> =
+    override suspend fun signUp(email: String, password: String): Result<Unit> =
         runCatching {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             result.user?.updateProfile(
-                UserProfileChangeRequest.Builder()
-                    .setDisplayName(name)
-                    .build()
+                UserProfileChangeRequest.Builder().build()
             )?.await()
+            auth.signOut()
             Unit
         }
 

@@ -1,5 +1,6 @@
 package com.wordle.game.presentation.game.vm
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.wordle.core.mvi.BaseMviViewModel
 import com.wordle.core.presentation.components.MAX_GUESSES
@@ -34,8 +35,10 @@ class GameViewModel @Inject constructor(
     private fun loadWords(language: String, wordLength: Int) {
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
+            Log.d("GameVM", "loadWords: language=$language wordLength=$wordLength")
             when (val result = getWordsUseCase(language, wordLength)) {
                 is Resource.Success -> {
+                    Log.d("GameVM", "loadWords success: words.size=${result.data.size} sample=${result.data.take(3)}")
                     val words = result.data
                     setState {
                         copy(
@@ -47,7 +50,10 @@ class GameViewModel @Inject constructor(
                         )
                     }
                 }
-                is Resource.Error   -> setState { copy(isLoading = false, error = result.message) }
+                is Resource.Error -> {
+                    Log.d("GameVM", "loadWords error: ${result.message}")
+                    setState { copy(isLoading = false, error = result.message) }
+                }
                 is Resource.Loading -> Unit
             }
         }
@@ -55,6 +61,8 @@ class GameViewModel @Inject constructor(
 
     private fun enterLetter(letter: Char) {
         val state = uiState.value
+        Log.d("GameVM", "enterLetter: letter=$letter isGameOver=${state.isGameOver} targetWord=${state.targetWord} wordList.size=${state.wordList.size} currentCol=${state.currentCol} wordLength=${state.wordLength}")
+
         if (state.isGameOver) return
         if (state.targetWord.isEmpty()) return
         if (state.currentCol >= state.wordLength) return
@@ -64,9 +72,10 @@ class GameViewModel @Inject constructor(
             col  = state.currentCol,
             tile = Tile(letter = letter.uppercaseChar(), state = TileState.FILLED)
         )
-        setState { copy(board = newBoard, currentCol = currentCol + 1) }
+        val newCol = state.currentCol + 1
+        setState { copy(board = newBoard, currentCol = newCol) }
 
-        if (state.currentCol == state.wordLength - 1) submitGuess()
+        if (newCol == state.wordLength) submitGuess()
     }
 
     private fun deleteLetter() {
@@ -94,11 +103,9 @@ class GameViewModel @Inject constructor(
 
         val guess = state.board[state.currentRow].map { it.letter }.joinToString("")
 
-        if (!state.wordList.any { it.equals(guess, ignoreCase = true) }) {
-            sendEffect { GameEffect.InvalidWord }
-            sendEffect { GameEffect.RowShake }
-            return
-        }
+        Log.d("GameVM", "submitGuess: guess=$guess targetWord=${state.targetWord}")
+        Log.d("GameVM", "wordList sample=${state.wordList.take(5)}")
+        Log.d("GameVM", "wordList contains guess=${state.wordList.any { it.equals(guess, ignoreCase = true) }}")
 
         val evaluatedRow = evaluateGuess(guess, state.targetWord)
         val newBoard = state.board.toMutableList()

@@ -1,6 +1,7 @@
 package com.wordle.game.presentation.profile.vm
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.mvi.BaseMviViewModel
@@ -63,6 +64,7 @@ class ProfileViewModel @Inject constructor(
                 email.substringBefore("@")
             }
 
+            Log.d("ProfileAvatar", "loadProfile: profile.avatarUrl=${profile.avatarUrl}")
             setState {
                 copy(
                     profileId = profile.id,
@@ -106,6 +108,7 @@ class ProfileViewModel @Inject constructor(
                         when (val upload = uploadAvatarUseCase(state.pendingAvatarUri, context)) {
                             is Resource.Success -> upload.data
                             is Resource.Error -> {
+                                Log.e("ProfileAvatar", "OnSaveProfileClick: upload failed ${upload.message}")
                                 setState { copy(isLoading = false) }; sendEffect {
                                     ProfileEffect.ShowError(
                                         upload.message ?: "Upload failed"
@@ -118,6 +121,7 @@ class ProfileViewModel @Inject constructor(
                     } else {
                         state.avatarUrl
                     }
+                    Log.d("ProfileAvatar", "OnSaveProfileClick: avatarUrl to send=$avatarUrl")
 
                     when (val result = updateProfileUseCase(
                         documentId    = state.documentId,
@@ -129,6 +133,7 @@ class ProfileViewModel @Inject constructor(
                         currentPoints = state.currentPoints,
                     )) {
                         is Resource.Success -> {
+                            Log.d("ProfileAvatar", "OnSaveProfileClick: update success result.data.avatarUrl=${result.data.avatarUrl} setting state avatarUrl=$avatarUrl")
                             setState {
                                 copy(
                                     name             = trimmed,

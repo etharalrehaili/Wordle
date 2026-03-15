@@ -9,6 +9,8 @@ interface GameApiService {
     suspend fun getWords(
         @Query("filters[language][\$eq]") language: String,
         @Query("filters[length][\$eq]") length: Int,
-        @Query("fields[0]") field: String = "text"
+        @Query("fields[0]") field0: String = "text",
+        @Query("fields[1]") field1: String = "language",
+        @Query("fields[2]") field2: String = "length",
     ): WordResponse
 }

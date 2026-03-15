@@ -11,8 +11,8 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun login(email: String, password: String): Result<Unit> =
         remoteDataSource.login(email, password)
 
-    override suspend fun signUp(name: String, email: String, password: String): Result<Unit> =
-        remoteDataSource.signUp(name, email, password)
+    override suspend fun signUp(email: String, password: String): Result<Unit> =
+        remoteDataSource.signUp(email, password)
 
     override suspend fun updateProfile(name: String): Result<Unit> =
         remoteDataSource.updateProfile(name)

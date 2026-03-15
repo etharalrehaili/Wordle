@@ -71,6 +71,11 @@ data class WordleColors(
     val border: Color,
     val borderActive: Color,
     val activeTile: Color,
+    val pinkText: Color,
+    val countdownBackground: Color,
+    val buttonPink: Color,
+    val buttonTeal: Color,
+    val buttonTaupe: Color,
 )
 
 val DarkWordleColors = WordleColors(
@@ -88,6 +93,11 @@ val DarkWordleColors = WordleColors(
     border       = DarkBorder,
     borderActive = DarkBorderActive,
     activeTile   = DarkActiveTile,
+    pinkText = DarkSoftPink,
+    countdownBackground = DarkCountdownBackground,
+    buttonPink = DarkButtonPink,
+    buttonTeal = DarkButtonTeal,
+    buttonTaupe = DarkButtonTaupe,
 )
 
 val LightWordleColors = WordleColors(
@@ -105,6 +115,12 @@ val LightWordleColors = WordleColors(
     border       = LightBorder,
     borderActive = LightBorderActive,
     activeTile   = LightActiveTile,
-)
+    pinkText = LightRosePink,
+    countdownBackground = LightCountdownBackground,
+    buttonPink = LightButtonPink,
+    buttonTeal = LightButtonTeal,
+    buttonTaupe = LightButtonTaupe,
+
+    )
 
 val LocalWordleColors = compositionLocalOf { DarkWordleColors }

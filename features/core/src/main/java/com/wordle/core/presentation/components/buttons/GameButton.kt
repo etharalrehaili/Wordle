@@ -35,6 +35,8 @@ fun GameButton(
     icon: ImageVector? = null,
     backgroundColor: Color? = null,
     contentColor: Color = Color.White,
+    showBorder: Boolean = true,
+    borderColor: Color? = null,
     onClick: Action,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -54,7 +56,17 @@ fun GameButton(
     else
         Modifier.background(brush = defaultBrush, shape = RoundedCornerShape(16.dp))
 
-    val borderColor = if (isPressed) Color(0xFF4A6080) else Color(0xFF2A3A50)
+    val resolvedBorderColor = borderColor
+        ?: if (isPressed) Color(0xFF4A6080) else Color(0xFF2A3A50)
+
+    val borderModifier = if (showBorder)
+        Modifier.border(
+            width = 1.dp,
+            color = resolvedBorderColor,
+            shape = RoundedCornerShape(16.dp)
+        )
+    else
+        Modifier
 
     Box(
         modifier = modifier
@@ -63,11 +75,7 @@ fun GameButton(
             .height(64.dp)
             .clip(RoundedCornerShape(16.dp))
             .then(bgModifier)
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(16.dp)
-            )
+            .then(borderModifier)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

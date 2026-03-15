@@ -119,6 +119,7 @@ fun ChallengeContent(
     Log.d("ChallengeContent", "wordLength=${uiState.wordLength}, board rows=${uiState.board.size}, board[0].size=${uiState.board.firstOrNull()?.size}, guessRows[0].letters.size=${guessRows.firstOrNull()?.letters?.size}")
 
     val keyStates = uiState.keyboardStates.mapValues { (_, tileState) -> tileState.toTypes() }
+    val hasNoChallenge = uiState.error != null && uiState.targetWord.isEmpty()
 
     Box(
         modifier = Modifier
@@ -135,23 +136,40 @@ fun ChallengeContent(
                 modifier           = Modifier.fillMaxWidth()
             )
 
-            GameBoard(
-                guesses    = guessRows,
-                currentRow = uiState.currentRow,
-                currentCol = uiState.currentCol,
-                wordLength = uiState.wordLength,
-                modifier   = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-            )
+            if (hasNoChallenge) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text       = uiState.error ?: "No challenge for today",
+                        color      = colors.body,
+                        fontSize   = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign  = TextAlign.Center,
+                    )
+                }
+            } else {
+                GameBoard(
+                    guesses    = guessRows,
+                    currentRow = uiState.currentRow,
+                    currentCol = uiState.currentCol,
+                    wordLength = uiState.wordLength,
+                    modifier   = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                )
 
-            GameKeyboard(
-                keyStates   = keyStates,
-                onKey       = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
-                onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
-                language    = currentLanguage,
-                modifier    = Modifier.fillMaxWidth()
-            )
+                GameKeyboard(
+                    keyStates   = keyStates,
+                    onKey       = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
+                    onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
+                    language    = currentLanguage,
+                    modifier    = Modifier.fillMaxWidth()
+                )
+            }
         }
 
         when (val dialog = dialogState) {
@@ -185,7 +203,6 @@ private fun ChallengeResultBottomSheet(
     sheetState: SheetState,
     onDismiss: Action,
 ) {
-    // Tick-tock: recalculate remaining time every second
     var countdown by remember { mutableStateOf(secondsUntilMidnight()) }
     LaunchedEffect(Unit) {
         while (true) {

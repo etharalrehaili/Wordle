@@ -1,9 +1,6 @@
 package com.wordle.core.presentation.components.bottomsheets
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,9 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -30,6 +27,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,7 +43,6 @@ import com.wordle.core.presentation.theme.LocalWordleColors
 fun AuthBottomSheet(
     onDismiss: Action = {},
     onLoginWithEmail: Action = {},
-    onLoginWithGoogle: Action = {},
     onSignUpClick: Action = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
@@ -53,99 +51,133 @@ fun AuthBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
-        containerColor   = colors.surface,
+        containerColor   = colors.background,
         dragHandle       = null,
-        shape            = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape            = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
         Column(
             modifier            = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 32.dp)
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            // ── Icon ────────────────────────────────────────────────────────
+            // ── Top accent strip ──────────────────────────────────────
             Box(
-                modifier         = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(colors.background),
-                contentAlignment = Alignment.Center
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                colors.buttonPink,
+                                colors.buttonTeal,
+                            )
+                        )
+                    )
+            )
+
+            Column(
+                modifier            = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp)
+                    .padding(top = 36.dp, bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector        = Icons.Outlined.EmojiEvents,
-                    contentDescription = null,
-                    tint               = colors.correct,
-                    modifier           = Modifier.size(32.dp)
+
+                // ── Icon ─────────────────────────────────────────────
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    colors.buttonPink.copy(alpha = 0.25f),
+                                    colors.buttonTeal.copy(alpha = 0.10f),
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector        = Icons.Outlined.EmojiEvents,
+                        contentDescription = null,
+                        tint               = colors.buttonPink,
+                        modifier           = Modifier.size(36.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                // ── Heading ───────────────────────────────────────────
+                Text(
+                    text       = "Join the Challenge",
+                    color      = colors.title,
+                    fontSize   = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign  = TextAlign.Center,
+                    letterSpacing = 0.3.sp,
                 )
-            }
 
-            Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(8.dp))
 
-            // ── Title ────────────────────────────────────────────────────────
-            Text(
-                text       = "Login to take a challenge",
-                color      = colors.title,
-                fontSize   = 20.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign  = TextAlign.Center,
-            )
+                Text(
+                    text      = "Sign in to compete with players\naround the world",
+                    color     = colors.body.copy(alpha = 0.75f),
+                    fontSize  = 14.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp,
+                )
 
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(32.dp))
 
-            Text(
-                text      = "Sign in to compete with players\naround the world",
-                color     = colors.body,
-                fontSize  = 14.sp,
-                textAlign = TextAlign.Center,
-            )
+                // ── Divider with label ────────────────────────────────
+                Row(
+                    modifier          = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(
+                        modifier  = Modifier.weight(1f),
+                        color     = colors.divider,
+                        thickness = 1.dp
+                    )
+                    Text(
+                        text      = "  continue with  ",
+                        color     = colors.body.copy(alpha = 0.45f),
+                        fontSize  = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.sp,
+                    )
+                    HorizontalDivider(
+                        modifier  = Modifier.weight(1f),
+                        color     = colors.divider,
+                        thickness = 1.dp
+                    )
+                }
 
-            Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(20.dp))
 
-            // ── With Email & Google ──────────────────────────────────────────────────
-            Row(
-                modifier              = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+                // ── Buttons ───────────────────────────────────────────
                 GameButton(
-                    label           = "Using Email",
-                    icon            = Icons.Filled.Email,
-                    backgroundColor = colors.key,
+                    label           = "Login with Email",
+                    backgroundColor = colors.buttonPink,
                     contentColor    = colors.title,
+                    showBorder      = false,
                     onClick         = onLoginWithEmail,
-                    modifier        = Modifier.weight(1f)
+                    modifier        = Modifier.fillMaxWidth()
                 )
+
+                Spacer(Modifier.height(10.dp))
 
                 GameButton(
-                    label           = "Using Google",
-                    icon            = Icons.Filled.Email,
-                    backgroundColor = colors.background,
+                    label           = "Create an Account",
+                    backgroundColor = Color.Transparent,
                     contentColor    = colors.title,
-                    onClick         = onLoginWithGoogle,
-                    modifier        = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── Sign up prompt ───────────────────────────────────────────────
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment     = Alignment.CenterVertically
-            ) {
-                Text(
-                    text     = "Don't have an account? ",
-                    color    = colors.body,
-                    fontSize = 14.sp,
-                )
-                Text(
-                    text     = "Sign up",
-                    color    = colors.title,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable(onClick = onSignUpClick)
+                    showBorder      = true,
+                    borderColor     = colors.buttonPink,
+                    onClick         = onSignUpClick,
+                    modifier        = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -159,7 +191,6 @@ private fun PreviewAuthBottomSheetDark() {
     AuthBottomSheet(
         onDismiss         = {},
         onLoginWithEmail  = {},
-        onLoginWithGoogle = {},
         onSignUpClick     = {},
     )
 }

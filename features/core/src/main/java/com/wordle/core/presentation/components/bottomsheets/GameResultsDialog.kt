@@ -1,6 +1,7 @@
 package com.wordle.core.presentation.components.bottomsheets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,13 +13,17 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.SentimentDissatisfied
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
@@ -28,16 +33,16 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.presentation.components.buttons.GameButton
 import com.wordle.core.presentation.theme.LocalWordleColors
-
-private val LetterTileColor  = Color(0xFF2196F3)
-private val ShareButtonColor = Color(0xFF2A2A2C)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,118 +54,140 @@ fun GameResultsDialog(
     onDismiss: () -> Unit = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-
     val colors = LocalWordleColors.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
-        containerColor   = colors.surface,
+        containerColor   = colors.background,
         dragHandle       = null,
-        shape = RoundedCornerShape(0.dp),
+        shape            = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
+            modifier            = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp)
+                .navigationBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                IconButton(
-                    onClick  = onDismiss,
-                    modifier = Modifier.align(Alignment.TopEnd)
+            // ── Top accent strip ──────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                colors.buttonPink,
+                                colors.buttonTeal,
+                            )
+                        )
+                    )
+            )
+
+            Column(
+                modifier            = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp)
+                    .padding(top = 36.dp, bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                // ── Icon ─────────────────────────────────────────────
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    colors.buttonPink.copy(alpha = 0.25f),
+                                    colors.buttonPink.copy(alpha = 0.08f),
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = colors.body
+                        imageVector        = if (accentColor == colors.correct)
+                            Icons.Outlined.EmojiEvents else Icons.Outlined.SentimentDissatisfied,
+                        contentDescription = null,
+                        tint               = colors.buttonPink,
+                        modifier           = Modifier.size(36.dp)
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(Modifier.height(20.dp))
 
-            Text(
-                text       = title,
-                color      = colors.title,
-                fontSize   = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign  = TextAlign.Center
-            )
+                // ── Title ─────────────────────────────────────────────
+                Text(
+                    text          = title,
+                    color         = colors.title,
+                    fontSize      = 22.sp,
+                    fontWeight    = FontWeight.ExtraBold,
+                    textAlign     = TextAlign.Center,
+                    letterSpacing = 0.3.sp,
+                )
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(Modifier.height(8.dp))
 
-            Text(
-                text          = "THE WORD WAS",
-                color         = colors.body,
-                fontSize      = 12.sp,
-                fontWeight    = FontWeight.SemiBold,
-                letterSpacing = 2.sp
-            )
+                Text(
+                    text      = "The word was",
+                    color     = colors.body.copy(alpha = 0.45f),
+                    fontSize  = 13.sp,
+                    textAlign = TextAlign.Center,
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                answer.forEach { letter ->
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .background(LetterTileColor, RoundedCornerShape(8.dp))
-                    ) {
-                        Text(
-                            text       = letter.toString(),
-                            color      = Color.White,
-                            fontSize   = 22.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        )
+                // ── Answer tiles ──────────────────────────────────────
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    answer.forEach { letter ->
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier         = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.buttonPink.copy(alpha = 0.15f))
+                                .border(
+                                    width = 1.dp,
+                                    color = colors.buttonPink.copy(alpha = 0.35f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                        ) {
+                            Text(
+                                text       = letter.toString(),
+                                color      = colors.buttonPink,
+                                fontSize   = 20.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(28.dp))
+                Spacer(Modifier.height(20.dp))
 
-            Button(
-                onClick  = onRestart,
-                colors   = ButtonDefaults.buttonColors(containerColor = LetterTileColor),
-                shape    = RoundedCornerShape(50.dp),
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) {
-                Text(
-                    text       = "PLAY AGAIN",
-                    color      = Color.White,
-                    fontSize   = 15.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp
+                // ── Buttons ───────────────────────────────────────────
+                GameButton(
+                    label           = "Play Again",
+                    backgroundColor = colors.buttonTeal,
+                    contentColor    = colors.title,
+                    showBorder      = false,
+                    onClick         = onRestart,
+                    modifier        = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                GameButton(
+                    label           = "Close",
+                    backgroundColor = Color.Transparent,
+                    contentColor    = colors.title,
+                    showBorder      = true,
+                    borderColor     = colors.border,
+                    onClick         = onDismiss,
+                    modifier        = Modifier.fillMaxWidth()
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick  = {},
-                colors   = ButtonDefaults.buttonColors(containerColor = ShareButtonColor),
-                shape    = RoundedCornerShape(50.dp),
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Share,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text       = "SHARE",
-                    color      = Color.White,
-                    fontSize   = 15.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

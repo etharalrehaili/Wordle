@@ -1,23 +1,35 @@
 package com.wordle.core.presentation.components.bottomsheets
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.wordle.core.presentation.components.buttons.GameButton
+import androidx.compose.ui.unit.sp
 import com.wordle.core.presentation.components.text.WordleText
 import com.wordle.core.presentation.preview.GameLightBackgroundPreview
 import com.wordle.core.presentation.theme.GameDesignTheme
@@ -34,41 +46,154 @@ fun WordLengthSelectionBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = colors.surface,
-        dragHandle = null,
-        shape = RoundedCornerShape(16.dp),
+        sheetState       = sheetState,
+        containerColor   = colors.background,
+        dragHandle       = null,
+        shape            = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-                .navigationBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            WordleText(
-                text       = "Choose Word Length",
-                color      = colors.title,
-                fontSize   = GameDesignTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+        Column(modifier = Modifier.fillMaxWidth()) {
+
+            // ── Top accent strip ──────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                colors.buttonPink,
+                                colors.buttonTeal,
+                            )
+                        )
+                    )
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // ── Main content ──────────────────────────────────────────
+            Column(
+                modifier            = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 24.dp, bottom = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
 
-            listOf(4, 5, 6).forEach { length ->
-                GameButton(
-                    label           = "$length Letters",
-                    backgroundColor = colors.correct,
-                    onClick         = { onLengthSelected(length) },
-                    modifier        = Modifier.fillMaxWidth()
-                )
+            // ── Pill handle ───────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(colors.divider)
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            // ── Header ────────────────────────────────────────────────
+            WordleText(
+                text       = "How long?",
+                color      = colors.title,
+                fontSize   = GameDesignTheme.typography.displaySmall,
+                fontWeight = FontWeight.ExtraBold,
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            WordleText(
+                text     = "Choose your word length to start",
+                color    = colors.body.copy(alpha = 0.5f),
+                fontSize = GameDesignTheme.typography.labelMedium,
+            )
+
+            Spacer(Modifier.height(28.dp))
+
+            // ── Cards ─────────────────────────────────────────────────
+            val options = listOf(
+                Triple(4, colors.buttonTaupe,  "Easy"),
+                Triple(5, colors.buttonTeal,   "Classic"),
+                Triple(6, colors.buttonPink,   "Hard"),
+            )
+
+            options.forEach { (length, accentColor, tag) ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(accentColor.copy(alpha = 0.10f))
+                        .border(
+                            width = 1.5.dp,
+                            color = accentColor.copy(alpha = 0.30f),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .clickable { onLengthSelected(length) }
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+                        // Tag + arrow
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(accentColor.copy(alpha = 0.20f))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                WordleText(
+                                    text       = tag,
+                                    color      = accentColor,
+                                    fontSize   = GameDesignTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp,
+                                )
+                            }
+
+                            Icon(
+                                imageVector        = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                                contentDescription = null,
+                                tint               = accentColor.copy(alpha = 0.6f),
+                                modifier           = Modifier.size(14.dp)
+                            )
+                        }
+
+                        // Letter squares preview
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            repeat(length) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(accentColor.copy(alpha = 0.18f))
+                                        .border(
+                                            1.dp,
+                                            accentColor.copy(alpha = 0.40f),
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                )
+                            }
+
+                            Spacer(Modifier.weight(1f))
+
+                            // Large length number
+                            WordleText(
+                                text       = "$length",
+                                color      = accentColor.copy(alpha = 0.20f),
+                                fontSize   = GameDesignTheme.typography.displayMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @GameLightBackgroundPreview
