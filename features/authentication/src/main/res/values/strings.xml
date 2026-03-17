@@ -1,3 +1,20 @@
 <resources>
-    <string name="app_name">authentication</string>
+    <!-- Sign Up Screen -->
+    <string name="signup_title">Create Account</string>
+    <string name="signup_email_label">Email</string>
+    <string name="signup_email_placeholder">your@gmail.com</string>
+    <string name="signup_password_label">Password</string>
+    <string name="signup_confirm_password_label">Confirm Password</string>
+    <string name="signup_button">Sign Up</string>
+    <string name="signup_success">Account created successfully</string>
+
+    <!-- Login Screen -->
+    <string name="login_email_label">Email</string>
+    <string name="login_email_placeholder">your@email.com</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_button">Login</string>
+
+    <!-- Validation Errors -->
+    <string name="error_empty_password">Password cannot be empty</string>
+    <string name="error_passwords_not_match">Passwords do not match</string>
 </resources>

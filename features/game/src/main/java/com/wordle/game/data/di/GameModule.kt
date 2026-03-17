@@ -16,6 +16,8 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.wordle.game.domain.repository.ProfileRepository
+import com.wordle.game.domain.usecases.leaderboard.GetLeaderboardUseCase
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
@@ -38,8 +40,8 @@ object GameModule {
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit = Retrofit.Builder()
-        .baseUrl("http://192.168.100.227:1337/api/")
-//        .baseUrl("http://10.0.2.2:1337/api/") // Use this for Android emulator
+//        .baseUrl("http://192.168.0.140:1337/api/")
+        .baseUrl("http://10.0.2.2:1337/api/") // Use this for Android emulator
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
@@ -54,5 +56,10 @@ object GameModule {
         PreferenceDataStoreFactory.create(
             produceFile = { context.preferencesDataStoreFile("user_preferences") }
         )
+
+    /** Provides the use case for fetching the top players leaderboard. */
+    @Provides @Singleton
+    fun provideGetLeaderboardUseCase(repo: ProfileRepository): GetLeaderboardUseCase =
+        GetLeaderboardUseCase(repo)
 
 }

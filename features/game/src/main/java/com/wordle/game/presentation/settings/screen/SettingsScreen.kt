@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,9 +49,11 @@ import com.wordle.core.presentation.components.text.WordleText
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
 import com.wordle.core.presentation.preview.GameLightBackgroundPreview
 import com.wordle.core.presentation.theme.GameDesignTheme
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
+import com.wordle.core.presentation.theme.GameDesignTheme.spacing
 import com.wordle.core.presentation.theme.WordleTheme
+import com.wordle.game.R
 import com.wordle.game.presentation.settings.contract.SettingsEffect
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,10 +66,6 @@ fun SettingsScreen(
     uiEffect: SharedFlow<SettingsEffect>,
     onSignOutSuccess: Action,
 ) {
-
-    val colors = LocalWordleColors.current
-    var showSignOutSheet by remember { mutableStateOf(false) }
-
     LaunchedEffect(Unit) {
         uiEffect.collect { effect ->
             when (effect) {
@@ -76,26 +75,37 @@ fun SettingsScreen(
         }
     }
 
+    SettingsContent(
+        onBack                = onBack,
+        onChangeEmailClick    = onChangeEmailClick,
+        onChangePasswordClick = onChangePasswordClick,
+        onSignOutClick        = onSignOutClick,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsContent(
+    onBack: Action,
+    onChangeEmailClick: Action,
+    onChangePasswordClick: Action,
+    onSignOutClick: Action,
+) {
+    var showSignOutSheet by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
     ) {
-        // ── Header ────────────────────────────────────────────────
+
+        // Topbar Section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            colors.buttonPink.copy(alpha = 0.10f),
-                            Color.Transparent
-                        )
-                    )
-                )
         ) {
             GameTopBar(
-                title              = "Settings",
+                title              = stringResource(R.string.settings_title),
                 startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
                 onStartIconClicked = onBack,
                 modifier           = Modifier.fillMaxWidth(),
@@ -106,61 +116,55 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(top = 8.dp),
+                .padding(horizontal = spacing.md)
+                .padding(top = spacing.xs),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
 
-            // ── Account Settings Section ───────────────────────────────────
-            SectionLabel("Account Settings")
+            // Account Settings Section
+            SectionLabel(stringResource(R.string.settings_account_section))
 
             SettingsItem(
-                label    = "Change Email",
-                icon     = Icons.Filled.Email,
-                accent = colors.buttonTeal,
-                backgroundColor = colors.countdownBackground,
-                onClick  = onChangeEmailClick,
+                label   = stringResource(R.string.settings_change_email),
+                icon    = Icons.Filled.Email,
+                accent  = colors.buttonTaupe,
+                onClick = onChangeEmailClick,
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.sm))
 
             SettingsItem(
-                label    = "Change Password",
-                icon     = Icons.Filled.Lock,
-                accent = colors.buttonTeal,
-                backgroundColor = colors.countdownBackground,
-                onClick  = onChangePasswordClick,
+                label   = stringResource(R.string.settings_change_password),
+                icon    = Icons.Filled.Lock,
+                accent  = colors.buttonTaupe,
+                onClick = onChangePasswordClick,
             )
 
-
-
-            // ── App Settings Section ───────────────────────────────────
-            SectionLabel("App Settings")
+            // App Settings Section
+            SectionLabel(stringResource(R.string.settings_app_section))
 
             SettingsItem(
-                label    = "Notifications",
-                icon     = Icons.Filled.Notifications,
-                accent = colors.buttonTeal,
-                backgroundColor = colors.countdownBackground,
-                onClick  = onChangeEmailClick,
+                label   = stringResource(R.string.settings_notifications),
+                icon    = Icons.Filled.Notifications,
+                accent  = colors.buttonTaupe,
+                onClick = {},
             )
 
-            // ── Support Section ───────────────────────────────────
-            SectionLabel("Support")
+            // Support Section
+            SectionLabel(stringResource(R.string.settings_support_section))
 
             SettingsItem(
-                label           = "Support",
-                icon            = Icons.Filled.QuestionMark,
-                accent = colors.buttonTeal,
-                backgroundColor = colors.countdownBackground,
-                onClick         = onChangeEmailClick,
+                label   = stringResource(R.string.settings_support),
+                icon    = Icons.Filled.QuestionMark,
+                accent  = colors.buttonTaupe,
+                onClick = {},
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.lg))
 
-            // Sign out
+            // Sign Out
             SettingsItem(
-                label         = "Sign Out",
+                label         = stringResource(R.string.sign_out_title),
                 icon          = Icons.AutoMirrored.Filled.ExitToApp,
                 accent        = colors.error,
                 onClick       = { showSignOutSheet = true },
@@ -190,7 +194,7 @@ private fun SectionLabel(text: String) {
         fontSize      = GameDesignTheme.typography.labelSmall,
         fontWeight    = FontWeight.SemiBold,
         letterSpacing = 1.sp,
-        modifier      = Modifier.padding(horizontal = 4.dp, vertical = 12.dp)
+        modifier      = Modifier.padding(horizontal = spacing.xxs, vertical = spacing.sm)
     )
 }
 
@@ -203,42 +207,38 @@ private fun SettingsItem(
     subtitle: String? = null,
     isDestructive: Boolean = false,
     showArrow: Boolean = true,
-    backgroundColor: Color? = null
 ) {
-
-    val colors = LocalWordleColors.current
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(spacing.md))
             .background(
                 when {
-                    isDestructive        -> accent.copy(alpha = 0.12f)
-                    backgroundColor != null -> backgroundColor
-                    else                 -> colors.surface
+                    isDestructive -> accent.copy(alpha = 0.12f)
+                    else          -> colors.buttonTaupe.copy(alpha = 0.10f)
                 }
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = spacing.md, vertical = spacing.sm),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier         = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(accent.copy(alpha = if (isDestructive) 0.25f else 0.15f)),  // ← was always 0.15f
+                .size(spacing.xxl)
+                .clip(RoundedCornerShape(spacing.md))
+                .background(accent.copy(alpha = if (isDestructive) 0.25f else 0.15f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector        = icon,
                 contentDescription = null,
                 tint               = accent,
-                modifier           = Modifier.size(22.dp)
+                modifier           = Modifier.size(spacing.md)
             )
         }
 
-        Spacer(Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(spacing.sm))
 
         Column(modifier = Modifier.weight(1f)) {
             WordleText(
@@ -248,7 +248,7 @@ private fun SettingsItem(
                 fontWeight = FontWeight.SemiBold,
             )
             if (subtitle != null) {
-                Spacer(Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height(spacing.xxs))
                 WordleText(
                     text     = subtitle,
                     color    = colors.body.copy(alpha = 0.4f),
@@ -263,7 +263,7 @@ private fun SettingsItem(
                 contentDescription = null,
                 tint               = if (isDestructive) accent.copy(alpha = 0.5f)
                 else colors.body.copy(alpha = 0.20f),
-                modifier           = Modifier.size(16.dp)
+                modifier           = Modifier.size(spacing.md)
             )
         }
     }
@@ -273,13 +273,11 @@ private fun SettingsItem(
 @Composable
 private fun PreviewSettingsScreenDark() {
     WordleTheme(appColorTheme = AppColorTheme.DARK) {
-        SettingsScreen(
-            onBack = {},
-            onChangeEmailClick = {},
+        SettingsContent(
+            onBack                = {},
+            onChangeEmailClick    = {},
             onChangePasswordClick = {},
-            onSignOutClick = {},
-            uiEffect = MutableSharedFlow(),
-            onSignOutSuccess = {},
+            onSignOutClick        = {},
         )
     }
 }
@@ -288,13 +286,11 @@ private fun PreviewSettingsScreenDark() {
 @Composable
 private fun PreviewSettingsScreenLight() {
     WordleTheme(appColorTheme = AppColorTheme.LIGHT) {
-        SettingsScreen(
-            onBack = {},
-            onChangeEmailClick = {},
+        SettingsContent(
+            onBack                = {},
+            onChangeEmailClick    = {},
             onChangePasswordClick = {},
-            onSignOutClick = {},
-            uiEffect = MutableSharedFlow(),
-            onSignOutSuccess = {},
+            onSignOutClick        = {},
         )
     }
 }

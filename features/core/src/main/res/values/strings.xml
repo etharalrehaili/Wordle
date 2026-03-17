@@ -1,3 +1,79 @@
 <resources>
-    <string name="app_name">core</string>
+    <!-- Drawer -->
+    <string name="drawer_profile">Profile</string>
+    <string name="drawer_profile_desc">View your stats</string>
+    <string name="drawer_theme">Theme</string>
+    <string name="drawer_theme_desc">Change appearance</string>
+    <string name="drawer_language">Language</string>
+    <string name="drawer_language_desc">Switch language</string>
+
+    <!-- Word Length Sheet -->
+    <string name="word_length_title">How long?</string>
+    <string name="word_length_subtitle">Choose your word length to start</string>
+    <string name="word_length_easy">Easy</string>
+    <string name="word_length_classic">Classic</string>
+    <string name="word_length_hard">Hard</string>
+
+    <!-- Wordle Info Bottom Sheet -->
+    <string name="info_how_to_play">How To Play</string>
+    <string name="info_guess_title">Guess the WORDLE in 6 tries.</string>
+    <string name="info_rule_1">Each guess must be a valid %d-letter word.</string>
+    <string name="info_rule_2">The color of the tiles will change to show how close your guess was.</string>
+    <string name="info_examples">Examples</string>
+    <string name="info_example_1_letter">P</string>
+    <string name="info_example_1_letters">PLAY</string>
+    <string name="info_example_1_desc"> is in the word and in the correct spot.</string>
+    <string name="info_example_2_letter">U</string>
+    <string name="info_example_2_letters">HOUSE</string>
+    <string name="info_example_2_desc"> is in the word but in the wrong spot.</string>
+    <string name="info_example_3_letter">S</string>
+    <string name="info_example_3_letters">FRIEND</string>
+    <string name="info_example_3_desc"> is not in the word in any spot.</string>
+    <string name="info_new_wordle">A new challenge word will be available each day!</string>
+
+    <!-- challenge -->
+    <string name="result_win_title">Brilliant!</string>
+    <string name="result_lose_title">Better Luck Next Time!</string>
+    <string name="result_answer_label">The answer was: %1$s</string>
+    <string name="challenge_next_word_label">New word available in</string>
+    <string name="result_the_word_was">The word was</string>
+    <string name="result_close">Close</string>
+    <string name="result_play_again">Play Again</string>
+
+    <!-- Auth Bottom Sheet -->
+    <string name="auth_join_title">Join the Challenge</string>
+    <string name="auth_join_subtitle">Sign in to compete with players around the world</string>
+    <string name="auth_continue_with">continue with</string>
+    <string name="auth_login_email">Login with Email</string>
+    <string name="auth_create_account">Create an Account</string>
+
+    <!-- Game Results Bottom Sheet -->
+    <string name="game_result_word_was">The word was</string>
+    <string name="game_result_solved_in">Solved in %1$s attempts</string>
+    <string name="game_result_play_again">Play Again</string>
+    <string name="game_result_close">Close</string>
+
+    <!-- Sign Out Bottom Sheet -->
+    <string name="sign_out_title">Sign Out</string>
+    <string name="sign_out_subtitle">Are you sure you want to sign out?</string>
+    <string name="sign_out_button_confirm">Yes, Sign Out</string>
+    <string name="sign_out_button_cancel">Cancel</string>
+
+    <!-- Theme and Language options -->
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="language_arabic">Arabic</string>
+    <string name="language_english">English</string>
+
+    <!-- Network Errors -->
+    <string name="error_invalid_credentials">Email or password is incorrect</string>
+    <string name="error_user_not_found">No account found with this email</string>
+    <string name="error_email_already_exists">An account with this email already exists</string>
+    <string name="error_too_many_requests">Too many attempts. Please try again later</string>
+    <string name="error_invalid_email_format">Please enter a valid email address</string>
+    <string name="error_no_internet">No internet connection</string>
+    <string name="error_connection">Connection error. Please check your internet</string>
+    <string name="error_timeout">Request timed out. Please try again</string>
+    <string name="error_unexpected">Something went wrong. Please try again</string>
+
 </resources>

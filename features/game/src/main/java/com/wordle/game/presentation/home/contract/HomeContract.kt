@@ -7,6 +7,7 @@ import com.wordle.core.mvi.UiState
 data class HomeUiState(
     val isLoading: Boolean = false,
     val isLoggedIn: Boolean = false,
+    val hasSolvedChallenge: Boolean = false,
 ) : UiState
 
 sealed interface HomeEffect : UiEffect

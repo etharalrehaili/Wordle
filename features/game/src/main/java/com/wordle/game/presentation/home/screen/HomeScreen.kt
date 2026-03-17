@@ -1,6 +1,7 @@
 package com.wordle.game.presentation.home.screen
 
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -51,7 +52,7 @@ import com.wordle.core.presentation.components.text.WordleText
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
 import com.wordle.core.presentation.preview.GameLightBackgroundPreview
 import com.wordle.core.presentation.theme.GameDesignTheme
-import com.wordle.core.presentation.theme.LocalWordleColors
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.wordle.game.R
@@ -75,6 +76,7 @@ fun HomeScreen(
     preferencesViewModel: PreferencesViewModel = hiltViewModel(),
     homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
+
     val preferencesUiState by preferencesViewModel.uiState.collectAsState()
     val homeUiState by homeViewModel.uiState.collectAsState()
 
@@ -98,6 +100,7 @@ fun HomeScreen(
         onLoginWithEmail = onLoginWithEmail,
         onSignUpClick    = onSignUpClick,
         isLoggedIn         = homeUiState.isLoggedIn,
+        hasSolvedChallenge = homeUiState.hasSolvedChallenge,
     )
 }
 
@@ -114,15 +117,18 @@ fun HomeContent(
     onThemeChanged: (AppColorTheme) -> Unit = {},
     onLanguageChanged: (AppLanguage) -> Unit = {},
     isLoggedIn: Boolean = false,
+    hasSolvedChallenge: Boolean = false,
     onLoginWithEmail: Action = {},
     onSignUpClick: Action = {},
 ) {
-    val colors = LocalWordleColors.current
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showAuthSheet by remember { mutableStateOf(false) }
     var showLengthSheet by remember { mutableStateOf(false) }
     var countdownSeconds by remember { mutableStateOf(secondsUntilMidnight()) }
+    BackHandler(enabled = drawerState.isOpen) {
+        scope.launch { drawerState.close() }
+    }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -184,7 +190,7 @@ fun HomeContent(
                     textAlign     = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(GameDesignTheme.spacing.xxs))
+//                Spacer(modifier = Modifier.height(GameDesignTheme.spacing.xxs))
 
                 WordleText(
                     text          = stringResource(R.string.Kalimati),
@@ -290,7 +296,7 @@ fun HomeContent(
 
                 Spacer(modifier = Modifier.height(GameDesignTheme.spacing.sm))
 
-                if (isLoggedIn) {
+                if (isLoggedIn && hasSolvedChallenge) {
                     NextWordCountdownRow(
                         countdownSeconds = countdownSeconds
                     )
@@ -316,30 +322,29 @@ fun HomeContent(
 private fun NextWordCountdownRow(
     countdownSeconds: Long
 ) {
-    val colors = LocalWordleColors.current
 
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Row(
-            modifier = Modifier
-                .wrapContentWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(colors.countdownBackground)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector        = Icons.Outlined.Schedule,
-                contentDescription = null,
-                tint               = colors.buttonTeal,
-                modifier           = Modifier.size(24.dp)
-            )
-            WordleText(
-                text       = "Next word available in",
-                color      = colors.body,
-                fontSize   = GameDesignTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium
-            )
+    Row(
+        modifier = Modifier
+            .wrapContentWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(colors.countdownBackground)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector        = Icons.Outlined.Schedule,
+            contentDescription = null,
+            tint               = colors.buttonTeal,
+            modifier           = Modifier.size(24.dp)
+        )
+        WordleText(
+            text       = stringResource(R.string.countdown_next_word),
+            color      = colors.body,
+            fontSize   = GameDesignTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium
+        )
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             WordleText(
                 text       = countdownSeconds.toHhMmSs(),
                 color      = colors.body,

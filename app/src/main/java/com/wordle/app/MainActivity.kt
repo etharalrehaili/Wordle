@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setBackgroundDrawableResource(android.R.color.transparent)
 
         val prefs      = getSharedPreferences("settings", MODE_PRIVATE)
         val savedLang  = prefs.getString("language", Locale.getDefault().language) ?: "en"

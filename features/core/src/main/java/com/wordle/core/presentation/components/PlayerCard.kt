@@ -3,6 +3,7 @@ package com.wordle.core.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,9 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.presentation.theme.GameDesignTheme
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 
 @Composable
@@ -34,58 +38,77 @@ fun PlayerCard(
     borderColor: Color? = null,
 ) {
 
-    val colors = LocalWordleColors.current
-
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.surface)
-            .border(width = 1.dp, color = borderColor ?: colors.border, shape = RoundedCornerShape(16.dp))
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.buttonTaupe.copy(alpha = 0.25f))
+            .border(
+                width = 1.dp,
+                color = borderColor ?: colors.border,
+                shape = RoundedCornerShape(18.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Rank
-        Text(
-            text = rank.toString(),
-            color = colors.body,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.width(24.dp)
-        )
+        // ── Rank badge ────────────────────────────────────────────
+        Box(
+            modifier         = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background((borderColor ?: colors.border).copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text       = rank.toString(),
+                color      = borderColor ?: colors.body,
+                fontSize   = 13.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Avatar + Name
+        // ── Avatar + Name ─────────────────────────────────────────
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            modifier          = Modifier.weight(1f)
         ) {
             PlayerAvatar(
                 name      = name,
                 avatarUrl = avatarUrl,
-                modifier  = Modifier.size(44.dp),
-                fontSize  = 14.sp,
+                modifier  = Modifier.size(40.dp),
+                fontSize  = 13.sp,
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Text(
-                text = name,
-                color = colors.title,
-                fontSize = 16.sp,
+                text       = name,
+                color      = colors.title,
+                fontSize   = 14.sp,
                 fontWeight = FontWeight.SemiBold,
+                maxLines   = 1,
+                overflow   = TextOverflow.Ellipsis,
             )
         }
 
-        // Points
-        Text(
-            text = "%,d".format(points),
-            color = colors.title,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
+        // ── Points pill ───────────────────────────────────────────
+        Box(
+            modifier         = Modifier
+                .clip(RoundedCornerShape(50.dp))
+                .background((borderColor ?: colors.buttonTeal).copy(alpha = 0.15f))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text       = "%,d".format(points),
+                color      = borderColor ?: colors.buttonTeal,
+                fontSize   = 13.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 

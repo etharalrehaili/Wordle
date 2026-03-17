@@ -1,9 +1,12 @@
 package com.wordle.game.domain.usecases.challenge
 
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.game.domain.repository.ChallengeRepository
 import com.wordle.game.presentation.game.contract.Tile
-import com.wordle.game.presentation.game.contract.TileState
 import javax.inject.Inject
+
+// persists the current board state to DataStore after every guess.
+// Keeps progress safe if the user leaves the app.
 
 class SaveChallengeStateUseCase @Inject constructor(
     private val repository: ChallengeRepository

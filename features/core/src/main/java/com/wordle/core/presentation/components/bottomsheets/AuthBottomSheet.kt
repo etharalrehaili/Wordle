@@ -29,13 +29,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.R
 import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.buttons.GameButton
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +49,6 @@ fun AuthBottomSheet(
     onSignUpClick: Action = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    val colors = LocalWordleColors.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -112,7 +114,7 @@ fun AuthBottomSheet(
 
                 // ── Heading ───────────────────────────────────────────
                 Text(
-                    text       = "Join the Challenge",
+                    text       = stringResource(R.string.auth_join_title),
                     color      = colors.title,
                     fontSize   = 22.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -123,7 +125,7 @@ fun AuthBottomSheet(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text      = "Sign in to compete with players\naround the world",
+                    text       = stringResource(R.string.auth_join_subtitle),
                     color     = colors.body.copy(alpha = 0.75f),
                     fontSize  = 14.sp,
                     textAlign = TextAlign.Center,
@@ -143,7 +145,7 @@ fun AuthBottomSheet(
                         thickness = 1.dp
                     )
                     Text(
-                        text      = "  continue with  ",
+                        text       = stringResource(R.string.auth_continue_with),
                         color     = colors.body.copy(alpha = 0.45f),
                         fontSize  = 11.sp,
                         fontWeight = FontWeight.Medium,
@@ -160,7 +162,7 @@ fun AuthBottomSheet(
 
                 // ── Buttons ───────────────────────────────────────────
                 GameButton(
-                    label           = "Login with Email",
+                    label       = stringResource(R.string.auth_login_email),
                     backgroundColor = colors.buttonPink,
                     contentColor    = colors.title,
                     showBorder      = false,
@@ -171,7 +173,7 @@ fun AuthBottomSheet(
                 Spacer(Modifier.height(10.dp))
 
                 GameButton(
-                    label           = "Create an Account",
+                    label       = stringResource(R.string.auth_create_account),
                     backgroundColor = Color.Transparent,
                     contentColor    = colors.title,
                     showBorder      = true,

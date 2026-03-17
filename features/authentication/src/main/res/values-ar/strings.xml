@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sign Up Screen -->
+    <string name="signup_title">إنشاء حساب</string>
+    <string name="signup_email_label">البريد الإلكتروني</string>
+    <string name="signup_email_placeholder">example@gmail.com</string>
+    <string name="signup_password_label">كلمة المرور</string>
+    <string name="signup_confirm_password_label">تأكيد كلمة المرور</string>
+    <string name="signup_button">إنشاء حساب</string>
+    <string name="signup_success">تم إنشاء الحساب بنجاح</string>
+
+    <!-- Login Screen -->
+    <string name="login_email_label">البريد الإلكتروني</string>
+    <string name="login_email_placeholder">example@gmail.com</string>
+    <string name="login_password_label">كلمة المرور</string>
+    <string name="login_button">تسجيل الدخول</string>
+
+    <!-- Validation Errors -->
+    <string name="error_empty_password">كلمة المرور لا يمكن أن تكون فارغة</string>
+    <string name="error_passwords_not_match">كلمتا المرور غير متطابقتين</string>
+</resources>

@@ -5,8 +5,8 @@ import com.wordle.core.mvi.UiIntent
 import com.wordle.core.mvi.UiState
 import com.wordle.core.presentation.components.MAX_GUESSES
 import com.wordle.core.presentation.components.WORD_LENGTH
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.game.presentation.game.contract.Tile
-import com.wordle.game.presentation.game.contract.TileState
 
 sealed interface ChallengeIntent: UiIntent {
     data class LoadWords(val language: String) : ChallengeIntent

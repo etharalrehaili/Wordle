@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Drawer -->
+    <string name="drawer_profile">الملف الشخصي</string>
+    <string name="drawer_profile_desc">عرض إحصائياتك</string>
+    <string name="drawer_theme">المظهر</string>
+    <string name="drawer_theme_desc">تغيير المظهر</string>
+    <string name="drawer_language">اللغة</string>
+    <string name="drawer_language_desc">تغيير اللغة</string>
+
+    <!-- Word Length Bottom Sheet -->
+    <string name="word_length_title">كم طول الكلمة؟</string>
+    <string name="word_length_subtitle">اختر طول الكلمة للبدء</string>
+    <string name="word_length_easy">سهل</string>
+    <string name="word_length_classic">كلاسيكي</string>
+    <string name="word_length_hard">صعب</string>
+
+    <!-- Wordle Info Bottom Sheet -->
+    <string name="info_how_to_play">كيفية اللعب</string>
+    <string name="info_guess_title">خمّن الكلمة في 6 محاولات.</string>
+    <string name="info_rule_1">يجب أن تكون كل محاولة كلمة صحيحة من %d أحرف.</string>
+    <string name="info_rule_2">سيتغير لون المربعات لتوضح مدى قرب تخمينك.</string>
+    <string name="info_examples">أمثلة</string>
+    <string name="info_example_1_letter">ك</string>
+    <string name="info_example_1_letters">كتاب</string>
+    <string name="info_example_1_desc"> موجود في الكلمة وفي المكان الصحيح.</string>
+    <string name="info_example_2_letter">د</string>
+    <string name="info_example_2_letters">مدينة</string>
+    <string name="info_example_2_desc"> موجود في الكلمة لكن في مكان خاطئ.</string>
+    <string name="info_example_3_letter">ق</string>
+    <string name="info_example_3_letters">اصدقاء</string>
+    <string name="info_example_3_desc"> غير موجود في الكلمة في أي مكان.</string>
+    <string name="info_new_wordle">كلمة تحدي جديدة ستكون متاحة كل يوم!</string>
+
+    <!-- challenge -->
+    <string name="result_win_title">رائع!</string>
+    <string name="result_lose_title">حظاً أوفر في المرة القادمة!</string>
+    <string name="result_answer_label">كانت الكلمة: %1$s</string>
+    <string name="challenge_next_word_label">الكلمة الجديدة ستكون متاحة خلال</string>
+    <string name="result_the_word_was">كانت الكلمة</string>
+    <string name="result_close">إغلاق</string>
+    <string name="result_play_again">العب مجدداً</string>
+
+    <!-- Auth Bottom Sheet -->
+    <string name="auth_join_title">انضم إلى التحدي</string>
+    <string name="auth_join_subtitle">سجّل دخولك للتنافس مع لاعبين حول العالم</string>
+    <string name="auth_continue_with">تابع باستخدام</string>
+    <string name="auth_login_email">تسجيل الدخول بالبريد الإلكتروني</string>
+    <string name="auth_create_account">إنشاء حساب</string>
+
+    <!-- Game Results Bottom Sheet -->
+    <string name="game_result_word_was">الكلمة كانت</string>
+    <string name="game_result_solved_in">تم حلها في %1$s محاولات</string>
+    <string name="game_result_play_again">العب مجدداً</string>
+    <string name="game_result_close">إغلاق</string>
+
+    <!-- Sign Out Bottom Sheet -->
+    <string name="sign_out_title">تسجيل الخروج</string>
+    <string name="sign_out_subtitle">هل أنت متأكد أنك تريد تسجيل الخروج؟</string>
+    <string name="sign_out_button_confirm">نعم، تسجيل الخروج</string>
+    <string name="sign_out_button_cancel">إلغاء</string>
+
+    <!-- Theme and Language options -->
+    <string name="theme_dark">داكن</string>
+    <string name="theme_light">فاتح</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_english">الإنجليزية</string>
+
+    <!-- Network Errors -->
+    <string name="error_invalid_credentials">البريد الإلكتروني أو كلمة المرور غير صحيحة</string>
+    <string name="error_user_not_found">لا يوجد حساب مرتبط بهذا البريد الإلكتروني</string>
+    <string name="error_email_already_exists">يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل</string>
+    <string name="error_too_many_requests">محاولات كثيرة. يرجى المحاولة لاحقاً</string>
+    <string name="error_invalid_email_format">يرجى إدخال بريد إلكتروني صحيح</string>
+    <string name="error_no_internet">لا يوجد اتصال بالإنترنت</string>
+    <string name="error_connection">خطأ في الاتصال. تحقق من الإنترنت</string>
+    <string name="error_timeout">انتهت مهلة الطلب. حاول مجدداً</string>
+    <string name="error_unexpected">حدث خطأ ما. يرجى المحاولة مجدداً</string>
+
+</resources>

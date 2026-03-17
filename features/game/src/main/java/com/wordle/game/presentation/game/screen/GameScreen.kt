@@ -25,17 +25,17 @@ import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.GameBoard
 import com.wordle.core.presentation.components.GameKeyboard
 import com.wordle.core.presentation.components.GuessRow
-import com.wordle.core.presentation.components.bottomsheets.GameResultsDialog
+import com.wordle.core.presentation.components.bottomsheets.GameResultsBottomSheet
 import com.wordle.core.presentation.components.bottomsheets.WordleInfoBottomSheet
 import com.wordle.core.presentation.components.enums.AppLanguage
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.presentation.components.navigation.GameTopBar
 import com.wordle.core.presentation.theme.LocalWordleColors
-import com.wordle.game.R
+import com.wordle.core.R as CoreRes
 import com.wordle.game.presentation.game.contract.GameDialogState
 import com.wordle.game.presentation.game.contract.GameEffect
 import com.wordle.game.presentation.game.contract.GameIntent
 import com.wordle.game.presentation.game.contract.GameUiState
-import com.wordle.game.presentation.game.contract.TileState
 import com.wordle.game.presentation.game.contract.toTypes
 import com.wordle.game.presentation.game.vm.GameViewModel
 
@@ -142,18 +142,19 @@ fun GameContent(
             GameDialogState.Info -> {
                 WordleInfoBottomSheet(
                     sheetState = infoSheetState,
-                    onDismiss  = onDismissDialog
+                    onDismiss  = onDismissDialog,
+                    wordLength = uiState.wordLength,
                 )
             }
             is GameDialogState.Result -> {
-                GameResultsDialog(
-                    title       = if (dialog.isWin) stringResource(R.string.result_win_title)
-                    else stringResource(R.string.result_lose_title),
+                GameResultsBottomSheet(
+                    title       = if (dialog.isWin) stringResource(CoreRes.string.result_win_title)
+                    else stringResource(CoreRes.string.result_lose_title),
                     answer      = dialog.word,
                     accentColor = if (dialog.isWin) colors.correct else colors.present,
                     sheetState  = resultSheetState,
                     onRestart   = onRestart,
-                    onDismiss   = onDismissDialog
+                    onDismiss   = onDismissDialog,
                 )
             }
             GameDialogState.None -> Unit

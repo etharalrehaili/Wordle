@@ -1,6 +1,7 @@
 package com.wordle.game.presentation.navigation
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -10,6 +11,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.wordle.game.presentation.profile.screen.ProfileScreen
+import com.wordle.game.presentation.profile.vm.ProfileViewModel
 import com.wordle.authentication.presentation.contract.AuthIntent
 import com.wordle.authentication.presentation.login.LoginScreen
 import com.wordle.authentication.presentation.signup.SignUpScreen
@@ -20,12 +23,10 @@ import com.wordle.game.presentation.challenge.screen.ChallengeScreen
 import com.wordle.game.presentation.game.screen.GameScreen
 import com.wordle.game.presentation.home.screen.HomeScreen
 import com.wordle.game.presentation.leaderboard.screen.LeaderboardScreen
-import com.wordle.game.presentation.profile.screen.ProfileScreen
 import com.wordle.game.presentation.settings.screen.SettingsScreen
 import com.wordle.game.presentation.settings.vm.SettingsViewModel
 import com.wordle.game.presentation.profile.contract.ProfileIntent
 import com.wordle.game.presentation.settings.contract.SettingsIntent
-import com.wordle.game.presentation.profile.vm.ProfileViewModel
 import kotlinx.serialization.Serializable
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -49,17 +50,40 @@ fun NavGraphBuilder.navGraph(
 
     composable<Route.HomeScreen> {
         HomeScreen(
-            onPlayClick = { length -> navController.navigate(Route.GameScreen(length)) },
-            onChallengeClick   = { navController.navigate(Route.ChallengeScreen) },
-            onLeaderboardClick = { navController.navigate(Route.LeaderboardScreen) },
-            onThemeChanged     = onThemeChanged,
-            onLanguageChanged  = onLanguageChanged,
-            onProfileClick     = { navController.navigate(Route.ProfileScreen) },
-            onLoginWithEmail   = { navController.navigate(Route.LoginScreen) },
-            onSignUpClick      = { navController.navigate(Route.SignUpScreen) },
+            onPlayClick = { length ->
+                navController.navigate(Route.GameScreen(length)) {
+                    launchSingleTop = true
+                }
+            },
+            onChallengeClick = {
+                navController.navigate(Route.ChallengeScreen) {
+                    launchSingleTop = true
+                }
+            },
+            onLeaderboardClick = {
+                navController.navigate(Route.LeaderboardScreen) {
+                    launchSingleTop = true
+                }
+            },
+            onProfileClick = {
+                navController.navigate(Route.ProfileScreen) {
+                    launchSingleTop = true
+                }
+            },
+            onLoginWithEmail = {
+                navController.navigate(Route.LoginScreen) {
+                    launchSingleTop = true
+                }
+            },
+            onSignUpClick = {
+                navController.navigate(Route.SignUpScreen) {
+                    launchSingleTop = true
+                }
+            },
+            onThemeChanged    = onThemeChanged,
+            onLanguageChanged = onLanguageChanged,
         )
     }
-
     composable<Route.GameScreen> { backStackEntry ->
         val route = backStackEntry.toRoute<Route.GameScreen>()
         GameScreen(
@@ -88,6 +112,7 @@ fun NavGraphBuilder.navGraph(
 
         ProfileScreen(
             uiState            = state,
+            uiEffect = viewModel.uiEffect,
             onBack             = { navController.popBackStack() },
             onEditProfileClick = { viewModel.onEvent(ProfileIntent.OnEditProfileClick) },
             onSaveProfileClick = { viewModel.onEvent(ProfileIntent.OnSaveProfileClick) },

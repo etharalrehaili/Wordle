@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.mvi.BaseMviViewModel
 import com.wordle.core.presentation.components.MAX_GUESSES
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.util.Resource
 import com.wordle.game.domain.usecases.challenge.GetDailyChallengeUseCase
 import com.wordle.game.domain.usecases.profile.GetProfileUseCase
@@ -16,7 +17,6 @@ import com.wordle.game.presentation.challenge.contract.ChallengeEffect
 import com.wordle.game.presentation.challenge.contract.ChallengeIntent
 import com.wordle.game.presentation.challenge.contract.ChallengeUiState
 import com.wordle.game.presentation.game.contract.Tile
-import com.wordle.game.presentation.game.contract.TileState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate

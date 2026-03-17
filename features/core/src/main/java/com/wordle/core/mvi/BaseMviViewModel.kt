@@ -1,7 +1,9 @@
 package com.wordle.core.mvi
 
+import UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wordle.core.R
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,27 +44,32 @@ abstract class BaseMviViewModel<I : UiIntent, S : UiState, E : UiEffect>(
     protected fun sendNetworkError(
         networkError: NetworkError,
         handelValidationError: Boolean = true,
-        onError: (String) -> Unit
+        onError: (UiText) -> Unit
     ) {
         if (!handelValidationError && networkError.hasValidationError) return
         viewModelScope.launch {
-            val errorMessage = when {
+            val errorMessage: UiText = when {
                 networkError.hasValidationError && networkError.networkValidation != null -> {
-                    // Handle validation errors
-                    networkError.remoteMessage ?: "Validation error occurred"
+                    networkError.remoteMessage ?: UiText.StringRes(R.string.error_unexpected)
                 }
+
                 networkError.networkFailure != null -> {
                     when (networkError.networkFailure) {
                         is NetworkFailure.Connection,
-                        is NetworkFailure.Connectivity -> "Connection error. Please check your internet."
-                        is NetworkFailure.Timeout -> "Request timeout. Please try again."
-                        is NetworkFailure.Client -> networkError.remoteMessage ?: "Client error occurred"
-                        is NetworkFailure.Server -> "Server error. Please try again later."
-                        is NetworkFailure.Unauthorized -> "Unauthorized. Please login again."
-                        is NetworkFailure.Unexpected -> networkError.remoteMessage ?: "Unexpected error occurred"
+                        is NetworkFailure.Connectivity -> UiText.StringRes(R.string.error_connection)
+
+                        is NetworkFailure.Timeout -> UiText.StringRes(R.string.error_timeout)
+                        is NetworkFailure.Client -> networkError.remoteMessage
+                            ?: UiText.StringRes(R.string.error_unexpected)
+
+                        is NetworkFailure.Server -> UiText.StringRes(R.string.error_unexpected)
+                        is NetworkFailure.Unauthorized -> UiText.StringRes(R.string.error_unexpected)
+                        is NetworkFailure.Unexpected -> networkError.remoteMessage
+                            ?: UiText.StringRes(R.string.error_unexpected)
                     }
                 }
-                else -> networkError.remoteMessage ?: "An error occurred"
+
+                else -> networkError.remoteMessage ?: UiText.StringRes(R.string.error_unexpected)
             }
             onError(errorMessage)
         }

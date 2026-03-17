@@ -3,12 +3,12 @@ package com.wordle.game.data.remote.datasource.profile
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.wordle.game.data.remote.api.CreateProfileData
-import com.wordle.game.data.remote.api.CreateProfileRequest
 import com.wordle.game.data.remote.api.ProfileApiService
-import com.wordle.game.data.remote.api.UpdateProfileData
-import com.wordle.game.data.remote.api.UpdateProfileRequest
+import com.wordle.game.data.remote.model.CreateProfileData
+import com.wordle.game.data.remote.model.CreateProfileRequest
 import com.wordle.game.data.remote.model.ProfileItem
+import com.wordle.game.data.remote.model.UpdateProfileData
+import com.wordle.game.data.remote.model.UpdateProfileRequest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -44,15 +44,27 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         winPercentage: Double,
         currentPoints: Int,
     ): ProfileItem {
-        Log.d("ProfileAvatar", "updateProfile: documentId=$documentId avatarUrl=$avatarUrl")
-        val updated = api.updateProfile(
-            documentId,
-            UpdateProfileRequest(
-                UpdateProfileData(name, avatarUrl, gamesPlayed, wordsSolved, winPercentage, currentPoints)
-            )
-        ).data
-        Log.d("ProfileAvatar", "updateProfile response: avatarUrl=${updated.avatarUrl}")
-        return updated
+        try {
+            return api.updateProfile(
+                documentId,
+                UpdateProfileRequest(
+                    UpdateProfileData(
+                        name          = name,
+                        avatarUrl     = avatarUrl,
+                        gamesPlayed   = gamesPlayed,
+                        wordsSolved   = wordsSolved,
+                        winPercentage = winPercentage,
+                        currentPoints = currentPoints,
+                        lastPlayedAt  = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
+                            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")),
+                    )
+                )
+            ).data
+        } catch (e: retrofit2.HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            Log.e("UpdateProfile", "HTTP ${e.code()} - $errorBody")
+            throw e
+        }
     }
 
     /**
@@ -61,9 +73,9 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
      */
     override suspend fun uploadAvatar(imageUri: Uri, context: Context): String {
         val contentResolver = context.contentResolver
-        val inputStream = contentResolver.openInputStream(imageUri)
+        val inputStream     = contentResolver.openInputStream(imageUri)
             ?: throw Exception("Cannot open image")
-        val mimeType = contentResolver.getType(imageUri) ?: "image/jpeg"
+        val mimeType  = contentResolver.getType(imageUri) ?: "image/jpeg"
         val extension = when (mimeType) {
             "image/png"  -> "png"
             "image/webp" -> "webp"
@@ -73,14 +85,10 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         inputStream.close()
 
         val requestBody = bytes.toRequestBody(mimeType.toMediaType())
-        val part = MultipartBody.Part.createFormData("files", "avatar.$extension", requestBody)
+        val part        = MultipartBody.Part.createFormData("files", "avatar.$extension", requestBody)
 
-        val response = api.uploadAvatar(part)
-        val relativePath = response.first().url
-//        return "http://10.0.2.2:1337$relativePath"
-        val fullUrl = "http://192.168.0.140:1337$relativePath"
-        Log.d("ProfileAvatar", "uploadAvatar: imageUri=$imageUri relativePath=$relativePath fullUrl=$fullUrl")
-        return fullUrl
+        val relativePath = api.uploadAvatar(part).first().url
+        return "http://10.0.2.2:1337$relativePath"
     }
 
     /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */

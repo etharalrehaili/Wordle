@@ -2,7 +2,7 @@ package com.wordle.game.domain.repository
 
 import android.content.Context
 import android.net.Uri
-import com.wordle.game.data.remote.model.ProfileItem
+import com.wordle.game.domain.model.Profile
 
 /**
  * Repository interface for profile operations.
@@ -11,10 +11,10 @@ import com.wordle.game.data.remote.model.ProfileItem
  */
 interface ProfileRepository {
     /** Fetches a profile by Firebase UID. Returns null if no profile exists. */
-    suspend fun getProfile(firebaseUid: String): ProfileItem?
+    suspend fun getProfile(firebaseUid: String): Profile?
 
     /** Creates a new profile in Strapi using the user's Firebase UID and email. */
-    suspend fun createProfile(firebaseUid: String, email: String): ProfileItem
+    suspend fun createProfile(firebaseUid: String, email: String): Profile
 
     /** Updates an existing profile's display info and game statistics. */
     suspend fun updateProfile(
@@ -25,11 +25,11 @@ interface ProfileRepository {
         wordsSolved: Int,
         winPercentage: Double,
         currentPoints: Int,
-    ): ProfileItem
+    ): Profile
 
     /** Uploads an avatar image to Strapi and returns the full URL of the uploaded file. */
     suspend fun uploadAvatar(imageUri: Uri, context: Context): String
 
     /** Fetches the top [limit] players sorted by points for the leaderboard. */
-    suspend fun getLeaderboard(limit: Int): List<ProfileItem>
+    suspend fun getLeaderboard(limit: Int): List<Profile>
 }

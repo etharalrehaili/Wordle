@@ -23,7 +23,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +33,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.R
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,106 +42,121 @@ import com.wordle.core.presentation.theme.LocalWordleColors
 fun WordleInfoBottomSheet(
     onDismiss: () -> Unit = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    wordLength: Int = 5,
 ) {
-
-    val colors = LocalWordleColors.current
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = colors.surface,
-        dragHandle = null,
-        shape = RoundedCornerShape(0.dp),
+        sheetState       = sheetState,
+        containerColor   = colors.background,
+        dragHandle       = null,
+        shape            = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-        ) {
-            // ── Header ────────────────────────────────────────────────────────
-            Text(
-                text = "How To Play",
-                color = colors.title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
+        Column(modifier = Modifier.fillMaxWidth()) {
+
+            // ── Top accent strip ──────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                colors.buttonPink,
+                                colors.buttonTeal,
+                            )
+                        )
+                    )
             )
 
-            HorizontalDivider(color = colors.divider, thickness = 1.dp)
-
+            // ── Main content ──────────────────────────────────────────
             Column(
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .navigationBarsPadding()
             ) {
-                // ── Rules ─────────────────────────────────────────────────────
                 Text(
-                    text = "Guess the WORDLE in 6 tries.",
-                    color = colors.title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
+                    text       = stringResource(R.string.info_how_to_play),
+                    color      = colors.title,
+                    fontSize   = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
                 )
 
-                RuleItem("Each guess must be a valid 5-letter word.")
-                RuleItem("The color of the tiles will change to show how close your guess was.")
-
-                Spacer(modifier = Modifier.height(4.dp))
                 HorizontalDivider(color = colors.divider, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = "Examples",
-                    color = colors.title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(
+                    modifier            = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text       = stringResource(R.string.info_guess_title),
+                        color      = colors.title,
+                        fontSize   = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
 
-                // ── Example 1: CORRECT ────────────────────────────────────────
-                ExampleRow(
-                    letters   = listOf('W', 'E', 'A', 'R', 'Y'),
-                    highlight = 0,
-                    color     = colors.correct
-                )
-                HighlightCaption(
-                    letter = 'W',
-                    description = " is in the word and in the correct spot."
-                )
+                    RuleItem(stringResource(R.string.info_rule_1, wordLength))
+                    RuleItem(stringResource(R.string.info_rule_2))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                // ── Example 2: PRESENT ────────────────────────────────────────
-                ExampleRow(
-                    letters   = listOf('P', 'I', 'L', 'L', 'S'),
-                    highlight = 1,
-                    color     = colors.present
-                )
-                HighlightCaption(
-                    letter = 'I',
-                    description = " is in the word but in the wrong spot."
-                )
+                    HorizontalDivider(color = colors.divider, thickness = 1.dp)
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                // ── Example 3: ABSENT ─────────────────────────────────────────
-                ExampleRow(
-                    letters   = listOf('V', 'A', 'G', 'U', 'E'),
-                    highlight = 3,
-                    color     = colors.absent
-                )
-                HighlightCaption(
-                    letter = 'U',
-                    description = " is not in the word in any spot."
-                )
+                    Text(
+                        text       = stringResource(R.string.info_examples),
+                        color      = colors.title,
+                        fontSize   = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Spacer(modifier = Modifier.height(4.dp))
-                HorizontalDivider(color = colors.divider, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(4.dp))
+                    ExampleRow(
+                        letters   = stringResource(R.string.info_example_1_letters).toList(),
+                        highlight = 0,
+                        color     = colors.correct
+                    )
 
-                Text(
-                    text = "A new WORDLE will be available each day!",
-                    color = colors.body,
-                    fontSize = 14.sp
-                )
+                    HighlightCaption(
+                        letter      = stringResource(R.string.info_example_1_letter).first(),
+                        description = stringResource(R.string.info_example_1_desc),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    ExampleRow(
+                        letters   = stringResource(R.string.info_example_2_letters).toList(),
+                        highlight = 1,
+                        color     = colors.present
+                    )
+                    HighlightCaption(
+                        letter      = stringResource(R.string.info_example_2_letter).first(),
+                        description = stringResource(R.string.info_example_2_desc),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    ExampleRow(
+                        letters   = stringResource(R.string.info_example_3_letters).toList(),
+                        highlight = 3,
+                        color     = colors.absent
+                    )
+                    HighlightCaption(
+                        letter      = stringResource(R.string.info_example_3_letter).first(),
+                        description = stringResource(R.string.info_example_3_desc),
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    HorizontalDivider(color = colors.divider, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text  = stringResource(R.string.info_new_wordle),
+                        color = colors.body,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
     }
@@ -188,13 +207,12 @@ private fun ExampleRow(
 @Composable
 private fun HighlightCaption(letter: Char, description: String) {
 
-    val colors = LocalWordleColors.current
-
     Text(
         text = buildAnnotatedString {
             withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.title)) {
                 append(letter.toString())
             }
+            append(" ")
             withStyle(SpanStyle(color = colors.body)) {
                 append(description)
             }

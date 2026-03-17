@@ -3,8 +3,10 @@ package com.wordle.game.data.repository
 import android.content.Context
 import android.net.Uri
 import com.wordle.game.data.local.db.AppDatabase
+import com.wordle.game.data.mappers.toDomain
+import com.wordle.game.data.mappers.toEntity
 import com.wordle.game.data.remote.datasource.profile.ProfileRemoteDataSource
-import com.wordle.game.data.remote.model.ProfileItem
+import com.wordle.game.domain.model.Profile
 import com.wordle.game.domain.repository.ProfileRepository
 import javax.inject.Inject
 
@@ -23,23 +25,23 @@ class ProfileRepositoryImpl @Inject constructor(
      * Returns cached profile from Room if available.
      * Otherwise fetches from API, caches the result, and returns it.
      */
-    override suspend fun getProfile(firebaseUid: String): ProfileItem? {
+    override suspend fun getProfile(firebaseUid: String): Profile? {
         val cached = db.profileDao().getProfile(firebaseUid)
-        if (cached != null) return cached.toProfileItem()
+        if (cached != null) return cached.toDomain()
 
         val remote = remote.getProfile(firebaseUid) ?: return null
         db.profileDao().insertProfile(remote.toEntity())
-        return remote
+        return remote.toDomain()
     }
 
     /**
      * Creates a new profile remotely and caches it locally.
      * Called once after a user registers for the first time.
      */
-    override suspend fun createProfile(firebaseUid: String, email: String): ProfileItem {
+    override suspend fun createProfile(firebaseUid: String, email: String): Profile {
         val profile = remote.createProfile(firebaseUid, email)
         db.profileDao().insertProfile(profile.toEntity())
-        return profile
+        return profile.toDomain()
     }
 
     /**
@@ -54,12 +56,12 @@ class ProfileRepositoryImpl @Inject constructor(
         wordsSolved: Int,
         winPercentage: Double,
         currentPoints: Int,
-    ): ProfileItem {
+    ): Profile {
         val profile = remote.updateProfile(
             documentId, name, avatarUrl, gamesPlayed, wordsSolved, winPercentage, currentPoints
         )
         db.profileDao().insertProfile(profile.toEntity())
-        return profile
+        return profile.toDomain()
     }
 
     /** Delegates avatar upload entirely to the remote data source. */
@@ -68,7 +70,7 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     /** Fetches leaderboard directly from API — not cached since it changes frequently. */
-    override suspend fun getLeaderboard(limit: Int): List<ProfileItem> {
-        return remote.getLeaderboard(limit)
+    override suspend fun getLeaderboard(limit: Int): List<Profile> {
+        return remote.getLeaderboard(limit).map { it.toDomain() }
     }
 }

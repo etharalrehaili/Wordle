@@ -1,8 +1,9 @@
 package com.wordle.game.domain.repository
 
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.game.data.repository.SavedChallengeState
 import com.wordle.game.presentation.game.contract.Tile
-import com.wordle.game.presentation.game.contract.TileState
+import kotlinx.coroutines.flow.Flow
 
 interface ChallengeRepository {
     suspend fun getDailyChallenge(date: String, language: String): String?
@@ -16,4 +17,5 @@ interface ChallengeRepository {
         isGameOver: Boolean,
         isWin: Boolean,
     )
+    fun hasSolvedTodayChallenge(): Flow<Boolean>
 }

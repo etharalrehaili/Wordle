@@ -66,9 +66,4 @@ object ProfileModule {
     @Provides @Singleton
     fun provideUploadAvatarUseCase(repo: ProfileRepository): UploadAvatarUseCase =
         UploadAvatarUseCase(repo)
-
-    /** Provides the use case for fetching the top players leaderboard. */
-    @Provides @Singleton
-    fun provideGetLeaderboardUseCase(repo: ProfileRepository): GetLeaderboardUseCase =
-        GetLeaderboardUseCase(repo)
 }

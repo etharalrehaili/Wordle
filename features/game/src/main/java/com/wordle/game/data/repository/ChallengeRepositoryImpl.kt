@@ -10,14 +10,16 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.presentation.components.MAX_GUESSES
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.game.data.local.db.AppDatabase
 import com.wordle.game.data.local.entity.ChallengeEntity
 import com.wordle.game.data.remote.datasource.challenge.ChallengeRemoteDataSource
 import com.wordle.game.domain.repository.ChallengeRepository
 import com.wordle.game.presentation.game.contract.Tile
-import com.wordle.game.presentation.game.contract.TileState
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -107,6 +109,19 @@ class ChallengeRepositoryImpl @Inject constructor(
             prefs[KEY_KEYBOARD]     = encodeKeyboard(keyboardStates)
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun hasSolvedTodayChallenge(): Flow<Boolean> =
+        context.challengeDataStore.data.map { prefs ->
+            val savedDate  = prefs[KEY_DATE]         ?: return@map false
+            val savedUid   = prefs[KEY_UID]          ?: return@map false
+            val isGameOver = prefs[KEY_IS_GAME_OVER] ?: return@map false
+            val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return@map false
+
+            savedUid == currentUid
+                    && savedDate == LocalDate.now().toString()
+                    && isGameOver
+        }
 
     private fun encodeBoard(board: List<List<Tile>>): String =
         board.flatten().joinToString(",") { "${it.letter}:${it.state.name}" }

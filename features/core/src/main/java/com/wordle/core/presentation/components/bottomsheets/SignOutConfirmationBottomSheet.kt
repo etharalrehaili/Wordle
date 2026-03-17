@@ -25,12 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.R
 import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.buttons.GameButton
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +43,6 @@ fun SignOutConfirmationBottomSheet(
     onConfirm: Action = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    val colors = LocalWordleColors.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -105,7 +107,7 @@ fun SignOutConfirmationBottomSheet(
 
                 // ── Heading ───────────────────────────────────────────
                 Text(
-                    text          = "Sign Out",
+                    text          = stringResource(R.string.sign_out_title),
                     color         = colors.title,
                     fontSize      = 22.sp,
                     fontWeight    = FontWeight.ExtraBold,
@@ -116,7 +118,7 @@ fun SignOutConfirmationBottomSheet(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text       = "Are you sure you want to sign out?",
+                    text       = stringResource(R.string.sign_out_subtitle),
                     color      = colors.body.copy(alpha = 0.75f),
                     fontSize   = 14.sp,
                     textAlign  = TextAlign.Center,
@@ -127,7 +129,7 @@ fun SignOutConfirmationBottomSheet(
 
                 // ── Buttons ───────────────────────────────────────────
                 GameButton(
-                    label           = "Yes, Sign Out",
+                    label           = stringResource(R.string.sign_out_button_confirm),
                     backgroundColor = colors.error,
                     contentColor    = Color.White,
                     showBorder      = false,
@@ -138,7 +140,7 @@ fun SignOutConfirmationBottomSheet(
                 Spacer(Modifier.height(10.dp))
 
                 GameButton(
-                    label           = "Cancel",
+                    label           = stringResource(R.string.sign_out_button_cancel),
                     backgroundColor = Color.Transparent,
                     contentColor    = colors.title,
                     showBorder      = true,

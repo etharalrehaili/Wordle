@@ -1,7 +1,10 @@
 package com.wordle.game.data.remote.api
 
-import com.wordle.game.data.remote.model.ProfileItem
+import com.wordle.game.data.remote.model.CreateProfileRequest
 import com.wordle.game.data.remote.model.ProfileResponse
+import com.wordle.game.data.remote.model.SingleProfileResponse
+import com.wordle.game.data.remote.model.StrapiUploadResponse
+import com.wordle.game.data.remote.model.UpdateProfileRequest
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -38,32 +41,13 @@ interface ProfileApiService {
     @GET("profiles")
     suspend fun getLeaderboard(
         @Query("sort[0]") sort: String = "currentPoints:desc",
+        @Query("sort[1]") sort2: String = "lastPlayedAt:asc",
         @Query("pagination[limit]") limit: Int = 10,
         @Query("fields[0]") f0: String = "name",
         @Query("fields[1]") f1: String = "avatarUrl",
         @Query("fields[2]") f2: String = "currentPoints",
+        @Query("fields[3]") f3: String = "firebaseUid",
+        @Query("fields[4]") f4: String = "wordsSolved",
+        @Query("fields[5]") f5: String = "lastPlayedAt",
     ): ProfileResponse
-
-    data class StrapiUploadResponse(
-        val id: Int,
-        val url: String
-    )
 }
-
-data class SingleProfileResponse(val data: ProfileItem)
-
-data class CreateProfileRequest(val data: CreateProfileData)
-data class CreateProfileData(
-    val firebaseUid: String,
-    val name: String,
-)
-
-data class UpdateProfileRequest(val data: UpdateProfileData)
-data class UpdateProfileData(
-    val name: String,
-    val avatarUrl: String?,
-    val gamesPlayed: Int,
-    val wordsSolved: Int,
-    val winPercentage: Double,
-    val currentPoints: Int,
-)

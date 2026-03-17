@@ -1,6 +1,9 @@
 package com.wordle.core.presentation.components.buttons
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -12,10 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
-import com.wordle.core.presentation.theme.LocalWordleColors
+import com.wordle.core.presentation.theme.GameDesignTheme
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 
 @Composable
 fun SegmentedButton(
@@ -24,16 +30,15 @@ fun SegmentedButton(
     onOptionSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalWordleColors.current
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .background(
                 color = colors.surface,
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(16.dp)
             )
-            .padding(6.dp)
+            .padding(4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -41,28 +46,48 @@ fun SegmentedButton(
         ) {
             options.forEach { option ->
                 val isSelected = option == selectedOption
+                val backgroundColor by animateColorAsState(
+                    targetValue   = if (isSelected) colors.buttonTeal.copy(alpha = 0.20f) else Color.Transparent,
+                    animationSpec = tween(durationMillis = 250),
+                    label         = "segmentBg"
+                )
+                val textColor by animateColorAsState(
+                    targetValue   = if (isSelected) colors.buttonTeal else colors.body.copy(alpha = 0.45f),
+                    animationSpec = tween(durationMillis = 250),
+                    label         = "segmentText"
+                )
+                val borderColor by animateColorAsState(
+                    targetValue   = if (isSelected) colors.buttonTeal.copy(alpha = 0.40f) else Color.Transparent,
+                    animationSpec = tween(durationMillis = 250),
+                    label         = "segmentBorder"
+                )
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(
-                            color = if (isSelected) colors.key else Color.Transparent
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(backgroundColor)
+                        .border(
+                            width = 1.dp,
+                            color = borderColor,
+                            shape = RoundedCornerShape(12.dp)
                         )
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            onOptionSelected(option)
-                        }
-                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                            indication        = null,
+                            onClick           = { onOptionSelected(option) }
+                        )
+                        .padding(vertical = 10.dp, horizontal = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = option,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isSelected) colors.title else colors.body
+                        text       = option,
+                        fontSize   = GameDesignTheme.typography.labelSmall,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color      = textColor,
+                        maxLines   = 1,
+                        overflow   = TextOverflow.Ellipsis,
+                        textAlign  = TextAlign.Center,
                     )
                 }
             }

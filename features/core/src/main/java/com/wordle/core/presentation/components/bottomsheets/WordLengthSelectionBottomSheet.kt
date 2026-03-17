@@ -27,12 +27,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.R
 import com.wordle.core.presentation.components.text.WordleText
 import com.wordle.core.presentation.preview.GameLightBackgroundPreview
 import com.wordle.core.presentation.theme.GameDesignTheme
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +45,6 @@ fun WordLengthSelectionBottomSheet(
     onDismiss: () -> Unit = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    val colors = LocalWordleColors.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -91,7 +93,7 @@ fun WordLengthSelectionBottomSheet(
 
             // ── Header ────────────────────────────────────────────────
             WordleText(
-                text       = "How long?",
+                text       = stringResource(R.string.word_length_title),
                 color      = colors.title,
                 fontSize   = GameDesignTheme.typography.displaySmall,
                 fontWeight = FontWeight.ExtraBold,
@@ -100,7 +102,7 @@ fun WordLengthSelectionBottomSheet(
             Spacer(Modifier.height(4.dp))
 
             WordleText(
-                text     = "Choose your word length to start",
+                text     = stringResource(R.string.word_length_subtitle),
                 color    = colors.body.copy(alpha = 0.5f),
                 fontSize = GameDesignTheme.typography.labelMedium,
             )
@@ -109,9 +111,9 @@ fun WordLengthSelectionBottomSheet(
 
             // ── Cards ─────────────────────────────────────────────────
             val options = listOf(
-                Triple(4, colors.buttonTaupe,  "Easy"),
-                Triple(5, colors.buttonTeal,   "Classic"),
-                Triple(6, colors.buttonPink,   "Hard"),
+                Triple(4, colors.buttonTaupe,  R.string.word_length_easy),
+                Triple(5, colors.buttonTeal,   R.string.word_length_classic),
+                Triple(6, colors.buttonPink,   R.string.word_length_hard),
             )
 
             options.forEach { (length, accentColor, tag) ->
@@ -143,7 +145,7 @@ fun WordLengthSelectionBottomSheet(
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
                                 WordleText(
-                                    text       = tag,
+                                    text       = stringResource(tag),
                                     color      = accentColor,
                                     fontSize   = GameDesignTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,

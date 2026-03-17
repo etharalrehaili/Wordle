@@ -1,5 +1,8 @@
 package com.wordle.core.mvi
 
+import UiText
+import com.wordle.core.R
+
 sealed interface NetworkFailure {
     /** No internet connection available */
     data object Connection : NetworkFailure
@@ -35,7 +38,7 @@ data class NetworkValidation(
 data class NetworkError(
     val networkFailure: NetworkFailure?       = null,
     val networkValidation: NetworkValidation? = null,
-    val remoteMessage: String?                = null,
+    val remoteMessage: UiText? = null,
 ) {
     val hasValidationError: Boolean
         get() = networkValidation != null
@@ -46,44 +49,51 @@ data class NetworkError(
 fun Throwable.toNetworkError(): NetworkError {
     val message = message?.lowercase() ?: ""
     return when {
-        // ── Firebase Auth errors ──────────────────────────────────
         message.contains("credential is incorrect", ignoreCase = true) ||
                 message.contains("invalid login credentials", ignoreCase = true) ||
                 message.contains("password is invalid", ignoreCase = true) ||
                 message.contains("malformed", ignoreCase = true) ->
-            NetworkError(remoteMessage = "Email or password is incorrect")
+            NetworkError(remoteMessage = UiText.StringRes(R.string.error_invalid_credentials))
 
         message.contains("no user record", ignoreCase = true) ||
                 message.contains("user not found", ignoreCase = true) ->
-            NetworkError(remoteMessage = "No account found with this email")
+            NetworkError(remoteMessage = UiText.StringRes(R.string.error_user_not_found))
 
         message.contains("email address is already in use", ignoreCase = true) ->
-            NetworkError(remoteMessage = "An account with this email already exists")
+            NetworkError(remoteMessage = UiText.StringRes(R.string.error_email_already_exists))
 
         message.contains("too many requests", ignoreCase = true) ->
-            NetworkError(remoteMessage = "Too many attempts. Please try again later")
+            NetworkError(remoteMessage = UiText.StringRes(R.string.error_too_many_requests))
 
         message.contains("email address is badly formatted", ignoreCase = true) ->
-            NetworkError(remoteMessage = "Please enter a valid email address")
+            NetworkError(remoteMessage = UiText.StringRes(R.string.error_invalid_email_format))
 
-        // ── Network errors ────────────────────────────────────────
         this is java.net.UnknownHostException ||
                 message.contains("unable to resolve host") ->
-            NetworkError(networkFailure = NetworkFailure.Connection, remoteMessage = "No internet connection")
+            NetworkError(
+                networkFailure = NetworkFailure.Connection,
+                remoteMessage  = UiText.StringRes(R.string.error_no_internet)
+            )
 
         this is java.net.ConnectException ||
                 message.contains("connection refused") ||
                 message.contains("recaptcha") ->
-            NetworkError(networkFailure = NetworkFailure.Connectivity, remoteMessage = "Connection error. Please check your internet")
+            NetworkError(
+                networkFailure = NetworkFailure.Connectivity,
+                remoteMessage  = UiText.StringRes(R.string.error_connection)
+            )
 
         this is java.net.SocketTimeoutException ||
                 message.contains("timeout") ->
-            NetworkError(networkFailure = NetworkFailure.Timeout, remoteMessage = "Request timed out. Please try again")
+            NetworkError(
+                networkFailure = NetworkFailure.Timeout,
+                remoteMessage  = UiText.StringRes(R.string.error_timeout)
+            )
 
         else ->
             NetworkError(
                 networkFailure = NetworkFailure.Unexpected(this),
-                remoteMessage  = "Something went wrong. Please try again",
+                remoteMessage  = UiText.StringRes(R.string.error_unexpected),
             )
     }
 }

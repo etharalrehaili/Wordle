@@ -21,12 +21,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.core.presentation.components.enums.SnackbarType
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
 
-
-enum class SnackbarType {
-    SUCCESS, ERROR, WARNING
-}
 
 private data class SnackbarStyle(
     val iconBackground: Color,
@@ -156,7 +153,7 @@ data class SnackbarState(val message: String, val type: SnackbarType)
 @Composable
 fun CustomSnackbarHost(
     state: SnackbarState,
-    durationMillis: Int = 4_000,
+    durationMillis: Int = 2_000,
     onDismiss: () -> Unit,
 ) {
     Box(

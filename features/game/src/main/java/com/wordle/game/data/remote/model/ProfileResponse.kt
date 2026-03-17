@@ -13,5 +13,6 @@ data class ProfileItem(
     val gamesPlayed: Int,
     val wordsSolved: Int,
     val winPercentage: Double,
-    val currentPoints: Int
+    val currentPoints: Int,
+    val lastPlayedAt: String? = null,
 )

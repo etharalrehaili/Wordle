@@ -2,6 +2,7 @@ package com.wordle.game.domain.usecases.profile
 
 import com.wordle.core.util.Resource
 import com.wordle.game.data.remote.model.ProfileItem
+import com.wordle.game.domain.model.Profile
 import com.wordle.game.domain.repository.ProfileRepository
 import javax.inject.Inject
 
@@ -9,7 +10,7 @@ import javax.inject.Inject
 class GetProfileUseCase @Inject constructor(
     private val repo: ProfileRepository
 ) {
-    suspend operator fun invoke(firebaseUid: String): Resource<ProfileItem?> {
+    suspend operator fun invoke(firebaseUid: String): Resource<Profile?> {
         return try {
             Resource.Success(repo.getProfile(firebaseUid))
         } catch (e: Exception) {

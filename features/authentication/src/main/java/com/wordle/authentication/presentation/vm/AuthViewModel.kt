@@ -1,6 +1,8 @@
 package com.wordle.authentication.presentation.vm
 
 import androidx.lifecycle.viewModelScope
+import com.wordle.authentication.R
+import com.wordle.core.R as CoreRes
 import com.wordle.authentication.domain.usecase.LoginUseCase
 import com.wordle.authentication.domain.usecase.SignUpUseCase
 import com.wordle.authentication.presentation.contract.AuthEffect
@@ -85,11 +87,11 @@ class AuthViewModel @Inject constructor(
         var valid = true
 
         if (state.email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches()) {
-            setState { copy(emailError = "Please enter a valid email") }
+            setState { copy(emailError = UiText.StringRes(CoreRes.string.error_invalid_email_format)) }
             valid = false
         }
         if (state.password.isBlank()) {
-            setState { copy(passwordError = "Password cannot be empty") }
+            setState { copy(passwordError = UiText.StringRes(R.string.error_empty_password)) }
             valid = false
         }
         return valid
@@ -100,18 +102,20 @@ class AuthViewModel @Inject constructor(
         var valid = true
 
         if (state.email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches()) {
-            setState { copy(emailError = "Please enter a valid email") }
+            setState { copy(emailError = UiText.StringRes(CoreRes.string.error_invalid_email_format)) }
             valid = false
         }
         if (state.password.isBlank()) {
-            setState { copy(passwordError = "Password cannot be empty") }
+            setState { copy(passwordError = UiText.StringRes(R.string.error_empty_password)) }
             valid = false
         }
         if (state.password != state.confirmPassword) {
-            setState { copy(
-                passwordError        = "Passwords should be matched",
-                confirmPasswordError = "Passwords should be matched",
-            ) }
+            setState {
+                copy(
+                    passwordError         = UiText.StringRes(R.string.error_passwords_not_match),
+                    confirmPasswordError  = UiText.StringRes(R.string.error_passwords_not_match),
+                )
+            }
             valid = false
         }
         return valid

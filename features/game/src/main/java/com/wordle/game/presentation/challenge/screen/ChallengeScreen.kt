@@ -40,8 +40,10 @@ import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.GameBoard
 import com.wordle.core.presentation.components.GameKeyboard
 import com.wordle.core.presentation.components.GuessRow
+import com.wordle.core.presentation.components.bottomsheets.ChallengeResultBottomSheet
 import com.wordle.core.presentation.components.bottomsheets.WordleInfoBottomSheet
 import com.wordle.core.presentation.components.enums.AppLanguage
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.presentation.components.navigation.GameTopBar
 import com.wordle.core.presentation.theme.LocalWordleColors
 import com.wordle.game.R
@@ -49,12 +51,8 @@ import com.wordle.game.presentation.challenge.contract.ChallengeDialogState
 import com.wordle.game.presentation.challenge.contract.ChallengeEffect
 import com.wordle.game.presentation.challenge.contract.ChallengeIntent
 import com.wordle.game.presentation.challenge.contract.ChallengeUiState
-import com.wordle.game.presentation.game.contract.TileState
 import com.wordle.game.presentation.game.contract.toTypes
 import com.wordle.game.presentation.challenge.vm.ChallengeViewModel
-import kotlinx.coroutines.delay
-import java.time.Duration
-import java.time.LocalDateTime
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -176,7 +174,8 @@ fun ChallengeContent(
             ChallengeDialogState.Info -> {
                 WordleInfoBottomSheet(
                     sheetState = infoSheetState,
-                    onDismiss  = onDismissDialog
+                    onDismiss  = onDismissDialog,
+                    wordLength = uiState.wordLength,
                 )
             }
             is ChallengeDialogState.Result -> {
@@ -190,101 +189,4 @@ fun ChallengeContent(
             ChallengeDialogState.None -> Unit
         }
     }
-}
-
-// ─── Daily Challenge Result Bottom Sheet ─────────────────────────────────────
-
-@RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChallengeResultBottomSheet(
-    isWin: Boolean,
-    targetWord: String,
-    sheetState: SheetState,
-    onDismiss: Action,
-) {
-    var countdown by remember { mutableStateOf(secondsUntilMidnight()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1_000L)
-            countdown = secondsUntilMidnight()
-        }
-    }
-
-    val colors = LocalWordleColors.current
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState       = sheetState,
-        containerColor   = colors.background,
-    ) {
-        Column(
-            modifier            = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Win / Lose headline
-            Text(
-                text       = if (isWin) stringResource(R.string.result_win_title)
-                else       stringResource(R.string.result_lose_title),
-                fontSize   = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color      = if (isWin) colors.correct else colors.present,
-                textAlign  = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            // Reveal the answer on a loss
-            if (!isWin) {
-                Text(
-                    text      = stringResource(R.string.result_answer_label, targetWord),
-                    fontSize  = 16.sp,
-                    color     = colors.body,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(16.dp))
-            }
-
-            // Countdown label
-            Text(
-                text      = stringResource(R.string.challenge_next_word_label),
-                fontSize  = 14.sp,
-                color     = colors.body,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            // HH:MM:SS countdown
-            Text(
-                text       = countdown.toHhMmSs(),
-                fontSize   = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color      = colors.body,
-                textAlign  = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(24.dp))
-        }
-    }
-}
-
-// ─── Time helpers ─────────────────────────────────────────────────────────────
-
-/** Returns the number of seconds from now until the next midnight (00:00:00). */
-@RequiresApi(Build.VERSION_CODES.O)
-private fun secondsUntilMidnight(): Long {
-    val now       = LocalDateTime.now()
-    val midnight  = now.toLocalDate().plusDays(1).atStartOfDay()
-    return Duration.between(now, midnight).seconds
-}
-
-/** Formats a raw second count as "HH:MM:SS". */
-private fun Long.toHhMmSs(): String {
-    val h = this / 3600
-    val m = (this % 3600) / 60
-    val s = this % 60
-    return "%02d:%02d:%02d".format(h, m, s)
 }

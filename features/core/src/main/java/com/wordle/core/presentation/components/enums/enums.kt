@@ -15,3 +15,17 @@ enum class AppLanguage(val code: String) {
 enum class AppColorTheme { DARK, LIGHT }
 
 enum class DrawerScreen { MENU, THEME, LANGUAGE }
+
+enum class LeaderboardFilter { THIS_WEEK, THIS_MONTH, ALL_TIME }
+
+enum class SnackbarType {
+    SUCCESS, ERROR, WARNING
+}
+
+enum class TileState {
+    EMPTY,
+    FILLED,
+    CORRECT,
+    MISPLACED,
+    WRONG
+}

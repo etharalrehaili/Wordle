@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +30,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.wordle.core.presentation.theme.GameDesignTheme
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 import com.wordle.core.presentation.theme.WordleColors
 
@@ -34,6 +39,7 @@ data class PodiumPlayer(
     val name: String,
     val points: Int,
     val avatarUrl: String? = null,
+    val isMe: Boolean = false,
 )
 
 @Composable
@@ -43,40 +49,42 @@ fun TopThreePodium(
     third: PodiumPlayer,
     modifier: Modifier = Modifier,
 ) {
-    val colors = LocalWordleColors.current
 
     Row(
-        modifier = modifier
+        modifier              = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.Bottom,
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment     = Alignment.Bottom,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         // 2nd place
         PodiumEntry(
             rank       = 2,
             player     = second,
-            avatarSize = 72.dp,
+            avatarSize = 68.dp,
             isFirst    = false,
+            accentColor = colors.buttonTaupe,
             colors     = colors,
         )
 
-        // 1st place — elevated with crown
+        // 1st place
         PodiumEntry(
-            rank       = 1,
-            player     = first,
-            avatarSize = 90.dp,
-            isFirst    = true,
-            colors     = colors,
+            rank        = 1,
+            player      = first,
+            avatarSize  = 88.dp,
+            isFirst     = true,
+            accentColor = colors.present,
+            colors      = colors,
         )
 
         // 3rd place
         PodiumEntry(
-            rank       = 3,
-            player     = third,
-            avatarSize = 72.dp,
-            isFirst    = false,
-            colors     = colors,
+            rank        = 3,
+            player      = third,
+            avatarSize  = 68.dp,
+            isFirst     = false,
+            accentColor = colors.buttonTaupe,
+            colors      = colors,
         )
     }
 }
@@ -87,69 +95,67 @@ private fun PodiumEntry(
     player: PodiumPlayer,
     avatarSize: Dp,
     isFirst: Boolean,
+    accentColor: Color,
     colors: WordleColors,
 ) {
+
+    val resolvedAccent = if (player.isMe) colors.buttonTeal else accentColor
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom,
-        modifier = Modifier.padding(horizontal = 8.dp)
+        modifier            = Modifier.padding(horizontal = 6.dp)
     ) {
-        // Crown for 1st place
+        // Crown / rank badge
         if (isFirst) {
             Text(
                 text     = "👑",
-                fontSize = 28.sp,
-                modifier = Modifier.offset(y = 6.dp)
+                fontSize = 26.sp,
+                modifier = Modifier.offset(y = 8.dp)
             )
         } else {
-            // Rank number above avatar for 2nd and 3rd
-            Text(
-                text       = rank.toString(),
-                color      = colors.body,
-                fontSize   = 14.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-        }
-
-        // Avatar
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(avatarSize)
-                .clip(CircleShape)
-                .background(colors.surface)
-                .border(
-                    width = if (isFirst) 3.dp else 2.dp,
-                    color = if (isFirst) colors.present else colors.border,
-                    shape = CircleShape
-                )
-        ) {
-            if (player.avatarUrl != null) {
-                AsyncImage(
-                    model= player.avatarUrl,
-                    contentDescription = "${player.name} avatar",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(avatarSize)
-                        .clip(CircleShape)
-                )
-            } else {
-                val initials = player.name
-                    .split(" ")
-                    .filter { it.isNotEmpty() }
-                    .take(2)
-                    .joinToString("") { it.first().uppercase() }
+            Box(
+                modifier         = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(resolvedAccent.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = initials,
-                    color = colors.title,
-                    fontSize = if (isFirst) 20.sp else 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    text       = rank.toString(),
+                    color      = resolvedAccent,
+                    fontSize   = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
                 )
             }
+            Spacer(modifier = Modifier.height(6.dp))
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        // Avatar with gradient border
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier         = Modifier
+                .size(avatarSize)
+                .clip(CircleShape)
+                .border(
+                    width = if (isFirst) 3.dp else 2.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(resolvedAccent, resolvedAccent.copy(alpha = 0.4f))
+                    ),
+                    shape = CircleShape
+                )
+                .padding(3.dp)
+                .clip(CircleShape)
+        ) {
+            PlayerAvatar(
+                name      = player.name,
+                avatarUrl = player.avatarUrl,
+                modifier  = Modifier.size(avatarSize),
+                fontSize  = if (isFirst) 22.sp else 16.sp,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Name
         Text(
@@ -162,16 +168,24 @@ private fun PodiumEntry(
             overflow   = TextOverflow.Ellipsis,
         )
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(3.dp))
 
-        // Points
-        Text(
-            text       = "%,d".format(player.points),
-            color      = colors.present,
-            fontSize   = 13.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign  = TextAlign.Center,
-        )
+        // Points pill
+        Box(
+            modifier         = Modifier
+                .clip(RoundedCornerShape(50.dp))
+                .background(resolvedAccent.copy(alpha = 0.15f))
+                .padding(horizontal = 10.dp, vertical = 3.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text       = "%,d".format(player.points),
+                color      = resolvedAccent,
+                fontSize   = 12.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign  = TextAlign.Center,
+            )
+        }
     }
 }
 

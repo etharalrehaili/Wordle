@@ -1,5 +1,6 @@
 package com.wordle.authentication.presentation.contract
 
+import UiText
 import com.wordle.core.mvi.UiEffect
 import com.wordle.core.mvi.UiIntent
 import com.wordle.core.mvi.UiState
@@ -9,9 +10,9 @@ data class AuthUiState(
     val password: String        = "",
     val confirmPassword: String = "",
     val isLoading: Boolean      = false,
-    val emailError: String?           = null,
-    val passwordError: String?        = null,
-    val confirmPasswordError: String? = null,
+    val emailError          : UiText? = null,
+    val passwordError       : UiText? = null,
+    val confirmPasswordError: UiText? = null,
     val nameError: String?            = null,
 ) : UiState
 
@@ -26,5 +27,5 @@ sealed interface AuthIntent : UiIntent {
 sealed interface AuthEffect : UiEffect {
     data object NavigateToHome        : AuthEffect
     data object SignUpSuccess         : AuthEffect
-    data class ShowError(val message: String) : AuthEffect
+    data class ShowError(val message: UiText) : AuthEffect
 }

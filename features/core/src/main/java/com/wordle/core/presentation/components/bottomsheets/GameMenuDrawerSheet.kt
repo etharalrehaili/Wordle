@@ -1,5 +1,6 @@
 package com.wordle.core.presentation.components.bottomsheets
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -40,17 +41,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.wordle.core.R
 import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.enums.AppColorTheme
 import com.wordle.core.presentation.components.enums.AppLanguage
 import com.wordle.core.presentation.components.enums.DrawerScreen
 import com.wordle.core.presentation.components.text.WordleText
 import com.wordle.core.presentation.theme.GameDesignTheme
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 
 @Composable
@@ -63,9 +66,14 @@ fun GameMenuDrawerSheet(
     onLanguageSelected: (AppLanguage) -> Unit,
     onThemeSelected: (AppColorTheme) -> Unit
 ) {
+
     var currentScreen by remember { mutableStateOf(DrawerScreen.MENU) }
     var isNavigatingForward by remember { mutableStateOf(true) }
-    val colors = LocalWordleColors.current
+
+    BackHandler(enabled = currentScreen != DrawerScreen.MENU) {
+        isNavigatingForward = false
+        currentScreen = DrawerScreen.MENU
+    }
 
     ModalDrawerSheet(
         drawerShape          = RectangleShape,
@@ -131,12 +139,12 @@ private fun MenuScreen(
         val action: () -> Unit,
     )
 
-    val colors = LocalWordleColors.current
 
     val items = buildList {
-        if (isLoggedIn) add(Entry(Icons.Filled.Person,   "Profile",  "View your stats",     colors.buttonTaupe,  onProfile))
-        add(Entry(Icons.Filled.Palette,                  "Theme",    "Change appearance",   colors.buttonTaupe,  onTheme))
-        add(Entry(Icons.Filled.Language,                 "Language", "Switch language",     colors.buttonTaupe, onLanguage))
+        if (isLoggedIn) add(Entry(Icons.Filled.Person,
+            stringResource(R.string.drawer_profile),  stringResource(R.string.drawer_profile_desc),     colors.buttonTaupe,  onProfile))
+        add(Entry(Icons.Filled.Palette,stringResource(R.string.drawer_theme),    stringResource(R.string.drawer_theme_desc),   colors.buttonTaupe,  onTheme))
+        add(Entry(Icons.Filled.Language,stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc),     colors.buttonTaupe, onLanguage))
     }
 
     DrawerColumn {
@@ -145,14 +153,6 @@ private fun MenuScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            colors.buttonPink.copy(alpha = 0.12f),
-                            Color.Transparent
-                        )
-                    )
-                )
                 .padding(start = 24.dp, end = 12.dp, top = 48.dp, bottom = 24.dp)
         )
 
@@ -225,14 +225,18 @@ private fun LanguageScreen(
     onBack: Action,
     onSelect: (AppLanguage) -> Unit,
 ) {
-    val colors = LocalWordleColors.current
-
     DrawerColumn {
-        SelectionHeader(title = "Language", onBack = onBack)
+
+        SelectionHeader(title = stringResource(R.string.drawer_language), onBack = onBack)
 
         AppLanguage.entries.forEach { lang ->
             SelectionRow(
-                label      = lang.name.lowercase().replaceFirstChar { it.uppercase() },
+                label = stringResource(
+                    when (lang) {
+                        AppLanguage.ARABIC   -> R.string.language_arabic
+                        AppLanguage.ENGLISH  -> R.string.language_english
+                    }
+                ),
                 isSelected = lang == selectedLanguage,
                 accent     = colors.buttonTeal,
                 onClick    = { onSelect(lang) }
@@ -247,14 +251,19 @@ private fun ThemeScreen(
     onBack: () -> Unit,
     onSelect: (AppColorTheme) -> Unit,
 ) {
-    val colors = LocalWordleColors.current
 
     DrawerColumn {
-        SelectionHeader(title = "Theme", onBack = onBack)
+
+        SelectionHeader(title = stringResource(R.string.drawer_theme), onBack = onBack)
 
         AppColorTheme.entries.forEach { theme ->
             SelectionRow(
-                label      = theme.name.lowercase().replaceFirstChar { it.uppercase() },
+                label = stringResource(
+                    when (theme) {
+                        AppColorTheme.DARK  -> R.string.theme_dark
+                        AppColorTheme.LIGHT -> R.string.theme_light
+                    }
+                ),
                 isSelected = theme == selectedTheme,
                 accent     = colors.buttonTeal,
                 onClick    = { onSelect(theme) }
@@ -265,7 +274,7 @@ private fun ThemeScreen(
 
 @Composable
 private fun SelectionHeader(title: String, onBack: () -> Unit) {
-    val colors = LocalWordleColors.current
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier          = Modifier

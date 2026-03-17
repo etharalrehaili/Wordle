@@ -1,5 +1,6 @@
 package com.wordle.core.presentation.components.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -13,6 +14,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -24,7 +29,7 @@ import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.text.WordleText
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
 import com.wordle.core.presentation.preview.GameLightBackgroundPreview
-import com.wordle.core.presentation.theme.LocalWordleColors
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +42,8 @@ fun GameTopBar(
     onEndIconClicked: Action? = null,
     containerColor: Color? = null,
 ) {
-    val colors = LocalWordleColors.current
     val appBarColor = containerColor ?: colors.background
+    var lastClickTime by remember { mutableStateOf(0L) }
 
     TopAppBar(
         title = {
@@ -57,7 +62,25 @@ fun GameTopBar(
         navigationIcon = {
             if (startIcon != null && onStartIconClicked != null) {
                 IconButton(
-                    onClick = onStartIconClicked,
+                    onClick = { onStartIconClicked() },
+//                    onClick = {
+//                        val now = System.currentTimeMillis()
+//                        if (now - lastClickTime > 200L) {
+//                            lastClickTime = now
+//                            onStartIconClicked()
+//                        }
+//                    },
+//                    onClick = {
+//                        val now = System.currentTimeMillis()
+//                        Log.d("GameTopBar", "Icon clicked, timeSinceLast=${now - lastClickTime}ms")
+//                        if (now - lastClickTime > 200L) {
+//                            lastClickTime = now
+//                            Log.d("GameTopBar", "Click accepted, navigating")
+//                            onStartIconClicked()
+//                        } else {
+//                            Log.w("GameTopBar", "Click REJECTED (too fast)")
+//                        }
+//                    },
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
@@ -72,11 +95,28 @@ fun GameTopBar(
             }
         },
         actions = {
-            Spacer(modifier = Modifier.size(48.dp))
 
             if (endIcon != null && onEndIconClicked != null) {
                 IconButton(
-                    onClick = onEndIconClicked,
+                    onClick = { onEndIconClicked() },
+//                    onClick = {
+//                        val now = System.currentTimeMillis()
+//                        if (now - lastClickTime > 200L) {
+//                            lastClickTime = now
+//                            onEndIconClicked()
+//                        }
+//                    },
+//                    onClick = {
+//                        val now = System.currentTimeMillis()
+//                        Log.d("GameTopBar", "Icon clicked, timeSinceLast=${now - lastClickTime}ms")
+//                        if (now - lastClickTime > 200L) {
+//                            lastClickTime = now
+//                            Log.d("GameTopBar", "Click accepted, navigating")
+//                            onEndIconClicked()
+//                        } else {
+//                            Log.w("GameTopBar", "Click REJECTED (too fast)")
+//                        }
+//                    },
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
@@ -86,6 +126,8 @@ fun GameTopBar(
                         modifier = Modifier.size(26.dp)
                     )
                 }
+            } else {
+                Spacer(modifier = Modifier.size(48.dp))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

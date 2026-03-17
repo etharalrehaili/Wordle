@@ -1,5 +1,6 @@
 package com.wordle.authentication.presentation.login
 
+import UiText
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,15 +18,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,21 +37,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wordle.authentication.R
 import com.wordle.authentication.presentation.contract.AuthEffect
 import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.CustomSnackbarHost
+import com.wordle.core.presentation.components.DotsLoadingIndicator
 import com.wordle.core.presentation.components.SnackbarState
-import com.wordle.core.presentation.components.SnackbarType
 import com.wordle.core.presentation.components.buttons.GameButton
+import com.wordle.core.presentation.components.enums.SnackbarType
 import com.wordle.core.presentation.components.navigation.GameTopBar
 import com.wordle.core.presentation.components.text.WordleText
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
 import com.wordle.core.presentation.theme.GameDesignTheme
+import com.wordle.core.presentation.theme.GameDesignTheme.colors
 import com.wordle.core.presentation.theme.LocalWordleColors
 import com.wordle.core.presentation.theme.WordleColors
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -64,8 +66,8 @@ import kotlinx.coroutines.flow.SharedFlow
 fun LoginScreen(
     email: String,
     password: String,
-    emailError: String?,
-    passwordError: String?,
+    emailError   : UiText?,
+    passwordError: UiText?,
     isLoading: Boolean,
     uiEffect: SharedFlow<AuthEffect>,
     onEmailChanged: (String) -> Unit,
@@ -74,16 +76,18 @@ fun LoginScreen(
     onLoginClick: Action,
     onNavigateToHome: Action,
 ) {
-    val colors = LocalWordleColors.current
     var passwordVisible by remember { mutableStateOf(false) }
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
+    val context = LocalContext.current
+    val resolvedEmailError    = emailError?.resolve(context)
+    val resolvedPasswordError = passwordError?.resolve(context)
 
     LaunchedEffect(Unit) {
         uiEffect.collect { effect ->
             when (effect) {
-                AuthEffect.NavigateToHome  -> onNavigateToHome()
-                is AuthEffect.ShowError    -> snackbarState = SnackbarState(effect.message, SnackbarType.ERROR)
-                else                       -> Unit
+                AuthEffect.NavigateToHome -> onNavigateToHome()
+                is AuthEffect.ShowError   -> snackbarState = SnackbarState(effect.message.resolve(context), SnackbarType.ERROR)
+                else                      -> Unit
             }
         }
     }
@@ -113,12 +117,14 @@ fun LoginScreen(
                 Spacer(Modifier.height(16.dp))
 
                 // ── Email ─────────────────────────────────────────────
-                FieldLabel("Email")
+                FieldLabel(stringResource(R.string.login_email_label))
+
                 Spacer(Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value         = email,
                     onValueChange = onEmailChanged,
-                    placeholder   = { Text("your@email.com", color = colors.body.copy(alpha = 0.35f), fontSize = 14.sp) },
+                    placeholder   = { Text(stringResource(R.string.login_email_placeholder), color = colors.body.copy(alpha = 0.35f), fontSize = 14.sp) },
                     leadingIcon   = {
                         Icon(
                             Icons.Filled.Email,
@@ -133,13 +139,15 @@ fun LoginScreen(
                     colors        = textFieldColors(colors),
                     shape         = RoundedCornerShape(16.dp),
                 )
-                if (emailError != null) FieldError(emailError)
+                if (resolvedEmailError != null) FieldError(resolvedEmailError)
 
                 Spacer(Modifier.height(20.dp))
 
                 // ── Password ──────────────────────────────────────────
-                FieldLabel("Password")
+                FieldLabel(stringResource(R.string.login_password_label))
+
                 Spacer(Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value                = password,
                     onValueChange        = onPasswordChanged,
@@ -169,25 +177,21 @@ fun LoginScreen(
                     colors               = textFieldColors(colors),
                     shape                = RoundedCornerShape(16.dp),
                 )
-                if (passwordError != null) FieldError(passwordError)
+                if (resolvedPasswordError != null) FieldError(resolvedPasswordError)
 
                 Spacer(Modifier.height(36.dp))
 
                 // ── Login button ──────────────────────────────────────
                 if (isLoading) {
                     Box(
-                        modifier          = Modifier.fillMaxWidth(),
-                        contentAlignment  = Alignment.Center
+                        modifier         = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(
-                            color       = colors.buttonTeal,
-                            strokeWidth = 2.dp,
-                            modifier    = Modifier.size(36.dp)
-                        )
+                        DotsLoadingIndicator()
                     }
                 } else {
                     GameButton(
-                        label           = "Login",
+                        label           = stringResource(R.string.login_button),
                         backgroundColor = colors.buttonTeal,
                         contentColor    = colors.title,
                         showBorder      = false,

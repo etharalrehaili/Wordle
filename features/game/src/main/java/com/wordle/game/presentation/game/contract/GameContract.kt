@@ -4,6 +4,7 @@ import com.wordle.core.mvi.UiEffect
 import com.wordle.core.mvi.UiIntent
 import com.wordle.core.mvi.UiState
 import com.wordle.core.presentation.components.MAX_GUESSES
+import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.presentation.components.enums.Types
 
 data class GameUiState(
@@ -45,14 +46,6 @@ fun TileState.toTypes(): Types = when (this) {
     TileState.WRONG     -> Types.ABSENT
     TileState.FILLED,
     TileState.EMPTY     -> Types.DEFAULT
-}
-
-enum class TileState {
-    EMPTY,
-    FILLED,
-    CORRECT,
-    MISPLACED,
-    WRONG
 }
 
 data class Tile(
