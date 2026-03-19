@@ -1,12 +1,10 @@
 package com.wordle.app
 
 import android.app.Activity
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.activity.viewModels
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,12 +23,16 @@ import com.wordle.core.presentation.theme.WordleTheme
 import com.wordle.core.util.LocaleHelper
 import com.wordle.game.presentation.navigation.Route
 import com.wordle.game.presentation.navigation.navGraph
+import com.wordle.game.presentation.preferences.vm.PreferencesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @RequiresApi(Build.VERSION_CODES.O)
+
+    // for language and theme
+    private val preferenceViewModel: PreferencesViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setBackgroundDrawableResource(android.R.color.transparent)

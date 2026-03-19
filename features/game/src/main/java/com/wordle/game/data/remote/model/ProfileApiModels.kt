@@ -31,5 +31,5 @@ data class UpdateProfileData(
     val wordsSolved: Int,
     val winPercentage: Double,
     val currentPoints: Int,
-    val lastPlayedAt: String? = null,
+    val lastPlayedAt: String?,
 )

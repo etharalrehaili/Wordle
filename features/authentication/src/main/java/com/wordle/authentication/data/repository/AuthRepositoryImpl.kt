@@ -17,5 +17,17 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun updateProfile(name: String): Result<Unit> =
         remoteDataSource.updateProfile(name)
 
+    override suspend fun sendEmail(email: String): Result<Unit> =
+        remoteDataSource.sendEmail(email)
+
+    override suspend fun sendVerificationEmail(): Result<Unit> =
+        remoteDataSource.sendVerificationEmail()
+
+    override suspend fun reAuthenticate(password: String): Result<Unit> =
+        remoteDataSource.reAuthenticate(password)
+
+    override suspend fun changeEmail(newEmail: String): Result<Unit> =
+        remoteDataSource.changeEmail(newEmail)
+
     override fun signOut() = remoteDataSource.signOut()
 }

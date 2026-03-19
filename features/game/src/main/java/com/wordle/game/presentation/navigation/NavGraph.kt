@@ -1,7 +1,6 @@
 package com.wordle.game.presentation.navigation
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -15,6 +14,7 @@ import com.wordle.game.presentation.profile.screen.ProfileScreen
 import com.wordle.game.presentation.profile.vm.ProfileViewModel
 import com.wordle.authentication.presentation.contract.AuthIntent
 import com.wordle.authentication.presentation.login.LoginScreen
+import com.wordle.authentication.presentation.resetpassword.SendEmailScreen
 import com.wordle.authentication.presentation.signup.SignUpScreen
 import com.wordle.authentication.presentation.vm.AuthViewModel
 import com.wordle.core.presentation.components.enums.AppColorTheme
@@ -27,6 +27,8 @@ import com.wordle.game.presentation.settings.screen.SettingsScreen
 import com.wordle.game.presentation.settings.vm.SettingsViewModel
 import com.wordle.game.presentation.profile.contract.ProfileIntent
 import com.wordle.game.presentation.settings.contract.SettingsIntent
+import com.wordle.game.presentation.settings.screen.ChangeEmailScreen
+import com.wordle.game.presentation.settings.screen.SupportScreen
 import kotlinx.serialization.Serializable
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -129,8 +131,9 @@ fun NavGraphBuilder.navGraph(
 
         SettingsScreen(
             onBack                = { navController.popBackStack() },
-            onChangeEmailClick    = { viewModel.onEvent(SettingsIntent.OnChangeEmailClick) },
-            onChangePasswordClick = { viewModel.onEvent(SettingsIntent.OnChangePasswordClick) },
+            onChangeEmailClick    = { navController.navigate(Route.ChangeEmailScreen) },
+            onChangePasswordClick = { navController.navigate(Route.ResetPasswordScreen) },
+            onSupportClick = { navController.navigate(Route.SupportScreen) },
             onSignOutClick        = { viewModel.onEvent(SettingsIntent.OnSignOutClick) },
             uiEffect              = viewModel.uiEffect,
             onSignOutSuccess      = {
@@ -139,6 +142,10 @@ fun NavGraphBuilder.navGraph(
                 }
             },
         )
+    }
+
+    composable<Route.SupportScreen> {
+        SupportScreen(onBack = { navController.popBackStack() })
     }
 
     composable<Route.LoginScreen> {
@@ -161,6 +168,50 @@ fun NavGraphBuilder.navGraph(
                     popUpTo(Route.LoginScreen) { inclusive = true }
                 }
             },
+            onNavigateToSignUp= {
+                navController.navigate(Route.SignUpScreen) {
+                    popUpTo(Route.LoginScreen) { inclusive = true }
+                }
+            },
+            onForgotPasswordClick = { navController.navigate(Route.ResetPasswordScreen) },
+        )
+    }
+
+    composable<Route.ResetPasswordScreen> {
+        val viewModel: AuthViewModel = hiltViewModel()
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+        // Determine if coming from settings (user is logged in)
+        val isLoggedIn = com.google.firebase.auth.FirebaseAuth
+            .getInstance().currentUser != null
+
+        SendEmailScreen(
+            email            = state.email,
+            emailError       = state.emailError,
+            isLoading        = state.isLoading,
+            uiEffect         = viewModel.uiEffect,
+            isEmailEditable  = !isLoggedIn,
+            onBack           = { navController.popBackStack() },
+            onEmailChanged   = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
+            onSendEmailClick = { viewModel.onEvent(AuthIntent.OnSendEmailClicked) },
+        )
+    }
+
+    composable<Route.ChangeEmailScreen> {
+        val viewModel: AuthViewModel = hiltViewModel()
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+        ChangeEmailScreen(
+            email             = state.newEmail,
+            emailError        = state.newEmailError,
+            isLoading         = state.isLoading,
+            uiEffect          = viewModel.uiEffect,
+            password          = state.reAuthPassword,
+            passwordError     = state.reAuthPasswordError,
+            onEmailChanged    = { viewModel.onEvent(AuthIntent.OnNewEmailChanged(it)) },
+            onPasswordChanged = { viewModel.onEvent(AuthIntent.OnReAuthPasswordChanged(it)) },
+            onBack            = { navController.popBackStack() },
+            onChangeEmailClick = { viewModel.onEvent(AuthIntent.OnChangeEmailClicked) },
         )
     }
 
@@ -221,4 +272,12 @@ sealed interface Route {
     @Serializable
     data object SignUpScreen : Route
 
+    @Serializable
+    data object ResetPasswordScreen : Route
+
+    @Serializable
+    data object ChangeEmailScreen : Route
+
+    @Serializable
+    data object SupportScreen : Route
 }

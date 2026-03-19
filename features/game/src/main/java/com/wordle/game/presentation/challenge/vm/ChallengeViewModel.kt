@@ -1,6 +1,7 @@
 package com.wordle.game.presentation.challenge.vm
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -181,7 +182,16 @@ class ChallengeViewModel @Inject constructor(
             val newWinRate     = if (newGamesPlayed > 0) (newWordsSolved * 100.0 / newGamesPlayed) else 0.0
             val newPoints      = profile.currentPoints + pointsEarned
 
-            updateProfileUseCase(
+//            updateProfileUseCase(
+//                documentId    = profile.documentId,
+//                name          = profile.name,
+//                avatarUrl     = profile.avatarUrl,
+//                gamesPlayed   = newGamesPlayed,
+//                wordsSolved   = newWordsSolved,
+//                winPercentage = newWinRate,
+//                currentPoints = newPoints,
+//            )
+            val result = updateProfileUseCase(
                 documentId    = profile.documentId,
                 name          = profile.name,
                 avatarUrl     = profile.avatarUrl,
@@ -190,6 +200,7 @@ class ChallengeViewModel @Inject constructor(
                 winPercentage = newWinRate,
                 currentPoints = newPoints,
             )
+            Log.d("ChallengeVM", "updateProfileStats result: $result")
         }
     }
 

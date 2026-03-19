@@ -302,18 +302,6 @@ fun HomeContent(
                     )
                 }
             }
-
-            WordleText(
-                text          = stringResource(R.string.made_with_love),
-                color         = colors.body.copy(alpha = 0.5f),
-                fontSize      = GameDesignTheme.typography.labelSmall,
-                fontWeight    = FontWeight.Medium,
-                letterSpacing = 1.5.sp,
-                textAlign     = TextAlign.Center,
-                modifier      = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
-            )
         }
     }
 }

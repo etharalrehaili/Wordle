@@ -63,13 +63,17 @@ fun SettingsScreen(
     onChangeEmailClick: Action,
     onChangePasswordClick: Action,
     onSignOutClick: Action,
+    onSupportClick: Action,
     uiEffect: SharedFlow<SettingsEffect>,
     onSignOutSuccess: Action,
 ) {
+
     LaunchedEffect(Unit) {
         uiEffect.collect { effect ->
             when (effect) {
-                SettingsEffect.SignOutSuccess -> onSignOutSuccess()
+                SettingsEffect.SignOutSuccess            -> onSignOutSuccess()
+                SettingsEffect.NavigateToChangeEmail     -> onChangeEmailClick()
+                SettingsEffect.NavigateToChangePassword  -> onChangePasswordClick()
                 else -> Unit
             }
         }
@@ -80,6 +84,7 @@ fun SettingsScreen(
         onChangeEmailClick    = onChangeEmailClick,
         onChangePasswordClick = onChangePasswordClick,
         onSignOutClick        = onSignOutClick,
+        onSupportClick = onSupportClick
     )
 }
 
@@ -89,6 +94,7 @@ fun SettingsContent(
     onBack: Action,
     onChangeEmailClick: Action,
     onChangePasswordClick: Action,
+    onSupportClick: Action,
     onSignOutClick: Action,
 ) {
     var showSignOutSheet by remember { mutableStateOf(false) }
@@ -157,7 +163,7 @@ fun SettingsContent(
                 label   = stringResource(R.string.settings_support),
                 icon    = Icons.Filled.QuestionMark,
                 accent  = colors.buttonTaupe,
-                onClick = {},
+                onClick = onSupportClick
             )
 
             Spacer(modifier = Modifier.height(spacing.lg))
@@ -278,6 +284,7 @@ private fun PreviewSettingsScreenDark() {
             onChangeEmailClick    = {},
             onChangePasswordClick = {},
             onSignOutClick        = {},
+            onSupportClick = {}
         )
     }
 }
@@ -291,6 +298,7 @@ private fun PreviewSettingsScreenLight() {
             onChangeEmailClick    = {},
             onChangePasswordClick = {},
             onSignOutClick        = {},
+            onSupportClick = {}
         )
     }
 }

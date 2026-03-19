@@ -264,33 +264,17 @@ fun LeaderboardContent(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                                 )
                             }
-                            // ── Podium ────────────────────────────────────
-                            if (top3.size >= 3) {
-                                item {
-                                    TopThreePodium(
-                                        first = PodiumPlayer(
-                                            top3[0].name,
-                                            top3[0].currentPoints,
-                                            top3[0].avatarUrl,
-                                            top3[0].firebaseUid == currentUid
-                                        ),
-                                        second = PodiumPlayer(
-                                            top3[1].name,
-                                            top3[1].currentPoints,
-                                            top3[1].avatarUrl,
-                                            top3[1].firebaseUid == currentUid
-                                        ),
-                                        third = PodiumPlayer(
-                                            top3[2].name,
-                                            top3[2].currentPoints,
-                                            top3[2].avatarUrl,
-                                            top3[2].firebaseUid == currentUid
-                                        ),
-                                    )
-                                }
+
+                            // ── Podium — always shown, empty slots for missing 2nd/3rd ──
+                            item {
+                                TopThreePodium(
+                                    first  = PodiumPlayer(top3[0].name, top3[0].currentPoints, top3[0].avatarUrl, top3[0].firebaseUid == currentUid),
+                                    second = top3.getOrNull(1)?.let { PodiumPlayer(it.name, it.currentPoints, it.avatarUrl, it.firebaseUid == currentUid) },
+                                    third  = top3.getOrNull(2)?.let { PodiumPlayer(it.name, it.currentPoints, it.avatarUrl, it.firebaseUid == currentUid) },
+                                )
                             }
 
-                            // ── Section label ─────────────────────────────
+                            // ── Rest of players (rank 4+) ─────────────────────────────
                             if (rest.isNotEmpty()) {
                                 item {
                                     Row(

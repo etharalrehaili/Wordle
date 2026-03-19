@@ -45,11 +45,10 @@ data class PodiumPlayer(
 @Composable
 fun TopThreePodium(
     first: PodiumPlayer,
-    second: PodiumPlayer,
-    third: PodiumPlayer,
+    second: PodiumPlayer? = null,
+    third: PodiumPlayer? = null,
     modifier: Modifier = Modifier,
 ) {
-
     Row(
         modifier              = modifier
             .fillMaxWidth()
@@ -57,34 +56,71 @@ fun TopThreePodium(
         verticalAlignment     = Alignment.Bottom,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        // 2nd place
-        PodiumEntry(
-            rank       = 2,
-            player     = second,
-            avatarSize = 68.dp,
-            isFirst    = false,
-            accentColor = colors.buttonTaupe,
-            colors     = colors,
-        )
+        // 2nd place — empty slot if null
+        if (second != null) {
+            PodiumEntry(rank = 2, player = second, avatarSize = 68.dp, isFirst = false, accentColor = colors.buttonTaupe, colors = colors)
+        } else {
+            EmptyPodiumSlot(rank = 2, colors = colors)
+        }
 
-        // 1st place
-        PodiumEntry(
-            rank        = 1,
-            player      = first,
-            avatarSize  = 88.dp,
-            isFirst     = true,
-            accentColor = colors.present,
-            colors      = colors,
-        )
+        // 1st place — always present
+        PodiumEntry(rank = 1, player = first, avatarSize = 88.dp, isFirst = true, accentColor = colors.present, colors = colors)
 
-        // 3rd place
-        PodiumEntry(
-            rank        = 3,
-            player      = third,
-            avatarSize  = 68.dp,
-            isFirst     = false,
-            accentColor = colors.buttonTaupe,
-            colors      = colors,
+        // 3rd place — empty slot if null
+        if (third != null) {
+            PodiumEntry(rank = 3, player = third, avatarSize = 68.dp, isFirst = false, accentColor = colors.buttonTaupe, colors = colors)
+        } else {
+            EmptyPodiumSlot(rank = 3, colors = colors)
+        }
+    }
+}
+
+@Composable
+private fun EmptyPodiumSlot(rank: Int, colors: WordleColors) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom,
+        modifier            = Modifier.padding(horizontal = 6.dp)
+    ) {
+        Box(
+            modifier         = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .background(colors.buttonTaupe.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text       = rank.toString(),
+                color      = colors.buttonTaupe.copy(alpha = 0.35f),
+                fontSize   = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        // Dashed empty avatar circle
+        Box(
+            modifier = Modifier
+                .size(68.dp)
+                .clip(CircleShape)
+                .border(
+                    width = 2.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            colors.buttonTaupe.copy(alpha = 0.25f),
+                            colors.buttonTaupe.copy(alpha = 0.10f),
+                        )
+                    ),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "?", color = colors.buttonTaupe.copy(alpha = 0.30f), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text     = "—",
+            color    = colors.body.copy(alpha = 0.20f),
+            fontSize = 13.sp,
         )
     }
 }

@@ -7,13 +7,46 @@
     <string name="signup_password_label">كلمة المرور</string>
     <string name="signup_confirm_password_label">تأكيد كلمة المرور</string>
     <string name="signup_button">إنشاء حساب</string>
-    <string name="signup_success">تم إنشاء الحساب بنجاح</string>
+    <string name="signup_success">تم إنشاء الحساب! يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك.</string>
+    <string name="signup_already_have_account">هل لديك حساب بالفعل؟</string>
+    <string name="signup_login_link">تسجيل الدخول</string>
 
     <!-- Login Screen -->
+    <string name="login_title">تسجيل الدخول</string>
     <string name="login_email_label">البريد الإلكتروني</string>
     <string name="login_email_placeholder">example@gmail.com</string>
     <string name="login_password_label">كلمة المرور</string>
     <string name="login_button">تسجيل الدخول</string>
+    <string name="login_forgot_password">نسيت كلمة المرور؟</string>
+    <string name="login_no_account">ليس لديك حساب؟</string>
+    <string name="login_sign_up_link">إنشاء حساب</string>
+
+    <!-- Reset Password Screen -->
+    <string name="reset_password_title">إعادة تعيين كلمة المرور</string>
+    <string name="reset_password_email">البريد الإلكتروني</string>
+    <string name="reset_password_email_placeholder">your@email.com</string>
+    <string name="reset_password_send_email_button">ارسال الايميل</string>
+    <string name="reset_password_email_sent">تم إرسال رسالة إعادة التعيين. تحقق من بريدك الوارد!</string>
+
+    <!-- Change Email Screen -->
+    <string name="change_email_title">تغيير البريد الإلكتروني</string>
+    <string name="change_email_new_email">البريد الإلكتروني الجديد</string>
+    <string name="change_email_new_email_placeholder">yournew@email.com</string>
+    <string name="change_email_button">تأكيد البريد الإلكتروني</string>
+    <string name="change_email_successfully">تم إرسال رابط التحقق إلى بريدك الجديد!</string>
+    <string name="reauth_dialog_title">تأكيد هويتك</string>
+    <string name="reauth_dialog_body">لأسباب أمنية، يرجى إدخال كلمة المرور الحالية للمتابعة.</string>
+    <string name="reauth_dialog_placeholder">كلمة المرور الحالية</string>
+    <string name="reauth_dialog_confirm">تأكيد</string>
+    <string name="reauth_dialog_cancel">إلغاء</string>
+
+    <!-- Support Screen -->
+    <string name="support_title">الدعم</string>
+    <string name="support_header_title">يسعدني سماع رأيك!</string>
+    <string name="support_header_body">هل لديك اقتراح، أو وجدت خطأً، أو تريد فقط التواصل؟ تواصل معي عبر LinkedIn وسأرد عليك في أقرب وقت ممكن.</string>
+    <string name="support_linkedin_name">ايثار الرحيلي</string>
+    <string name="support_linkedin_handle">linkedin.com/in/ethar-alrehaili</string>
+    <string name="support_cta_button">تواصل عبر LinkedIn</string>
 
     <!-- Validation Errors -->
     <string name="error_empty_password">كلمة المرور لا يمكن أن تكون فارغة</string>

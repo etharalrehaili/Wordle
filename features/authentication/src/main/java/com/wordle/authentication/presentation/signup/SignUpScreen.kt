@@ -3,14 +3,18 @@ package com.wordle.authentication.presentation.signup
 import UiText
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,12 +24,10 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,9 +52,11 @@ import com.wordle.core.presentation.components.SnackbarState
 import com.wordle.core.presentation.components.buttons.GameButton
 import com.wordle.core.presentation.components.enums.SnackbarType
 import com.wordle.core.presentation.components.navigation.GameTopBar
+import com.wordle.core.presentation.components.text.WordleText
+import com.wordle.core.presentation.components.text.textFieldColors
 import com.wordle.core.presentation.preview.GameDarkBackgroundPreview
+import com.wordle.core.presentation.theme.GameDesignTheme
 import com.wordle.core.presentation.theme.GameDesignTheme.colors
-import com.wordle.core.presentation.theme.WordleColors
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
@@ -62,7 +66,7 @@ fun SignUpScreen(
     password: String,
     confirmPassword: String,
     isLoading: Boolean,
-    emailError   : UiText?,
+    emailError: UiText?,
     passwordError: UiText?,
     confirmPasswordError: UiText?,
     uiEffect: SharedFlow<AuthEffect>,
@@ -71,16 +75,11 @@ fun SignUpScreen(
     onPasswordChanged: (String) -> Unit,
     onConfirmPasswordChanged: (String) -> Unit,
     onSignUpClick: Action,
-    onNavigateToLogin: Action,
+    onNavigateToLogin: Action
 ) {
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
     var navigateAfterSnackbar by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val resolvedEmailError           = emailError?.resolve(context)
-    val resolvedPasswordError        = passwordError?.resolve(context)
-    val resolvedConfirmPasswordError = confirmPasswordError?.resolve(context)
 
     LaunchedEffect(Unit) {
         uiEffect.collect { effect ->
@@ -88,7 +87,8 @@ fun SignUpScreen(
                 AuthEffect.SignUpSuccess -> {
                     snackbarState = SnackbarState(
                         context.getString(R.string.signup_success),
-                        SnackbarType.SUCCESS)
+                        SnackbarType.SUCCESS
+                    )
                     navigateAfterSnackbar = true
                 }
                 is AuthEffect.ShowError ->
@@ -97,6 +97,59 @@ fun SignUpScreen(
             }
         }
     }
+
+    SignUpContent(
+        email                    = email,
+        password                 = password,
+        confirmPassword          = confirmPassword,
+        isLoading                = isLoading,
+        emailError               = emailError,
+        passwordError            = passwordError,
+        confirmPasswordError     = confirmPasswordError,
+        onBack                   = onBack,
+        onEmailChanged           = onEmailChanged,
+        onPasswordChanged        = onPasswordChanged,
+        onConfirmPasswordChanged = onConfirmPasswordChanged,
+        onSignUpClick            = onSignUpClick,
+        onNavigateToLogin        = onNavigateToLogin,
+    )
+
+    if (snackbarState != null) {
+        CustomSnackbarHost(
+            state     = snackbarState!!,
+            onDismiss = {
+                snackbarState = null
+                if (navigateAfterSnackbar) {
+                    navigateAfterSnackbar = false
+                    onNavigateToLogin()
+                }
+            },
+        )
+    }
+}
+
+@Composable
+fun SignUpContent(
+    email: String,
+    password: String,
+    confirmPassword: String,
+    isLoading: Boolean,
+    emailError: UiText?,
+    passwordError: UiText?,
+    confirmPasswordError: UiText?,
+    onBack: Action,
+    onEmailChanged: (String) -> Unit,
+    onPasswordChanged: (String) -> Unit,
+    onConfirmPasswordChanged: (String) -> Unit,
+    onSignUpClick: Action,
+    onNavigateToLogin: Action
+) {
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val resolvedEmailError           = emailError?.resolve(context)
+    val resolvedPasswordError        = passwordError?.resolve(context)
+    val resolvedConfirmPasswordError = confirmPasswordError?.resolve(context)
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -260,36 +313,32 @@ fun SignUpScreen(
                         modifier        = Modifier.fillMaxWidth()
                     )
                 }
-            }
-        }
 
-        if (snackbarState != null) {
-            CustomSnackbarHost(
-                state     = snackbarState!!,
-                onDismiss = {
-                    snackbarState = null
-                    if (navigateAfterSnackbar) {
-                        navigateAfterSnackbar = false
-                        onNavigateToLogin()
-                    }
-                },
-            )
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    WordleText(
+                        text     = stringResource(R.string.signup_already_have_account),
+                        color    = colors.body.copy(alpha = 0.5f),
+                        fontSize = GameDesignTheme.typography.labelSmall,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    WordleText(
+                        text       = stringResource(R.string.signup_login_link),
+                        color      = colors.buttonTeal,
+                        fontSize   = GameDesignTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier   = Modifier.clickable { onNavigateToLogin() }
+                    )
+                }
+            }
         }
     }
 }
-
-// ── TextField colors helper ───────────────────────────────────────────────────
-
-@Composable
-private fun textFieldColors(colors: WordleColors) =
-    OutlinedTextFieldDefaults.colors(
-        focusedBorderColor   = colors.buttonTeal,
-        unfocusedBorderColor = colors.border,
-        focusedTextColor     = colors.title,
-        unfocusedTextColor   = colors.title,
-        cursorColor          = colors.buttonTeal,
-        errorBorderColor     = MaterialTheme.colorScheme.error,
-    )
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 

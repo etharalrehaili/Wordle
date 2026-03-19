@@ -6,7 +6,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.mvi.BaseMviViewModel
 import com.wordle.core.util.Resource
 import com.wordle.game.R
-import com.wordle.game.domain.usecases.profile.CreateProfileUseCase
 import com.wordle.game.domain.usecases.profile.GetProfileUseCase
 import com.wordle.game.domain.usecases.profile.UpdateProfileUseCase
 import com.wordle.game.domain.usecases.profile.UploadAvatarUseCase
@@ -20,7 +19,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val createProfileUseCase: CreateProfileUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
     private val uploadAvatarUseCase: UploadAvatarUseCase,
@@ -35,8 +33,6 @@ class ProfileViewModel @Inject constructor(
 
     /**
      * Fetches the current user's profile from the backend.
-     * If no profile exists yet (e.g. first login), a new one is created automatically
-     * using the user's Firebase UID and the local part of their email as a display name.
      */
     private fun loadProfile() {
         viewModelScope.launch {
@@ -44,30 +40,19 @@ class ProfileViewModel @Inject constructor(
             val uid   = user.uid
             val email = user.email ?: uid
 
+            // Profile is guaranteed to exist by the time the user navigates here
+            // (HomeViewModel creates it on login), so just load it
             val profile = when (val result = getProfileUseCase(uid)) {
-                is Resource.Success -> {
-                    // Profile found — use it, or create one if the result data is null
-                    result.data ?: when (val created = createProfileUseCase(uid, email.substringBefore("@"))) {
-                        is Resource.Success -> created.data
-                        is Resource.Error   -> {
-                            sendEffect { ProfileEffect.ShowError(created.message ?: context.getString(
-                                R.string.error_generic)) }
-                            return@launch
-                        }
-                        else -> return@launch
-                    }
-                }
-                is Resource.Error -> {
+                is Resource.Success -> result.data ?: return@launch
+                is Resource.Error   -> {
                     sendEffect { ProfileEffect.ShowError(result.message ?: context.getString(R.string.error_generic)) }
                     return@launch
                 }
                 else -> return@launch
             }
 
-            // If the profile name is not set yet, use the email's local part as a fallback display name
             val displayName = profile.name.ifBlank { email.substringBefore("@") }
 
-            // Update the UI state with the loaded profile data
             setState {
                 copy(
                     profileId     = profile.id,

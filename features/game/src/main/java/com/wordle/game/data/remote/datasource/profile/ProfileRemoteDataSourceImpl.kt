@@ -88,7 +88,7 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         val part        = MultipartBody.Part.createFormData("files", "avatar.$extension", requestBody)
 
         val relativePath = api.uploadAvatar(part).first().url
-        return "http://10.0.2.2:1337$relativePath"
+        return "http://192.168.0.100:1337$relativePath"
     }
 
     /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */
