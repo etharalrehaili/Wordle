@@ -37,16 +37,18 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.alias.Action
+import com.wordle.core.presentation.components.CustomSnackbarHost
 import com.wordle.core.presentation.components.GameBoard
 import com.wordle.core.presentation.components.GameKeyboard
 import com.wordle.core.presentation.components.GuessRow
+import com.wordle.core.presentation.components.SnackbarState
 import com.wordle.core.presentation.components.bottomsheets.ChallengeResultBottomSheet
 import com.wordle.core.presentation.components.bottomsheets.WordleInfoBottomSheet
 import com.wordle.core.presentation.components.enums.AppLanguage
+import com.wordle.core.presentation.components.enums.SnackbarType
 import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.presentation.components.navigation.GameTopBar
 import com.wordle.core.presentation.theme.LocalWordleColors
-import com.wordle.game.R
 import com.wordle.game.presentation.challenge.contract.ChallengeDialogState
 import com.wordle.game.presentation.challenge.contract.ChallengeEffect
 import com.wordle.game.presentation.challenge.contract.ChallengeIntent
@@ -64,7 +66,8 @@ fun ChallengeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var dialogState by remember { mutableStateOf<ChallengeDialogState>(ChallengeDialogState.None) }
-    val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""  // ← add
+    val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
 
     LaunchedEffect(currentLanguage, currentUid) {
         viewModel.onEvent(ChallengeIntent.LoadWords(currentLanguage.code))
@@ -75,6 +78,10 @@ fun ChallengeScreen(
             when (effect) {
                 is ChallengeEffect.ShowGameDialog ->
                     dialogState = ChallengeDialogState.Result(effect.isWin, effect.targetWord)
+                ChallengeEffect.NotInWordList -> snackbarState = SnackbarState(
+                    message = "Not in word list",
+                    type    = SnackbarType.WARNING
+                )
                 ChallengeEffect.InvalidWord -> { }
                 ChallengeEffect.RowShake    -> { }
             }
@@ -85,6 +92,8 @@ fun ChallengeScreen(
         uiState         = uiState,
         currentLanguage = currentLanguage,
         dialogState     = dialogState,
+        snackbarState   = snackbarState,
+        onDismissSnackbar = { snackbarState = null },
         onClose         = onClose,
         onInfoClick     = { dialogState = ChallengeDialogState.Info },
         onDismissDialog = { dialogState = ChallengeDialogState.None },
@@ -99,6 +108,8 @@ fun ChallengeContent(
     uiState: ChallengeUiState,
     currentLanguage: AppLanguage,
     dialogState: ChallengeDialogState,
+    snackbarState: SnackbarState?,
+    onDismissSnackbar: Action,
     onClose: Action,
     onInfoClick: Action,
     onDismissDialog: Action,
@@ -114,7 +125,6 @@ fun ChallengeContent(
             types   = row.map { tile -> tile.state.toTypes() }
         )
     }
-    Log.d("ChallengeContent", "wordLength=${uiState.wordLength}, board rows=${uiState.board.size}, board[0].size=${uiState.board.firstOrNull()?.size}, guessRows[0].letters.size=${guessRows.firstOrNull()?.letters?.size}")
 
     val keyStates = uiState.keyboardStates.mapValues { (_, tileState) -> tileState.toTypes() }
     val hasNoChallenge = uiState.error != null && uiState.targetWord.isEmpty()
@@ -168,6 +178,13 @@ fun ChallengeContent(
                     modifier    = Modifier.fillMaxWidth()
                 )
             }
+        }
+
+        snackbarState?.let {
+            CustomSnackbarHost(
+                state     = it,
+                onDismiss = onDismissSnackbar,
+            )
         }
 
         when (val dialog = dialogState) {

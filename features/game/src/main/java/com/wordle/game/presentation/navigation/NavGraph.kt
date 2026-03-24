@@ -51,6 +51,7 @@ fun NavGraphBuilder.navGraph(
     }
 
     composable<Route.HomeScreen> {
+
         HomeScreen(
             onPlayClick = { length ->
                 navController.navigate(Route.GameScreen(length)) {
@@ -89,7 +90,11 @@ fun NavGraphBuilder.navGraph(
     composable<Route.GameScreen> { backStackEntry ->
         val route = backStackEntry.toRoute<Route.GameScreen>()
         GameScreen(
-            onClose         = { navController.popBackStack() },
+            onClose = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             currentLanguage = currentLanguage(),
             wordLength      = route.wordLength,
         )
@@ -97,14 +102,23 @@ fun NavGraphBuilder.navGraph(
 
     composable<Route.ChallengeScreen> {
         ChallengeScreen(
-            onClose = { navController.popBackStack() },
+            onClose = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             currentLanguage = currentLanguage(),
         )
     }
 
     composable<Route.LeaderboardScreen> {
         LeaderboardScreen(
-            onClose = { navController.popBackStack() }
+            onClose = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
+            currentLanguage  = currentLanguage(),
         )
     }
 
@@ -115,7 +129,11 @@ fun NavGraphBuilder.navGraph(
         ProfileScreen(
             uiState            = state,
             uiEffect = viewModel.uiEffect,
-            onBack             = { navController.popBackStack() },
+            onBack = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             onEditProfileClick = { viewModel.onEvent(ProfileIntent.OnEditProfileClick) },
             onSaveProfileClick = { viewModel.onEvent(ProfileIntent.OnSaveProfileClick) },
             onCancelEditClick  = { viewModel.onEvent(ProfileIntent.OnCancelEditClick) },
@@ -130,7 +148,11 @@ fun NavGraphBuilder.navGraph(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         SettingsScreen(
-            onBack                = { navController.popBackStack() },
+            onBack = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             onChangeEmailClick    = { navController.navigate(Route.ChangeEmailScreen) },
             onChangePasswordClick = { navController.navigate(Route.ResetPasswordScreen) },
             onSupportClick = { navController.navigate(Route.SupportScreen) },
@@ -145,7 +167,13 @@ fun NavGraphBuilder.navGraph(
     }
 
     composable<Route.SupportScreen> {
-        SupportScreen(onBack = { navController.popBackStack() })
+        SupportScreen(
+            onBack = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            }
+        )
     }
 
     composable<Route.LoginScreen> {
@@ -159,7 +187,11 @@ fun NavGraphBuilder.navGraph(
             passwordError     = state.passwordError,
             isLoading         = state.isLoading,
             uiEffect          = viewModel.uiEffect,
-            onBack            = { navController.popBackStack() },
+            onBack = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             onEmailChanged    = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
             onPasswordChanged = { viewModel.onEvent(AuthIntent.OnPasswordChanged(it)) },
             onLoginClick      = { viewModel.onEvent(AuthIntent.OnLoginClick) },
@@ -191,7 +223,11 @@ fun NavGraphBuilder.navGraph(
             isLoading        = state.isLoading,
             uiEffect         = viewModel.uiEffect,
             isEmailEditable  = !isLoggedIn,
-            onBack           = { navController.popBackStack() },
+            onBack = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             onEmailChanged   = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
             onSendEmailClick = { viewModel.onEvent(AuthIntent.OnSendEmailClicked) },
         )
@@ -210,7 +246,11 @@ fun NavGraphBuilder.navGraph(
             passwordError     = state.reAuthPasswordError,
             onEmailChanged    = { viewModel.onEvent(AuthIntent.OnNewEmailChanged(it)) },
             onPasswordChanged = { viewModel.onEvent(AuthIntent.OnReAuthPasswordChanged(it)) },
-            onBack            = { navController.popBackStack() },
+            onBack = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             onChangeEmailClick = { viewModel.onEvent(AuthIntent.OnChangeEmailClicked) },
         )
     }
@@ -228,7 +268,11 @@ fun NavGraphBuilder.navGraph(
             passwordError            = state.passwordError,
             confirmPasswordError     = state.confirmPasswordError,
             uiEffect                 = viewModel.uiEffect,
-            onBack                   = { navController.popBackStack() },
+            onBack = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
             onEmailChanged           = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
             onPasswordChanged        = { viewModel.onEvent(AuthIntent.OnPasswordChanged(it)) },
             onConfirmPasswordChanged = { viewModel.onEvent(AuthIntent.OnConfirmPasswordChanged(it)) },

@@ -1,7 +1,6 @@
 package com.wordle.game.presentation.leaderboard.screen
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +9,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,7 +33,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -46,11 +52,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.wordle.core.alias.Action
-import com.wordle.core.presentation.components.PlayerAvatar
 import com.wordle.core.presentation.components.PlayerCard
 import com.wordle.core.presentation.components.PodiumPlayer
 import com.wordle.core.presentation.components.TopThreePodium
 import com.wordle.core.presentation.components.buttons.SegmentedButton
+import com.wordle.core.presentation.components.enums.AppLanguage
 import com.wordle.core.presentation.components.enums.LeaderboardFilter
 import com.wordle.core.presentation.components.navigation.GameTopBar
 import com.wordle.core.presentation.components.text.WordleText
@@ -68,53 +74,60 @@ import com.wordle.game.presentation.leaderboard.vm.LeaderboardViewModel
 fun LeaderboardScreen(
     viewModel: LeaderboardViewModel = hiltViewModel(),
     onClose: Action,
+    currentLanguage: AppLanguage,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    LaunchedEffect(currentLanguage) {
+        val code = if (currentLanguage == AppLanguage.ARABIC) "ar" else "en"
+        viewModel.onEvent(LeaderboardIntent.ChangeLanguage(code))
+    }
+
     LeaderboardContent(
         uiState  = uiState,
-        onClose = onClose,
+        onClose  = onClose,
         onIntent = viewModel::onEvent,
     )
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaderboardContent(
     uiState: LeaderboardUiState,
     onClose: Action,
     onIntent: (LeaderboardIntent) -> Unit,
 ) {
-
-    Log.d("Leaderboard", "LeaderboardContent composed, isLoading=${uiState.isLoading}, error=${uiState.error}, players=${uiState.players.size}")
-
     val currentUid = FirebaseAuth.getInstance().currentUser?.uid
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
     ) {
+        // ── Top bar stays outside the refresh area ────────────────
+        GameTopBar(
+            title            = stringResource(R.string.leaderboard),
+            endIcon          = Icons.Filled.Close,
+            onEndIconClicked = onClose,
+            containerColor   = Color.Transparent,
+            modifier         = Modifier.fillMaxWidth(),
+        )
 
-        Column(modifier = Modifier.fillMaxSize()) {
-
-            // ── Top bar ───────────────────────────────────────────────
-            GameTopBar(
-                title = stringResource(R.string.leaderboard),
-                endIcon = Icons.Filled.Close,
-                onEndIconClicked = onClose,
-                containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
+        // ── PullToRefreshBox wraps only the scrollable content ────
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh    = { onIntent(LeaderboardIntent.Refresh) },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
             when {
-                uiState.isLoading -> {
+                uiState.isLoading || uiState.isRefreshing -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier         = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            color = colors.buttonTeal,
+                            color       = colors.buttonTeal,
                             strokeWidth = 2.dp,
                         )
                     }
@@ -122,7 +135,7 @@ fun LeaderboardContent(
 
                 uiState.error != null -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier         = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
@@ -130,14 +143,14 @@ fun LeaderboardContent(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.ErrorOutline,
+                                imageVector        = Icons.Outlined.ErrorOutline,
                                 contentDescription = null,
-                                tint = colors.body.copy(alpha = 0.3f),
-                                modifier = Modifier.size(48.dp)
+                                tint               = colors.body.copy(alpha = 0.3f),
+                                modifier           = Modifier.size(48.dp)
                             )
                             WordleText(
-                                text = uiState.error ?: "",
-                                color = colors.body.copy(alpha = 0.5f),
+                                text     = uiState.error ?: "",
+                                color    = colors.body.copy(alpha = 0.5f),
                                 fontSize = typography.labelMedium,
                             )
                         }
@@ -149,49 +162,32 @@ fun LeaderboardContent(
                     val oneWeekMs = 7L * 24 * 60 * 60 * 1000
                     val oneMonthMs = 30L * 24 * 60 * 60 * 1000
 
-                    Log.d("Leaderboard", "Total players: ${uiState.players.size}")
-                    Log.d("Leaderboard", "Selected filter: ${uiState.selectedFilter}")
                     uiState.players.forEach { player ->
-                        Log.d("Leaderboard", "Player: ${player.name}, lastPlayedAt=${player.lastPlayedAt}")
                     }
 
                     val filteredPlayers = when (uiState.selectedFilter) {
                         LeaderboardFilter.THIS_WEEK -> uiState.players.filter { player ->
-                            player.lastPlayedAt?.let {
+                            val lastPlayed = if (uiState.language == "ar") player.arLastPlayedAt else player.enLastPlayedAt
+                            lastPlayed?.let {
                                 try {
                                     val time = java.time.Instant.parse(it).toEpochMilli()
-                                    val diff = now - time
-                                    Log.d("Leaderboard", "Player: ${player.name}, diff=${diff}ms, oneWeekMs=$oneWeekMs, included=${diff <= oneWeekMs}")
-                                    diff <= oneWeekMs
-                                } catch (e: Exception) {
-                                    Log.e("Leaderboard", "Failed to parse lastPlayedAt for ${player.name}: $it, error=${e.message}")
-                                    true
-                                }
-                            } ?: run {
-                                Log.d("Leaderboard", "Player: ${player.name} has no lastPlayedAt → excluded")
-                                false
-                            }
+                                    now - time <= oneWeekMs
+                                } catch (e: Exception) { true }
+                            } ?: false
                         }
+
                         LeaderboardFilter.THIS_MONTH -> uiState.players.filter { player ->
-                            player.lastPlayedAt?.let {
+                            val lastPlayed = if (uiState.language == "ar") player.arLastPlayedAt else player.enLastPlayedAt
+                            lastPlayed?.let {
                                 try {
                                     val time = java.time.Instant.parse(it).toEpochMilli()
-                                    val diff = now - time
-                                    Log.d("Leaderboard", "Player: ${player.name}, diff=${diff}ms, oneMonthMs=$oneMonthMs, included=${diff <= oneMonthMs}")
-                                    diff <= oneMonthMs
-                                } catch (e: Exception) {
-                                    Log.e("Leaderboard", "Failed to parse lastPlayedAt for ${player.name}: $it, error=${e.message}")
-                                    true
-                                }
-                            } ?: run {
-                                Log.d("Leaderboard", "Player: ${player.name} has no lastPlayedAt → excluded")
-                                false
-                            }
+                                    now - time <= oneMonthMs
+                                } catch (e: Exception) { true }
+                            } ?: false
                         }
+
                         LeaderboardFilter.ALL_TIME -> uiState.players
                     }
-
-                    Log.d("Leaderboard", "Filtered players count: ${filteredPlayers.size}")
 
                     val players = filteredPlayers
                     val top3 = players.take(3)
@@ -207,11 +203,12 @@ fun LeaderboardContent(
                                 stringResource(R.string.filter_all_time),
                             )
                             val filterValues = LeaderboardFilter.entries
-                            val selectedLabel = filterLabels[filterValues.indexOf(uiState.selectedFilter)]
+                            val selectedLabel =
+                                filterLabels[filterValues.indexOf(uiState.selectedFilter)]
 
                             SegmentedButton(
-                                options          = filterLabels,
-                                selectedOption   = selectedLabel,
+                                options = filterLabels,
+                                selectedOption = selectedLabel,
                                 onOptionSelected = { label ->
                                     val index = filterLabels.indexOf(label)
                                     onIntent(LeaderboardIntent.ChangeFilter(filterValues[index]))
@@ -220,7 +217,7 @@ fun LeaderboardContent(
                             )
 
                             Box(
-                                modifier         = Modifier.fillMaxSize(),
+                                modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(
@@ -230,18 +227,18 @@ fun LeaderboardContent(
                                 ) {
                                     Text(text = "🏆", fontSize = 48.sp)
                                     WordleText(
-                                        text      = stringResource(R.string.leaderboard_no_winners),
-                                        color     = colors.body.copy(alpha = 0.5f),
-                                        fontSize  = typography.labelMedium,
+                                        text = stringResource(R.string.leaderboard_no_winners),
+                                        color = colors.body.copy(alpha = 0.5f),
+                                        fontSize = typography.labelMedium,
                                         textAlign = TextAlign.Center,
-                                        modifier  = Modifier.padding(horizontal = 32.dp)
+                                        modifier = Modifier.padding(horizontal = 32.dp)
                                     )
                                 }
                             }
                         }
                     } else {
                         LazyColumn(
-                            modifier       = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(bottom = 32.dp),
                         ) {
                             // ── Segmented Button ──────────────────────────────
@@ -252,25 +249,48 @@ fun LeaderboardContent(
                                     stringResource(R.string.filter_all_time),
                                 )
                                 val filterValues = LeaderboardFilter.entries
-                                val selectedLabel = filterLabels[filterValues.indexOf(uiState.selectedFilter)]
+                                val selectedLabel =
+                                    filterLabels[filterValues.indexOf(uiState.selectedFilter)]
 
                                 SegmentedButton(
-                                    options          = filterLabels,
-                                    selectedOption   = selectedLabel,
+                                    options = filterLabels,
+                                    selectedOption = selectedLabel,
                                     onOptionSelected = { label ->
                                         val index = filterLabels.indexOf(label)
                                         onIntent(LeaderboardIntent.ChangeFilter(filterValues[index]))
                                     },
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = 16.dp,
+                                        vertical = 12.dp
+                                    )
                                 )
                             }
 
                             // ── Podium — always shown, empty slots for missing 2nd/3rd ──
                             item {
                                 TopThreePodium(
-                                    first  = PodiumPlayer(top3[0].name, top3[0].currentPoints, top3[0].avatarUrl, top3[0].firebaseUid == currentUid),
-                                    second = top3.getOrNull(1)?.let { PodiumPlayer(it.name, it.currentPoints, it.avatarUrl, it.firebaseUid == currentUid) },
-                                    third  = top3.getOrNull(2)?.let { PodiumPlayer(it.name, it.currentPoints, it.avatarUrl, it.firebaseUid == currentUid) },
+                                    first = PodiumPlayer(
+                                        top3[0].name,
+                                        if (uiState.language == "ar") top3[0].arCurrentPoints else top3[0].enCurrentPoints, // 👈
+                                        top3[0].avatarUrl,
+                                        top3[0].firebaseUid == currentUid
+                                    ),
+                                    second = top3.getOrNull(1)?.let {
+                                        PodiumPlayer(
+                                            it.name,
+                                            if (uiState.language == "ar") it.arCurrentPoints else it.enCurrentPoints, // 👈 it, not top3[0]
+                                            it.avatarUrl,
+                                            it.firebaseUid == currentUid
+                                        )
+                                    },
+                                    third = top3.getOrNull(2)?.let {
+                                        PodiumPlayer(
+                                            it.name,
+                                            if (uiState.language == "ar") it.arCurrentPoints else it.enCurrentPoints, // 👈 it, not top3[0]
+                                            it.avatarUrl,
+                                            it.firebaseUid == currentUid
+                                        )
+                                    },
                                 )
                             }
 
@@ -311,7 +331,7 @@ fun LeaderboardContent(
                                 PlayerCard(
                                     rank = index + 4,
                                     name = player.name,
-                                    points = player.currentPoints,
+                                    points = if (uiState.language == "ar") player.arCurrentPoints else player.enCurrentPoints, // 👈
                                     avatarUrl = player.avatarUrl,
                                     borderColor = if (isMe) colors.buttonTeal else colors.buttonTaupe,
                                     modifier = Modifier
@@ -364,7 +384,7 @@ fun LeaderboardContent(
                                         PlayerCard(
                                             rank = players.size + 1,
                                             name = me.name,
-                                            points = me.currentPoints,
+                                            points      = if (uiState.language == "ar") me.arCurrentPoints else me.enCurrentPoints, // 👈
                                             avatarUrl = me.avatarUrl,
                                             borderColor = colors.buttonPink,
                                             modifier = Modifier

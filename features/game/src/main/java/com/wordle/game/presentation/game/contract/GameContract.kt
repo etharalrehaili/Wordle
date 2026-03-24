@@ -23,6 +23,7 @@ data class GameUiState(
 sealed interface GameEffect : UiEffect {
     data class ShowGameDialog(val isWin: Boolean, val targetWord: String) : GameEffect
     data object InvalidWord : GameEffect
+    data object NotInWordList : GameEffect
     data object RowShake : GameEffect
 }
 

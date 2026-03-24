@@ -44,10 +44,12 @@
     <string name="profile_display_name_label">الاسم المعروض</string>
     <string name="profile_save_button">حفظ</string>
     <string name="profile_cancel_button">إلغاء</string>
-    <string name="profile_stat_played">لُعبت</string>
-    <string name="profile_stat_solved">حُلّت</string>
+    <string name="profile_stat_played">عدد مرات اللعب</string>
+    <string name="profile_stat_solved">عدد مرات الفوز</string>
     <string name="profile_stat_win_rate">نسبة الفوز</string>
     <string name="profile_updated_successfully">تم تحديث الملف الشخصي بنجاح</string>
+    <string name="profile_stat_arabic">عربي</string>
+    <string name="profile_stat_english">إنجليزي</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>

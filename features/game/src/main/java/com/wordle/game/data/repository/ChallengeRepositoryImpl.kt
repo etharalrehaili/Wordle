@@ -34,15 +34,15 @@ class ChallengeRepositoryImpl @Inject constructor(
 ) : ChallengeRepository {
 
     companion object {
-        private val KEY_UID          = stringPreferencesKey("challenge_uid")
-        private val KEY_DATE         = stringPreferencesKey("challenge_date")
-        private val KEY_TARGET       = stringPreferencesKey("challenge_target")
-        private val KEY_CURRENT_ROW  = intPreferencesKey("challenge_current_row")
-        private val KEY_CURRENT_COL  = intPreferencesKey("challenge_current_col")
-        private val KEY_IS_GAME_OVER = booleanPreferencesKey("challenge_is_game_over")
-        private val KEY_IS_WIN       = booleanPreferencesKey("challenge_is_win")
-        private val KEY_BOARD        = stringPreferencesKey("challenge_board")
-        private val KEY_KEYBOARD     = stringPreferencesKey("challenge_keyboard")
+        private fun keyUid(lang: String)        = stringPreferencesKey("challenge_uid_$lang")
+        private fun keyDate(lang: String)       = stringPreferencesKey("challenge_date_$lang")
+        private fun keyTarget(lang: String)     = stringPreferencesKey("challenge_target_$lang")
+        private fun keyCurrentRow(lang: String) = intPreferencesKey("challenge_current_row_$lang")
+        private fun keyCurrentCol(lang: String) = intPreferencesKey("challenge_current_col_$lang")
+        private fun keyIsGameOver(lang: String) = booleanPreferencesKey("challenge_is_game_over_$lang")
+        private fun keyIsWin(lang: String)      = booleanPreferencesKey("challenge_is_win_$lang")
+        private fun keyBoard(lang: String)      = stringPreferencesKey("challenge_board_$lang")
+        private fun keyKeyboard(lang: String)   = stringPreferencesKey("challenge_keyboard_$lang")
     }
 
     override suspend fun getDailyChallenge(date: String, language: String): String? {
@@ -58,24 +58,25 @@ class ChallengeRepositoryImpl @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun loadTodayState(): SavedChallengeState? {
+    override suspend fun loadTodayState(language: String): SavedChallengeState? {
         val prefs      = context.challengeDataStore.data.first()
-        val savedDate  = prefs[KEY_DATE] ?: return null
-        val savedUid   = prefs[KEY_UID]  ?: return null
+        val savedDate  = prefs[keyDate(language)] ?: return null
+        val savedUid   = prefs[keyUid(language)]  ?: return null
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
 
         if (savedUid != currentUid) return null
         if (savedDate != LocalDate.now().toString()) return null
 
-        val target     = prefs[KEY_TARGET]       ?: return null
-        val currentRow = prefs[KEY_CURRENT_ROW]  ?: 0
-        val currentCol = prefs[KEY_CURRENT_COL]  ?: 0
-        val isGameOver = prefs[KEY_IS_GAME_OVER] ?: false
-        val isWin      = prefs[KEY_IS_WIN]       ?: false
-        val boardStr   = prefs[KEY_BOARD]        ?: return null
-        val keyboardStr= prefs[KEY_KEYBOARD]     ?: ""
+        val target     = prefs[keyTarget(language)]     ?: return null
+        val currentRow = prefs[keyCurrentRow(language)] ?: 0
+        val currentCol = prefs[keyCurrentCol(language)] ?: 0
+        val isGameOver = prefs[keyIsGameOver(language)] ?: false
+        val isWin      = prefs[keyIsWin(language)]      ?: false
+        val boardStr   = prefs[keyBoard(language)]      ?: return null
+        val keyboardStr= prefs[keyKeyboard(language)]   ?: ""
 
         return SavedChallengeState(
+            language       = language,
             targetWord     = target,
             board          = decodeBoard(boardStr, target.length),
             keyboardStates = decodeKeyboard(keyboardStr),
@@ -88,6 +89,7 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun saveState(
+        language: String,
         targetWord: String,
         board: List<List<Tile>>,
         keyboardStates: Map<Char, TileState>,
@@ -98,24 +100,24 @@ class ChallengeRepositoryImpl @Inject constructor(
     ) {
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         context.challengeDataStore.edit { prefs ->
-            prefs[KEY_UID]          = currentUid
-            prefs[KEY_DATE]         = LocalDate.now().toString()
-            prefs[KEY_TARGET]       = targetWord
-            prefs[KEY_CURRENT_ROW]  = currentRow
-            prefs[KEY_CURRENT_COL]  = currentCol
-            prefs[KEY_IS_GAME_OVER] = isGameOver
-            prefs[KEY_IS_WIN]       = isWin
-            prefs[KEY_BOARD]        = encodeBoard(board)
-            prefs[KEY_KEYBOARD]     = encodeKeyboard(keyboardStates)
+            prefs[keyUid(language)]        = currentUid
+            prefs[keyDate(language)]       = LocalDate.now().toString()
+            prefs[keyTarget(language)]     = targetWord
+            prefs[keyCurrentRow(language)] = currentRow
+            prefs[keyCurrentCol(language)] = currentCol
+            prefs[keyIsGameOver(language)] = isGameOver
+            prefs[keyIsWin(language)]      = isWin
+            prefs[keyBoard(language)]      = encodeBoard(board)
+            prefs[keyKeyboard(language)]   = encodeKeyboard(keyboardStates)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun hasSolvedTodayChallenge(): Flow<Boolean> =
+    override fun hasSolvedTodayChallenge(language: String): Flow<Boolean> =
         context.challengeDataStore.data.map { prefs ->
-            val savedDate  = prefs[KEY_DATE]         ?: return@map false
-            val savedUid   = prefs[KEY_UID]          ?: return@map false
-            val isGameOver = prefs[KEY_IS_GAME_OVER] ?: return@map false
+            val savedDate  = prefs[keyDate(language)]      ?: return@map false
+            val savedUid   = prefs[keyUid(language)]       ?: return@map false
+            val isGameOver = prefs[keyIsGameOver(language)] ?: return@map false
             val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return@map false
 
             savedUid == currentUid
@@ -145,6 +147,7 @@ class ChallengeRepositoryImpl @Inject constructor(
 }
 
 data class SavedChallengeState(
+    val language: String,
     val targetWord: String,
     val board: List<List<Tile>>,
     val keyboardStates: Map<Char, TileState>,

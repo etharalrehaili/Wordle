@@ -1,7 +1,6 @@
 package com.wordle.game.domain.usecases.profile
 
 import com.wordle.core.util.Resource
-import com.wordle.game.data.remote.model.ProfileItem
 import com.wordle.game.domain.model.Profile
 import com.wordle.game.domain.repository.ProfileRepository
 import javax.inject.Inject

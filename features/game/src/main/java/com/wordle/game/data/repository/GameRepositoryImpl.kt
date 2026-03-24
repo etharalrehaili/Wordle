@@ -15,7 +15,7 @@ class GameRepositoryImpl @Inject constructor(
         // Check cache first
         val cached = db.wordDao().getWords(language, wordLength)
         if (cached.isNotEmpty()) {
-            return cached.map { it.text }
+                return cached.map { it.text.uppercase() }
         }
 
         // Cache empty — fetch from API

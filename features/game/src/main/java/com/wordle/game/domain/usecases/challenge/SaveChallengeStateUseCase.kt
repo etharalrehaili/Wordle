@@ -12,6 +12,7 @@ class SaveChallengeStateUseCase @Inject constructor(
     private val repository: ChallengeRepository
 ) {
     suspend operator fun invoke(
+        language: String,
         targetWord: String,
         board: List<List<Tile>>,
         keyboardStates: Map<Char, TileState>,
@@ -21,6 +22,7 @@ class SaveChallengeStateUseCase @Inject constructor(
         isWin: Boolean,
     ) {
         repository.saveState(
+            language = language,
             targetWord     = targetWord,
             board          = board,
             keyboardStates = keyboardStates,

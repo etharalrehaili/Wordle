@@ -50,15 +50,18 @@ class ProfileRepositoryImpl @Inject constructor(
      */
     override suspend fun updateProfile(
         documentId: String,
+        firebaseUid: String,
         name: String,
         avatarUrl: String?,
+        language: String,
         gamesPlayed: Int,
         wordsSolved: Int,
         winPercentage: Double,
         currentPoints: Int,
     ): Profile {
         val profile = remote.updateProfile(
-            documentId, name, avatarUrl, gamesPlayed, wordsSolved, winPercentage, currentPoints
+            documentId, firebaseUid, name, avatarUrl,
+            language, gamesPlayed, wordsSolved, winPercentage, currentPoints
         )
         db.profileDao().insertProfile(profile.toEntity())
         return profile.toDomain()
@@ -70,7 +73,7 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     /** Fetches leaderboard directly from API — not cached since it changes frequently. */
-    override suspend fun getLeaderboard(limit: Int): List<Profile> {
-        return remote.getLeaderboard(limit).map { it.toDomain() }
+    override suspend fun getLeaderboard(limit: Int, language: String): List<Profile> {
+            return remote.getLeaderboard(limit, language).map { it.toDomain() }
     }
 }

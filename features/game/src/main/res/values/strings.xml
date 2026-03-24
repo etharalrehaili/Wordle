@@ -45,6 +45,8 @@
     <string name="profile_stat_solved">Solved</string>
     <string name="profile_stat_win_rate">Win Rate</string>
     <string name="profile_updated_successfully">Profile Updated Successfully</string>
+    <string name="profile_stat_arabic">ar</string>
+    <string name="profile_stat_english">en</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>

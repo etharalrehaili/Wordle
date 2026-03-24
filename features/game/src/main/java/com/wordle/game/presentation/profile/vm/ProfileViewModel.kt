@@ -55,15 +55,21 @@ class ProfileViewModel @Inject constructor(
 
             setState {
                 copy(
-                    profileId     = profile.id,
-                    documentId    = profile.documentId,
-                    name          = displayName,
-                    email         = email,
-                    avatarUrl     = profile.avatarUrl,
-                    gamesPlayed   = profile.gamesPlayed,
-                    wordsSolved   = profile.wordsSolved,
-                    winPercentage = profile.winPercentage.toInt(),
-                    currentPoints = profile.currentPoints,
+                    profileId        = profile.id,
+                    documentId       = profile.documentId,
+                    name             = displayName,
+                    email            = email,
+                    avatarUrl        = profile.avatarUrl,
+                    // English stats
+                    enGamesPlayed    = profile.enGamesPlayed,
+                    enWordsSolved    = profile.enWordsSolved,
+                    enWinPercentage  = profile.enWinPercentage.toInt(),
+                    enCurrentPoints  = profile.enCurrentPoints,
+                    // Arabic stats
+                    arGamesPlayed    = profile.arGamesPlayed,
+                    arWordsSolved    = profile.arWordsSolved,
+                    arWinPercentage  = profile.arWinPercentage.toInt(),
+                    arCurrentPoints  = profile.arCurrentPoints,
                 )
             }
         }
@@ -140,12 +146,14 @@ class ProfileViewModel @Inject constructor(
                     // Send the full updated profile to the backend
                     when (val result = updateProfileUseCase(
                         documentId    = state.documentId,
+                        firebaseUid = FirebaseAuth.getInstance().currentUser?.uid ?: "",
                         name          = trimmed,
                         avatarUrl     = avatarUrl,
-                        gamesPlayed   = state.gamesPlayed,
-                        wordsSolved   = state.wordsSolved,
-                        winPercentage = state.winPercentage.toDouble(),
-                        currentPoints = state.currentPoints,
+                        language      = "en",
+                        gamesPlayed   = state.enGamesPlayed,
+                        wordsSolved   = state.enWordsSolved,
+                        winPercentage = state.enWinPercentage.toDouble(),
+                        currentPoints = state.enCurrentPoints,
                     )) {
                         is Resource.Success -> {
                             // Apply saved values to the UI state and exit edit mode

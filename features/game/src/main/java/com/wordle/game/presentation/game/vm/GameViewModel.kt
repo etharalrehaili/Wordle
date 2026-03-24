@@ -103,9 +103,12 @@ class GameViewModel @Inject constructor(
 
         val guess = state.board[state.currentRow].map { it.letter }.joinToString("")
 
-        Log.d("GameVM", "submitGuess: guess=$guess targetWord=${state.targetWord}")
-        Log.d("GameVM", "wordList sample=${state.wordList.take(5)}")
-        Log.d("GameVM", "wordList contains guess=${state.wordList.any { it.equals(guess, ignoreCase = true) }}")
+        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
+        if (!isInWordList) {
+            sendEffect { GameEffect.NotInWordList }
+            sendEffect { GameEffect.RowShake }
+            return
+        }
 
         val evaluatedRow = evaluateGuess(guess, state.targetWord)
         val newBoard = state.board.toMutableList()

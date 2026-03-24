@@ -17,6 +17,7 @@ import com.wordle.game.domain.usecases.profile.UpdateProfileUseCase
 import com.wordle.game.presentation.challenge.contract.ChallengeEffect
 import com.wordle.game.presentation.challenge.contract.ChallengeIntent
 import com.wordle.game.presentation.challenge.contract.ChallengeUiState
+import com.wordle.game.presentation.game.contract.GameEffect
 import com.wordle.game.presentation.game.contract.Tile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -50,11 +51,14 @@ class ChallengeViewModel @Inject constructor(
             setState { copy(isLoading = true, error = null) }
             val today = LocalDate.now().toString()
 
-            val saved = loadTodayChallengeUseCase()
-            if (saved != null) {
+            val saved = loadTodayChallengeUseCase(language)
+
+            // Only restore saved state if it matches the requested language
+            if (saved != null && saved.language == language) {
                 setState {
                     copy(
                         isLoading      = false,
+                        language       = language,
                         wordLength     = saved.targetWord.length,
                         targetWord     = saved.targetWord,
                         board          = saved.board,
@@ -68,13 +72,19 @@ class ChallengeViewModel @Inject constructor(
                     sendEffect { ChallengeEffect.ShowGameDialog(isWin = saved.isWin, targetWord = saved.targetWord) }
                 }
             } else {
+                // Fetch fresh challenge for the requested language
                 when (val result = getDailyChallengeUseCase(today, language)) {
                     is Resource.Success -> setState {
                         copy(
                             isLoading  = false,
+                            language = language,
                             targetWord = result.data,
                             wordLength = result.data.length,
-                            board      = List(MAX_GUESSES) { List(result.data.length) { Tile() } }
+                            board      = List(MAX_GUESSES) { List(result.data.length) { Tile() } },
+                            keyboardStates = emptyMap(),
+                            currentRow = 0,
+                            currentCol = 0,
+                            isGameOver = false,
                         )
                     }
                     is Resource.Error   -> setState { copy(isLoading = false, error = result.message) }
@@ -124,6 +134,14 @@ class ChallengeViewModel @Inject constructor(
         }
 
         val guess        = state.board[state.currentRow].map { it.letter }.joinToString("")
+
+        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
+        if (!isInWordList) {
+            sendEffect { ChallengeEffect.NotInWordList }
+            sendEffect { ChallengeEffect.RowShake }
+            return
+        }
+
         val evaluatedRow = evaluateGuess(guess, state.targetWord)
         val newBoard     = state.board.toMutableList().also { it[state.currentRow] = evaluatedRow }.toList()
         val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
@@ -144,6 +162,7 @@ class ChallengeViewModel @Inject constructor(
         viewModelScope.launch {
             val s = uiState.value
             saveChallengeStateUseCase(
+                language       = s.language,
                 targetWord     = s.targetWord,
                 board          = s.board,
                 keyboardStates = s.keyboardStates,
@@ -154,13 +173,14 @@ class ChallengeViewModel @Inject constructor(
             )
         }
 
+        val currentLanguage = state.language
         if (isWin || isLast) {
             sendEffect { ChallengeEffect.ShowGameDialog(isWin = isWin, targetWord = state.targetWord) }
-            updateProfileStats(isWin = isWin, guessCount = state.currentRow + 1)
+            updateProfileStats(isWin = isWin, guessCount = state.currentRow + 1, language = currentLanguage)
         }
     }
 
-    private fun updateProfileStats(isWin: Boolean, guessCount: Int) {
+    private fun updateProfileStats(isWin: Boolean, guessCount: Int, language: String) {
         viewModelScope.launch {
             val user = FirebaseAuth.getInstance().currentUser ?: return@launch
             val profile = when (val result = getProfileUseCase(user.uid)) {
@@ -177,30 +197,26 @@ class ChallengeViewModel @Inject constructor(
                 else -> 10
             } else 0
 
-            val newGamesPlayed = profile.gamesPlayed + 1
-            val newWordsSolved = profile.wordsSolved + if (isWin) 1 else 0
-            val newWinRate     = if (newGamesPlayed > 0) (newWordsSolved * 100.0 / newGamesPlayed) else 0.0
-            val newPoints      = profile.currentPoints + pointsEarned
+            val currentGames    = profile.gamesPlayedForLanguage(language)
+            val currentSolved   = profile.wordsSolvedForLanguage(language)
+            val currentPoints   = profile.pointsForLanguage(language)
 
-//            updateProfileUseCase(
-//                documentId    = profile.documentId,
-//                name          = profile.name,
-//                avatarUrl     = profile.avatarUrl,
-//                gamesPlayed   = newGamesPlayed,
-//                wordsSolved   = newWordsSolved,
-//                winPercentage = newWinRate,
-//                currentPoints = newPoints,
-//            )
-            val result = updateProfileUseCase(
+            val newGamesPlayed  = currentGames + 1
+            val newWordsSolved  = currentSolved + if (isWin) 1 else 0
+            val newWinRate      = if (newGamesPlayed > 0) (newWordsSolved * 100.0 / newGamesPlayed) else 0.0
+            val newPoints       = currentPoints + pointsEarned
+
+            updateProfileUseCase(
                 documentId    = profile.documentId,
+                firebaseUid   = user.uid,
                 name          = profile.name,
                 avatarUrl     = profile.avatarUrl,
+                language      = language,
                 gamesPlayed   = newGamesPlayed,
                 wordsSolved   = newWordsSolved,
                 winPercentage = newWinRate,
                 currentPoints = newPoints,
             )
-            Log.d("ChallengeVM", "updateProfileStats result: $result")
         }
     }
 

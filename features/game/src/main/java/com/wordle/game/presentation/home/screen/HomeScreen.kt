@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Duration
 import java.time.LocalDateTime
 import com.wordle.core.alias.Action
@@ -77,16 +78,10 @@ fun HomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
 
-    val preferencesUiState by preferencesViewModel.uiState.collectAsState()
-    val homeUiState by homeViewModel.uiState.collectAsState()
+    android.util.Log.d("NavDebug", "HomeScreen composed")
 
-    LaunchedEffect(Unit) {
-        preferencesViewModel.uiEffect.collect { effect ->
-            when (effect) {
-                is PreferencesEffect.ApplyLanguage -> setAppLanguage(effect.locale)
-            }
-        }
-    }
+    val homeUiState        by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val preferencesUiState by preferencesViewModel.uiState.collectAsStateWithLifecycle()
 
     HomeContent(
         uiState            = preferencesUiState,
@@ -94,13 +89,17 @@ fun HomeScreen(
         onChallengeClick   = onChallengeClick,
         onLeaderboardClick = onLeaderboardClick,
         onProfileClick     = onProfileClick,
-        onIntent           = preferencesViewModel::onEvent,
-        onThemeChanged     = onThemeChanged,
-        onLanguageChanged  = onLanguageChanged,
-        onLoginWithEmail = onLoginWithEmail,
-        onSignUpClick    = onSignUpClick,
+        onIntent           = { intent ->
+            preferencesViewModel.onEvent(intent)
+            when (intent) {
+                is PreferencesIntent.ChangeTheme    -> onThemeChanged(intent.theme)
+                is PreferencesIntent.ChangeLanguage -> onLanguageChanged(intent.language)
+            }
+        },
         isLoggedIn         = homeUiState.isLoggedIn,
         hasSolvedChallenge = homeUiState.hasSolvedChallenge,
+        onLoginWithEmail   = onLoginWithEmail,
+        onSignUpClick      = onSignUpClick,
     )
 }
 
@@ -114,22 +113,25 @@ fun HomeContent(
     onLeaderboardClick: Action,
     onProfileClick: Action,
     onIntent: (PreferencesIntent) -> Unit,
-    onThemeChanged: (AppColorTheme) -> Unit = {},
-    onLanguageChanged: (AppLanguage) -> Unit = {},
     isLoggedIn: Boolean = false,
     hasSolvedChallenge: Boolean = false,
     onLoginWithEmail: Action = {},
     onSignUpClick: Action = {},
 ) {
+
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showAuthSheet by remember { mutableStateOf(false) }
     var showLengthSheet by remember { mutableStateOf(false) }
     var countdownSeconds by remember { mutableStateOf(secondsUntilMidnight()) }
+
     BackHandler(enabled = drawerState.isOpen) {
         scope.launch { drawerState.close() }
     }
 
+    LaunchedEffect(drawerState.currentValue) {
+        android.util.Log.d("NavDebug", "Drawer state changed: ${drawerState.currentValue}")
+    }
     LaunchedEffect(Unit) {
         while (true) {
             delay(1_000L)
@@ -149,14 +151,8 @@ fun HomeContent(
                     onProfileClick()
                 },
                 isLoggedIn       = isLoggedIn,
-                onLanguageSelected = { language ->
-                    onIntent(PreferencesIntent.ChangeLanguage(language))
-                    onLanguageChanged(language)
-                },
-                onThemeSelected    = { theme ->
-                    onIntent(PreferencesIntent.ChangeTheme(theme))
-                    onThemeChanged(theme)
-                },
+                onLanguageSelected = { onIntent(PreferencesIntent.ChangeLanguage(it)) },
+                onThemeSelected    = { onIntent(PreferencesIntent.ChangeTheme(it)) },
             )
         },
         gesturesEnabled = drawerState.isOpen
@@ -166,9 +162,13 @@ fun HomeContent(
                 .fillMaxSize()
                 .background(colors.background)
         ) {
+
             GameTopBar(
                 startIcon          = Icons.Filled.Menu,
-                onStartIconClicked = { scope.launch { drawerState.open() } },
+                onStartIconClicked = {
+                    android.util.Log.d("NavDebug", "Menu icon clicked, drawer state: ${drawerState.currentValue}")
+                    scope.launch { drawerState.open() }
+                },
                 modifier           = Modifier.align(Alignment.TopCenter),
                 containerColor     = Color.Transparent
             )

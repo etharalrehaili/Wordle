@@ -1,61 +1,61 @@
 package com.wordle.game.presentation.preferences.vm
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.lifecycle.viewModelScope
+import com.wordle.core.domain.model.DARK_MODEL
+import com.wordle.core.domain.model.ENGLISH_MODEL
+import com.wordle.core.domain.model.LIGHT_MODEL
+import dagger.hilt.android.lifecycle.HiltViewModel
+import com.wordle.core.domain.model.LanguageModel
+import com.wordle.core.domain.model.ThemeModel
+import com.wordle.core.domain.model.isArabic
+import com.wordle.core.domain.model.isDark
+import com.wordle.core.domain.usecase.GetCurrentLanguageUseCase
+import com.wordle.core.domain.usecase.GetCurrentThemeUseCase
+import com.wordle.core.domain.usecase.GetLanguageUseCase
+import com.wordle.core.domain.usecase.GetThemeUseCase
+import com.wordle.core.domain.usecase.SetLanguageUseCase
+import com.wordle.core.domain.usecase.SetThemeUseCase
 import com.wordle.core.mvi.BaseMviViewModel
 import com.wordle.core.presentation.components.enums.AppColorTheme
 import com.wordle.core.presentation.components.enums.AppLanguage
 import com.wordle.game.presentation.preferences.contract.PreferencesEffect
 import com.wordle.game.presentation.preferences.contract.PreferencesIntent
 import com.wordle.game.presentation.preferences.contract.PreferencesUiState
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import androidx.datastore.preferences.core.Preferences
 import javax.inject.Inject
 
 @HiltViewModel
 class PreferencesViewModel @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    private val getLanguageUseCase: GetLanguageUseCase,
+    private val getCurrentLanguageUseCase: GetCurrentLanguageUseCase,
+    private val setLanguageUseCase: SetLanguageUseCase,
+    private val getThemeUseCase: GetThemeUseCase,
+    private val getCurrentThemeUseCase: GetCurrentThemeUseCase,
+    private val setThemeUseCase: SetThemeUseCase,
 ) : BaseMviViewModel<PreferencesIntent, PreferencesUiState, PreferencesEffect>(
-    initialState = PreferencesUiState()
+    initialState = PreferencesUiState(
+        selectedLanguage = if (getCurrentLanguageUseCase().isArabic()) AppLanguage.ARABIC else AppLanguage.ENGLISH,
+        selectedTheme    = if (getCurrentThemeUseCase().isDark()) AppColorTheme.DARK else AppColorTheme.LIGHT,
+    )
 ) {
-    companion object {
-        val THEME_KEY    = stringPreferencesKey("theme")
-        val LANGUAGE_KEY = stringPreferencesKey("language")
-    }
 
-    init {
-        viewModelScope.launch {
-            dataStore.data.first().let { prefs ->
-                val theme    = prefs[THEME_KEY]?.let { AppColorTheme.valueOf(it) } ?: AppColorTheme.DARK
-                val language = prefs[LANGUAGE_KEY]?.let { AppLanguage.entries.find { l -> l.code == it } } ?: AppLanguage.ENGLISH
-                setState { copy(selectedTheme = theme, selectedLanguage = language) }
+    override fun onEvent(intent: PreferencesIntent) {
+        when (intent) {
+            is PreferencesIntent.ChangeLanguage -> {
+                val code     = if (intent.language == AppLanguage.ARABIC) "ar" else "en"
+                val model    = getLanguages().firstOrNull { it.code == code } ?: ENGLISH_MODEL
+                setLanguageUseCase(model)
+                setState { copy(selectedLanguage = intent.language) }
+            }
+            is PreferencesIntent.ChangeTheme -> {
+                val model = if (intent.theme == AppColorTheme.DARK) DARK_MODEL else LIGHT_MODEL
+                setThemeUseCase(model)
+                setState { copy(selectedTheme = intent.theme) }
             }
         }
     }
 
-    override fun onEvent(intent: PreferencesIntent) {
-        when (intent) {
-            is PreferencesIntent.ChangeTheme    -> handleThemeChange(intent.theme)
-            is PreferencesIntent.ChangeLanguage -> handleLanguageChange(intent.language)
-        }
-    }
-
-    private fun handleThemeChange(theme: AppColorTheme) {
-        setState { copy(selectedTheme = theme) }
-        viewModelScope.launch {
-            dataStore.edit { it[THEME_KEY] = theme.name }
-        }
-    }
-
-    private fun handleLanguageChange(language: AppLanguage) {
-        setState { copy(selectedLanguage = language) }
-        sendEffect { PreferencesEffect.ApplyLanguage(language.code) }
-        viewModelScope.launch {
-            dataStore.edit { it[LANGUAGE_KEY] = language.code }
-        }
-    }
+    fun getLanguages(): List<LanguageModel> = getLanguageUseCase()
+    fun getCurrentLanguage(): LanguageModel = getCurrentLanguageUseCase()
+    fun getCurrentTheme(): ThemeModel = getCurrentThemeUseCase()
+    fun setLanguage(language: LanguageModel) = setLanguageUseCase(language)
+    fun setTheme(theme: ThemeModel) = setThemeUseCase(theme)
 }

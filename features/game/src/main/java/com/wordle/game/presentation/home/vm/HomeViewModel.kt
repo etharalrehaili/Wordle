@@ -12,6 +12,7 @@ import com.wordle.game.presentation.home.contract.HomeEffect
 import com.wordle.game.presentation.home.contract.HomeIntent
 import com.wordle.game.presentation.home.contract.HomeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,6 +25,7 @@ class HomeViewModel @Inject constructor(
 ) : BaseMviViewModel<HomeIntent, HomeUiState, HomeEffect>(
     initialState = HomeUiState()
 ) {
+
     init {
         viewModelScope.launch {
             getAuthState().collect { isLoggedIn ->
@@ -32,7 +34,12 @@ class HomeViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            getChallengeSolvedState().collect { solved ->
+            // check both languages, show countdown if either is solved
+            getChallengeSolvedState("en").combine(
+                getChallengeSolvedState("ar")
+            ) { enSolved, arSolved ->
+                enSolved || arSolved
+            }.collect { solved ->
                 setState { copy(hasSolvedChallenge = solved) }
             }
         }

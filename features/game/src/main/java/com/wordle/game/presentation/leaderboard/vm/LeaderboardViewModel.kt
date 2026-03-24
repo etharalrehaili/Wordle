@@ -17,28 +17,41 @@ class LeaderboardViewModel @Inject constructor(
 ) : BaseMviViewModel<LeaderboardIntent, LeaderboardUiState, LeaderboardEffect>(
     initialState = LeaderboardUiState()
 ) {
-    init { loadLeaderboard() }
 
     override fun onEvent(intent: LeaderboardIntent) {
         when (intent) {
-            LeaderboardIntent.Refresh -> loadLeaderboard()
+            LeaderboardIntent.Refresh -> {
+                setState { copy(isRefreshing = true) }
+                loadLeaderboard(isRefresh = true, language = uiState.value.language)
+            }
             is LeaderboardIntent.ChangeFilter -> {
                 setState { copy(selectedFilter = intent.filter) }
+            }
+            is LeaderboardIntent.ChangeLanguage -> {
+                setState { copy(language = intent.language) }
+                loadLeaderboard(language = intent.language)
             }
         }
     }
 
-    private fun loadLeaderboard() {
+
+    private fun loadLeaderboard(isRefresh: Boolean = false, language: String) {
         viewModelScope.launch {
-            setState { copy(isLoading = true, error = null) }
-            when (val result = getLeaderboardUseCase(limit = 10)) {
+            if (!isRefresh) setState { copy(isLoading = true, error = null) }
+            when (val result = getLeaderboardUseCase(limit = 10, language = language)) {
                 is Resource.Success -> setState {
                     copy(
-                        isLoading = false,
-                        players = result.data.filter { it.wordsSolved >= 1 }
+                        isLoading    = false,
+                        isRefreshing = false,
+                        players      = result.data.filter {
+                            if (language == "ar") it.arWordsSolved >= 1
+                            else it.enWordsSolved >= 1
+                        }
                     )
                 }
-                is Resource.Error   -> setState { copy(isLoading = false, error = result.message) }
+                is Resource.Error -> setState {
+                    copy(isLoading = false, isRefreshing = false, error = result.message)
+                }
                 else -> Unit
             }
         }

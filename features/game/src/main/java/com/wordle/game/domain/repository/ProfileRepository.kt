@@ -19,8 +19,10 @@ interface ProfileRepository {
     /** Updates an existing profile's display info and game statistics. */
     suspend fun updateProfile(
         documentId: String,
+        firebaseUid: String,
         name: String,
         avatarUrl: String?,
+        language: String,
         gamesPlayed: Int,
         wordsSolved: Int,
         winPercentage: Double,
@@ -31,5 +33,6 @@ interface ProfileRepository {
     suspend fun uploadAvatar(imageUri: Uri, context: Context): String
 
     /** Fetches the top [limit] players sorted by points for the leaderboard. */
-    suspend fun getLeaderboard(limit: Int): List<Profile>
+    suspend fun getLeaderboard(limit: Int, language: String): List<Profile>
+
 }

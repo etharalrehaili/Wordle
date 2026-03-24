@@ -2,7 +2,6 @@ package com.wordle.game.data.remote.datasource.profile
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.wordle.game.data.remote.api.ProfileApiService
 import com.wordle.game.data.remote.model.CreateProfileData
 import com.wordle.game.data.remote.model.CreateProfileRequest
@@ -34,37 +33,56 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         ).data
     }
 
-    /** Sends a PUT request to Strapi to update the profile document. */
     override suspend fun updateProfile(
         documentId: String,
+        firebaseUid: String,
         name: String,
         avatarUrl: String?,
+        language: String,
         gamesPlayed: Int,
         wordsSolved: Int,
         winPercentage: Double,
         currentPoints: Int,
     ): ProfileItem {
-        try {
-            return api.updateProfile(
-                documentId,
-                UpdateProfileRequest(
-                    UpdateProfileData(
-                        name          = name,
-                        avatarUrl     = avatarUrl,
-                        gamesPlayed   = gamesPlayed,
-                        wordsSolved   = wordsSolved,
-                        winPercentage = winPercentage,
-                        currentPoints = currentPoints,
-                        lastPlayedAt  = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
-                            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")),
-                    )
-                )
-            ).data
-        } catch (e: retrofit2.HttpException) {
-            val errorBody = e.response()?.errorBody()?.string()
-            Log.e("UpdateProfile", "HTTP ${e.code()} - $errorBody")
-            throw e
+        // Use firebaseUid to get current profile
+        val current = getProfile(firebaseUid) ?: throw Exception("Profile not found")
+
+        val now = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+
+        val data = if (language == "ar") {
+            UpdateProfileData(
+                name            = name,
+                avatarUrl       = avatarUrl,
+                enGamesPlayed   = current.enGamesPlayed,
+                enWordsSolved   = current.enWordsSolved,
+                enWinPercentage = current.enWinPercentage,
+                enCurrentPoints = current.enCurrentPoints,
+                enLastPlayedAt  = current.enLastPlayedAt,
+                arGamesPlayed   = gamesPlayed,
+                arWordsSolved   = wordsSolved,
+                arWinPercentage = winPercentage,
+                arCurrentPoints = currentPoints,
+                arLastPlayedAt  = now,
+            )
+        } else {
+            UpdateProfileData(
+                name            = name,
+                avatarUrl       = avatarUrl,
+                enGamesPlayed   = gamesPlayed,
+                enWordsSolved   = wordsSolved,
+                enWinPercentage = winPercentage,
+                enCurrentPoints = currentPoints,
+                enLastPlayedAt  = now,
+                arGamesPlayed   = current.arGamesPlayed,
+                arWordsSolved   = current.arWordsSolved,
+                arWinPercentage = current.arWinPercentage,
+                arCurrentPoints = current.arCurrentPoints,
+                arLastPlayedAt  = current.arLastPlayedAt,
+            )
         }
+
+        return api.updateProfile(documentId, UpdateProfileRequest(data)).data
     }
 
     /**
@@ -88,11 +106,12 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         val part        = MultipartBody.Part.createFormData("files", "avatar.$extension", requestBody)
 
         val relativePath = api.uploadAvatar(part).first().url
-        return "http://192.168.0.100:1337$relativePath"
+        return "http://192.168.0.140:1337$relativePath"
     }
 
     /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */
-    override suspend fun getLeaderboard(limit: Int): List<ProfileItem> {
-        return api.getLeaderboard(limit = limit).data
+    override suspend fun getLeaderboard(limit: Int, language: String): List<ProfileItem> {
+        val sort = if (language == "ar") "arCurrentPoints:desc" else "enCurrentPoints:desc"
+        return api.getLeaderboard(limit = limit, sort = sort).data
     }
 }

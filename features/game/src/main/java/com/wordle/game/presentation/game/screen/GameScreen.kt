@@ -22,12 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wordle.core.alias.Action
+import com.wordle.core.presentation.components.CustomSnackbarHost
 import com.wordle.core.presentation.components.GameBoard
 import com.wordle.core.presentation.components.GameKeyboard
 import com.wordle.core.presentation.components.GuessRow
+import com.wordle.core.presentation.components.SnackbarState
 import com.wordle.core.presentation.components.bottomsheets.GameResultsBottomSheet
 import com.wordle.core.presentation.components.bottomsheets.WordleInfoBottomSheet
 import com.wordle.core.presentation.components.enums.AppLanguage
+import com.wordle.core.presentation.components.enums.SnackbarType
 import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.presentation.components.navigation.GameTopBar
 import com.wordle.core.presentation.theme.LocalWordleColors
@@ -49,6 +52,7 @@ fun GameScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var dialogState by remember { mutableStateOf<GameDialogState>(GameDialogState.None) }
+    var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
 
     LaunchedEffect(currentLanguage) {
         viewModel.onEvent(GameIntent.LoadWords(currentLanguage.code, wordLength))
@@ -58,6 +62,10 @@ fun GameScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is GameEffect.ShowGameDialog -> dialogState = GameDialogState.Result(effect.isWin, effect.targetWord)
+                GameEffect.NotInWordList -> snackbarState = SnackbarState(
+                    message = "Not in word list",
+                    type    = SnackbarType.WARNING
+                )
                 GameEffect.InvalidWord -> { }
                 GameEffect.RowShake    -> { }
             }
@@ -68,6 +76,8 @@ fun GameScreen(
         uiState = uiState,
         currentLanguage = currentLanguage,
         dialogState = dialogState,
+        snackbarState   = snackbarState,
+        onDismissSnackbar = { snackbarState = null },
         onClose = onClose,
         onInfoClick = { dialogState = GameDialogState.Info },
         onDismissDialog = { dialogState = GameDialogState.None },
@@ -85,6 +95,8 @@ fun GameContent(
     uiState: GameUiState,
     currentLanguage: AppLanguage,
     dialogState: GameDialogState,
+    snackbarState: SnackbarState?,
+    onDismissSnackbar: Action,
     onClose: Action,
     onInfoClick: Action,
     onDismissDialog: Action,
@@ -135,6 +147,13 @@ fun GameContent(
                 onBackspace = { onIntent(GameIntent.DeleteLetter) },
                 language    = currentLanguage,
                 modifier    = Modifier.fillMaxWidth()
+            )
+        }
+
+        snackbarState?.let {
+            CustomSnackbarHost(
+                state     = it,
+                onDismiss = onDismissSnackbar,
             )
         }
 

@@ -286,11 +286,54 @@ fun ProfileContent(
                             )
                             Spacer(modifier = Modifier.height(spacing.xxs))
                             WordleText(
-                                text       = "%,d".format(uiState.currentPoints),
+                                text       = "%,d".format(uiState.enCurrentPoints + uiState.arCurrentPoints),
                                 color      = colors.title,
                                 fontSize   = typography.displaySmall,
                                 fontWeight = FontWeight.ExtraBold,
                             )
+                            Spacer(modifier = Modifier.height(spacing.xs))
+
+                            // ar / en breakdown
+                            Row(
+                                modifier              = Modifier
+                                    .clip(RoundedCornerShape(spacing.xs))
+                                    .background(colors.buttonPink.copy(alpha = 0.10f))
+                                    .padding(horizontal = spacing.sm, vertical = spacing.xxs),
+                                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                                verticalAlignment     = Alignment.CenterVertically,
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    WordleText(
+                                        text     = stringResource(R.string.profile_stat_arabic),
+                                        color    = colors.body.copy(alpha = 0.35f),
+                                        fontSize = typography.labelSmall,
+                                    )
+                                    WordleText(
+                                        text       = "%,d".format(uiState.arCurrentPoints),
+                                        color      = colors.buttonPink,
+                                        fontSize   = typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 1.dp, height = spacing.md)
+                                        .background(colors.border)
+                                )
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    WordleText(
+                                        text     = stringResource(R.string.profile_stat_english),
+                                        color    = colors.body.copy(alpha = 0.35f),
+                                        fontSize = typography.labelSmall,
+                                    )
+                                    WordleText(
+                                        text       = "%,d".format(uiState.enCurrentPoints),
+                                        color      = colors.buttonPink,
+                                        fontSize   = typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
                         }
                         Box(
                             modifier = Modifier
@@ -313,26 +356,52 @@ fun ProfileContent(
                     modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(spacing.xs)
                 ) {
+                    // Stats cards — sum both languages
                     MiniStatCard(
-                        icon     = Icons.Filled.Games,
-                        label    = stringResource(R.string.profile_stat_played),
-                        value    = uiState.gamesPlayed.toString(),
-                        accent   = colors.buttonTaupe,
-                        modifier = Modifier.weight(1f)
+                        icon      = Icons.Filled.Games,
+                        label     = stringResource(R.string.profile_stat_played),
+                        value     = (uiState.enGamesPlayed + uiState.arGamesPlayed).toString(),
+                        accent    = colors.buttonTaupe,
+                        modifier  = Modifier.weight(1f),
+                        subtitles = listOf(
+                            stringResource(R.string.profile_stat_arabic) to uiState.arGamesPlayed.toString(),
+                            stringResource(R.string.profile_stat_english) to uiState.enGamesPlayed.toString(),
+                        )
                     )
                     MiniStatCard(
-                        icon     = Icons.Filled.Check,
-                        label    = stringResource(R.string.profile_stat_solved),
-                        value    = uiState.wordsSolved.toString(),
-                        accent   = colors.buttonTeal,
-                        modifier = Modifier.weight(1f)
+                        icon      = Icons.Filled.Check,
+                        label     = stringResource(R.string.profile_stat_solved),
+                        value     = (uiState.enWordsSolved + uiState.arWordsSolved).toString(),
+                        accent    = colors.buttonTeal,
+                        modifier  = Modifier.weight(1f),
+                        subtitles = listOf(
+                            stringResource(R.string.profile_stat_arabic) to uiState.arWordsSolved.toString(),
+                            stringResource(R.string.profile_stat_english) to uiState.enWordsSolved.toString(),
+                        )
                     )
                     MiniStatCard(
                         icon     = Icons.Outlined.EmojiEvents,
                         label    = stringResource(R.string.profile_stat_win_rate),
-                        value    = "${uiState.winPercentage}%",
-                        accent   = colors.buttonPink,
-                        modifier = Modifier.weight(1f)
+                        value    = run {
+                            val totalGames  = uiState.enGamesPlayed + uiState.arGamesPlayed
+                            val totalSolved = uiState.enWordsSolved + uiState.arWordsSolved
+                            val rate = if (totalGames > 0) (totalSolved * 100 / totalGames) else 0
+                            "$rate%"
+                        },
+                        accent    = colors.buttonPink,
+                        modifier  = Modifier.weight(1f),
+                        subtitles = listOf(
+                            stringResource(R.string.profile_stat_arabic) to run {
+                                val rate = if (uiState.arGamesPlayed > 0)
+                                    (uiState.arWordsSolved * 100 / uiState.arGamesPlayed) else 0
+                                "$rate%"
+                            },
+                            stringResource(R.string.profile_stat_english) to run {
+                                val rate = if (uiState.enGamesPlayed > 0)
+                                    (uiState.enWordsSolved * 100 / uiState.enGamesPlayed) else 0
+                                "$rate%"
+                            },
+                        )
                     )
                 }
             }
@@ -347,6 +416,7 @@ private fun MiniStatCard(
     value: String,
     accent: Color,
     modifier: Modifier = Modifier,
+    subtitles: List<Pair<String, String>> = emptyList(), // label to value
 ) {
     Column(
         modifier            = modifier
@@ -382,6 +452,48 @@ private fun MiniStatCard(
             color    = colors.body.copy(alpha = 0.45f),
             fontSize = typography.labelSmall,
         )
+
+        // Per-language breakdown
+        if (subtitles.isNotEmpty()) {
+            Row(
+                modifier              = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(spacing.xs))
+                    .background(accent.copy(alpha = 0.10f))
+                    .padding(horizontal = spacing.xs, vertical = spacing.xxs),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                subtitles.forEachIndexed { index, (lang, stat) ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        WordleText(
+                            text     = lang,
+                            color    = colors.body.copy(alpha = 0.35f),
+                            fontSize = typography.labelSmall,
+                        )
+                        WordleText(
+                            text       = stat,
+                            color      = accent,
+                            fontSize   = typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    // Divider between items
+                    if (index < subtitles.lastIndex) {
+                        Box(
+                            modifier = Modifier
+                                .height(spacing.md)
+                                .padding(horizontal = spacing.xxs)
+                                .background(colors.border)
+                                .size(width = 1.dp, height = spacing.md)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -521,15 +633,15 @@ private fun EditProfileSection(
 private fun PreviewProfileScreenLight() {
     ProfileScreen(
         uiState = ProfileUiState(
-            name = "Ahmed Al-Rashid",
-            email = "ahmed@example.com",
-            gamesPlayed = 42,
-            wordsSolved = 35,
-            winPercentage = 78,
-            currentPoints = 24500,
-            isEditMode = false,
+            name            = "Ahmed Al-Rashid",
+            email           = "ahmed@example.com",
+            enGamesPlayed   = 42,
+            enWordsSolved   = 35,
+            enWinPercentage = 78,
+            enCurrentPoints = 24500,
+            isEditMode      = false,
         ),
-        uiEffect = MutableSharedFlow(),
+        uiEffect           = MutableSharedFlow(),
         onBack             = {},
         onSettingsClick    = {},
         onEditProfileClick = {},
@@ -545,16 +657,16 @@ private fun PreviewProfileScreenLight() {
 private fun PreviewProfileScreenEditMode() {
     ProfileScreen(
         uiState = ProfileUiState(
-            name          = "Ahmed Al-Rashid",
-            email         = "ahmed@example.com",
-            gamesPlayed   = 42,
-            wordsSolved   = 35,
-            winPercentage = 78,
-            currentPoints = 24500,
-            isEditMode    = true,
-            editName      = "Ahmed Al-Rashid",
+            name            = "Ahmed Al-Rashid",
+            email           = "ahmed@example.com",
+            enGamesPlayed   = 42,
+            enWordsSolved   = 35,
+            enWinPercentage = 78,
+            enCurrentPoints = 24500,
+            isEditMode      = true,
+            editName        = "Ahmed Al-Rashid",
         ),
-        uiEffect = MutableSharedFlow(),
+        uiEffect           = MutableSharedFlow(),
         onBack             = {},
         onSettingsClick    = {},
         onEditProfileClick = {},

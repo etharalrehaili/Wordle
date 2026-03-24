@@ -42,7 +42,6 @@ fun GameTopBar(
     containerColor: Color? = null,
 ) {
     val appBarColor = containerColor ?: colors.background
-    var lastClickTime by remember { mutableStateOf(0L) }
 
     TopAppBar(
         title = {

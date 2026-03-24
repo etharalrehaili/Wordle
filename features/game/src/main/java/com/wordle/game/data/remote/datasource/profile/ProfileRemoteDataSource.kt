@@ -18,8 +18,10 @@ interface ProfileRemoteDataSource {
     /** Updates an existing Strapi profile document by [documentId]. */
     suspend fun updateProfile(
         documentId: String,
+        firebaseUid: String,
         name: String,
         avatarUrl: String?,
+        language: String,
         gamesPlayed: Int,
         wordsSolved: Int,
         winPercentage: Double,
@@ -33,5 +35,5 @@ interface ProfileRemoteDataSource {
     suspend fun uploadAvatar(imageUri: Uri, context: Context): String
 
     /** Fetches the top [limit] profiles sorted by points descending. */
-    suspend fun getLeaderboard(limit: Int): List<ProfileItem>
+    suspend fun getLeaderboard(limit: Int, language: String): List<ProfileItem>
 }

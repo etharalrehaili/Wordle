@@ -8,8 +8,8 @@ import javax.inject.Inject
 // Used by the Home screen to decide whether to show the countdown timer.
 
 class GetChallengeSolvedStateUseCase @Inject constructor(
-    private val challengeRepository: ChallengeRepository
+    private val repository: ChallengeRepository
 ) {
-    operator fun invoke(): Flow<Boolean> =
-        challengeRepository.hasSolvedTodayChallenge()
+    operator fun invoke(language: String): Flow<Boolean> =
+        repository.hasSolvedTodayChallenge(language)
 }

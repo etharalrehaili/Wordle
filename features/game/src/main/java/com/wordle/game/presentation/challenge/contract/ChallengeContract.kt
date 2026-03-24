@@ -6,6 +6,7 @@ import com.wordle.core.mvi.UiState
 import com.wordle.core.presentation.components.MAX_GUESSES
 import com.wordle.core.presentation.components.WORD_LENGTH
 import com.wordle.core.presentation.components.enums.TileState
+import com.wordle.game.presentation.game.contract.GameEffect
 import com.wordle.game.presentation.game.contract.Tile
 
 sealed interface ChallengeIntent: UiIntent {
@@ -17,6 +18,7 @@ sealed interface ChallengeIntent: UiIntent {
 
 sealed interface ChallengeEffect: UiEffect {
     object InvalidWord : ChallengeEffect
+    data object NotInWordList : ChallengeEffect
     object RowShake    : ChallengeEffect
     data class ShowGameDialog(val isWin: Boolean, val targetWord: String) : ChallengeEffect
 }
@@ -32,6 +34,7 @@ data class ChallengeUiState(
     val currentRow: Int           = 0,
     val currentCol: Int           = 0,
     val isGameOver: Boolean       = false,
+    val language: String = "",
 ) : UiState
 
 sealed interface ChallengeDialogState {

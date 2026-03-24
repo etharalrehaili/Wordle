@@ -27,9 +27,16 @@ data class UpdateProfileRequest(val data: UpdateProfileData)
 data class UpdateProfileData(
     val name: String,
     val avatarUrl: String?,
-    val gamesPlayed: Int,
-    val wordsSolved: Int,
-    val winPercentage: Double,
-    val currentPoints: Int,
-    val lastPlayedAt: String?,
+    // English stats
+    val enGamesPlayed: Int,
+    val enWordsSolved: Int,
+    val enWinPercentage: Double,
+    val enCurrentPoints: Int,
+    val enLastPlayedAt: String?,
+    // Arabic stats
+    val arGamesPlayed: Int,
+    val arWordsSolved: Int,
+    val arWinPercentage: Double,
+    val arCurrentPoints: Int,
+    val arLastPlayedAt: String?,
 )

@@ -13,8 +13,14 @@ data class ProfileEntity(
     val documentId: String, // Strapi document ID used for remote update/delete operations
     val name: String,
     val avatarUrl: String?,
-    val gamesPlayed: Int,
-    val wordsSolved: Int,
-    val winPercentage: Double, // (wordsSolved / gamesPlayed) * 100
-    val currentPoints: Int,
+    val enGamesPlayed: Int,
+    val arGamesPlayed: Int,
+    val enWordsSolved: Int,
+    val arWordsSolved: Int,
+    val enWinPercentage: Double, // (wordsSolved / gamesPlayed) * 100
+    val arWinPercentage: Double, // (wordsSolved / gamesPlayed) * 100
+    val enCurrentPoints: Int,
+    val arCurrentPoints: Int,
+    val enLastPlayedAt: String? = null,
+    val arLastPlayedAt: String? = null,
 )
