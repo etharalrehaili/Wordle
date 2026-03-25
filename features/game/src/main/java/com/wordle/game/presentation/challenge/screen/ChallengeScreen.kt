@@ -1,23 +1,20 @@
 package com.wordle.game.presentation.challenge.screen
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -144,39 +141,53 @@ fun ChallengeContent(
                 modifier           = Modifier.fillMaxWidth()
             )
 
-            if (hasNoChallenge) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text       = uiState.error ?: "No challenge for today",
-                        color      = colors.body,
-                        fontSize   = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign  = TextAlign.Center,
+            when {
+                uiState.isLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                hasNoChallenge -> {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text       = uiState.error ?: "No challenge for today",
+                            color      = colors.body,
+                            fontSize   = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign  = TextAlign.Center,
+                        )
+                    }
+                }
+                else -> {
+                    GameBoard(
+                        guesses    = guessRows,
+                        currentRow = uiState.currentRow,
+                        currentCol = uiState.currentCol,
+                        wordLength = uiState.wordLength,
+                        modifier   = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    )
+
+                    GameKeyboard(
+                        keyStates   = keyStates,
+                        onKey       = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
+                        onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
+                        language    = currentLanguage,
+                        modifier    = Modifier.fillMaxWidth()
                     )
                 }
-            } else {
-                GameBoard(
-                    guesses    = guessRows,
-                    currentRow = uiState.currentRow,
-                    currentCol = uiState.currentCol,
-                    wordLength = uiState.wordLength,
-                    modifier   = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                )
-
-                GameKeyboard(
-                    keyStates   = keyStates,
-                    onKey       = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
-                    onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
-                    language    = currentLanguage,
-                    modifier    = Modifier.fillMaxWidth()
-                )
             }
         }
 

@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.firebase.auth.FirebaseAuth
+import com.wordle.core.util.normalizeForWordle
 import com.wordle.core.presentation.components.MAX_GUESSES
 import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.game.data.local.db.AppDatabase
@@ -47,7 +48,7 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     override suspend fun getDailyChallenge(date: String, language: String): String? {
         val cached = db.challengeDao().getChallenge(date, language)
-        if (cached != null) return cached.word
+        if (cached != null) return cached.word.normalizeForWordle()
 
         val word = remote.getDailyChallenge(date, language) ?: return null
         db.challengeDao().insertChallenge(

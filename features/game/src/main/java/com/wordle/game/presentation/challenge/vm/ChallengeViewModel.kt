@@ -8,6 +8,7 @@ import com.wordle.core.mvi.BaseMviViewModel
 import com.wordle.core.presentation.components.MAX_GUESSES
 import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.util.Resource
+import com.wordle.core.util.normalizeForWordle
 import com.wordle.game.domain.usecases.challenge.GetDailyChallengeUseCase
 import com.wordle.game.domain.usecases.profile.GetProfileUseCase
 import com.wordle.game.domain.usecases.challenge.LoadTodayChallengeUseCase
@@ -17,7 +18,6 @@ import com.wordle.game.domain.usecases.profile.UpdateProfileUseCase
 import com.wordle.game.presentation.challenge.contract.ChallengeEffect
 import com.wordle.game.presentation.challenge.contract.ChallengeIntent
 import com.wordle.game.presentation.challenge.contract.ChallengeUiState
-import com.wordle.game.presentation.game.contract.GameEffect
 import com.wordle.game.presentation.game.contract.Tile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -56,39 +56,64 @@ class ChallengeViewModel @Inject constructor(
 
             // Only restore saved state if it matches the requested language
             if (saved != null && saved.language == language) {
-                setState {
-                    copy(
-                        isLoading      = false,
-                        language       = language,
-                        wordLength     = saved.targetWord.length,
-                        targetWord     = saved.targetWord,
-                        board          = saved.board,
-                        keyboardStates = saved.keyboardStates,
-                        currentRow     = saved.currentRow,
-                        currentCol     = saved.currentCol,
-                        isGameOver     = saved.isGameOver,
-                    )
-                }
-                if (saved.isGameOver) {
-                    sendEffect { ChallengeEffect.ShowGameDialog(isWin = saved.isWin, targetWord = saved.targetWord) }
+                val wordLength = saved.targetWord.length
+                when (val wordsResult = getWordsUseCase(language, wordLength)) {
+                    is Resource.Success -> {
+                        val targetNorm = saved.targetWord.normalizeForWordle()
+                        val list =
+                            wordsResult.data.withDailyTargetIfMissing(targetNorm)
+                        setState {
+                            copy(
+                                isLoading      = false,
+                                language       = language,
+                                wordLength     = wordLength,
+                                targetWord     = saved.targetWord,
+                                wordList       = list,
+                                board          = saved.board,
+                                keyboardStates = saved.keyboardStates,
+                                currentRow     = saved.currentRow,
+                                currentCol     = saved.currentCol,
+                                isGameOver     = saved.isGameOver,
+                            )
+                        }
+                        if (saved.isGameOver) {
+                            sendEffect { ChallengeEffect.ShowGameDialog(isWin = saved.isWin, targetWord = saved.targetWord) }
+                        }
+                    }
+                    is Resource.Error   -> setState { copy(isLoading = false, error = wordsResult.message) }
+                    is Resource.Loading -> Unit
                 }
             } else {
-                // Fetch fresh challenge for the requested language
-                when (val result = getDailyChallengeUseCase(today, language)) {
-                    is Resource.Success -> setState {
-                        copy(
-                            isLoading  = false,
-                            language = language,
-                            targetWord = result.data,
-                            wordLength = result.data.length,
-                            board      = List(MAX_GUESSES) { List(result.data.length) { Tile() } },
-                            keyboardStates = emptyMap(),
-                            currentRow = 0,
-                            currentCol = 0,
-                            isGameOver = false,
-                        )
+                // Fetch fresh challenge for the requested language, then the dictionary for guesses
+                when (val challengeResult = getDailyChallengeUseCase(today, language)) {
+                    is Resource.Success -> {
+                        val target = challengeResult.data
+                        val wordLength = target.length
+                        when (val wordsResult = getWordsUseCase(language, wordLength)) {
+                            is Resource.Success -> {
+                                val targetNorm = target.normalizeForWordle()
+                                val list =
+                                    wordsResult.data.withDailyTargetIfMissing(targetNorm)
+                                setState {
+                                    copy(
+                                    isLoading = false,
+                                    language = language,
+                                    targetWord = target,
+                                    wordLength = wordLength,
+                                    wordList = list,
+                                    board = List(MAX_GUESSES) { List(wordLength) { Tile() } },
+                                    keyboardStates = emptyMap(),
+                                    currentRow = 0,
+                                    currentCol = 0,
+                                    isGameOver = false,
+                                )
+                                }
+                            }
+                            is Resource.Error   -> setState { copy(isLoading = false, error = wordsResult.message) }
+                            is Resource.Loading -> Unit
+                        }
                     }
-                    is Resource.Error   -> setState { copy(isLoading = false, error = result.message) }
+                    is Resource.Error   -> setState { copy(isLoading = false, error = challengeResult.message) }
                     is Resource.Loading -> Unit
                 }
             }
@@ -134,16 +159,16 @@ class ChallengeViewModel @Inject constructor(
             return
         }
 
-        val guess        = state.board[state.currentRow].map { it.letter }.joinToString("")
-
-        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
+        val rawGuess     = state.board[state.currentRow].map { it.letter }.joinToString("")
+        val guessNorm    = rawGuess.normalizeForWordle()
+        val isInWordList = state.wordList.any { it.normalizeForWordle() == guessNorm }
         if (!isInWordList) {
             sendEffect { ChallengeEffect.NotInWordList }
             sendEffect { ChallengeEffect.RowShake }
             return
         }
 
-        val evaluatedRow = evaluateGuess(guess, state.targetWord)
+        val evaluatedRow = evaluateGuess(rawGuess, state.targetWord)
         val newBoard     = state.board.toMutableList().also { it[state.currentRow] = evaluatedRow }.toList()
         val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
 
@@ -222,9 +247,11 @@ class ChallengeViewModel @Inject constructor(
     }
 
     private fun evaluateGuess(guess: String, target: String): List<Tile> {
-        val result          = Array(target.length) { TileState.WRONG }
-        val targetArr       = target.toCharArray()
-        val guessArr        = guess.toCharArray()
+        val g               = guess.normalizeForWordle()
+        val t               = target.normalizeForWordle()
+        val result          = Array(t.length) { TileState.WRONG }
+        val targetArr       = t.toCharArray()
+        val guessArr        = g.toCharArray()
         val remainingTarget = targetArr.toMutableList()
 
         for (i in guessArr.indices) {
@@ -266,5 +293,10 @@ class ChallengeViewModel @Inject constructor(
             }
         }
         return merged
+    }
+
+    private fun List<String>.withDailyTargetIfMissing(targetNorm: String): List<String> {
+        if (any { it.normalizeForWordle() == targetNorm }) return this
+        return this + targetNorm
     }
 }

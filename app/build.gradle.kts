@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.wordle.app"
+    namespace = "com.khammin.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.wordle.app"
+        applicationId = "com.khammin.app"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

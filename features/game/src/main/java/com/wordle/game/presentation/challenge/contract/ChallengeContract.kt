@@ -24,7 +24,7 @@ sealed interface ChallengeEffect: UiEffect {
 }
 
 data class ChallengeUiState(
-    val isLoading: Boolean        = false,
+    val isLoading: Boolean        = true,
     val error: String?            = null,
     val wordList: List<String>    = emptyList(),
     val targetWord: String        = "",

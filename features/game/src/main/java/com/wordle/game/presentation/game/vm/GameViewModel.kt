@@ -1,11 +1,11 @@
 package com.wordle.game.presentation.game.vm
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.wordle.core.mvi.BaseMviViewModel
 import com.wordle.core.presentation.components.MAX_GUESSES
 import com.wordle.core.presentation.components.enums.TileState
 import com.wordle.core.util.Resource
+import com.wordle.core.util.normalizeForWordle
 import com.wordle.game.domain.usecases.game.GetWordsUseCase
 import com.wordle.game.presentation.game.contract.GameEffect
 import com.wordle.game.presentation.game.contract.GameIntent
@@ -35,23 +35,20 @@ class GameViewModel @Inject constructor(
     private fun loadWords(language: String, wordLength: Int) {
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
-            Log.d("GameVM", "loadWords: language=$language wordLength=$wordLength")
             when (val result = getWordsUseCase(language, wordLength)) {
                 is Resource.Success -> {
-                    Log.d("GameVM", "loadWords success: words.size=${result.data.size} sample=${result.data.take(3)}")
                     val words = result.data
                     setState {
                         copy(
                             isLoading  = false,
                             wordLength = wordLength,
                             wordList   = words,
-                            targetWord = words.random().uppercase(),
+                            targetWord = words.random().normalizeForWordle(),
                             board      = List(MAX_GUESSES) { List(wordLength) { Tile() } }
                         )
                     }
                 }
                 is Resource.Error -> {
-                    Log.d("GameVM", "loadWords error: ${result.message}")
                     setState { copy(isLoading = false, error = result.message) }
                 }
                 is Resource.Loading -> Unit
@@ -61,8 +58,6 @@ class GameViewModel @Inject constructor(
 
     private fun enterLetter(letter: Char) {
         val state = uiState.value
-        Log.d("GameVM", "enterLetter: letter=$letter isGameOver=${state.isGameOver} targetWord=${state.targetWord} wordList.size=${state.wordList.size} currentCol=${state.currentCol} wordLength=${state.wordLength}")
-
         if (state.isGameOver) return
         if (state.targetWord.isEmpty()) return
         if (state.currentCol >= state.wordLength) return
@@ -101,16 +96,16 @@ class GameViewModel @Inject constructor(
             return
         }
 
-        val guess = state.board[state.currentRow].map { it.letter }.joinToString("")
-
-        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
+        val rawGuess     = state.board[state.currentRow].map { it.letter }.joinToString("")
+        val guessNorm    = rawGuess.normalizeForWordle()
+        val isInWordList = state.wordList.any { it.normalizeForWordle() == guessNorm }
         if (!isInWordList) {
             sendEffect { GameEffect.NotInWordList }
             sendEffect { GameEffect.RowShake }
             return
         }
 
-        val evaluatedRow = evaluateGuess(guess, state.targetWord)
+        val evaluatedRow = evaluateGuess(rawGuess, state.targetWord)
         val newBoard = state.board.toMutableList()
             .also { it[state.currentRow] = evaluatedRow }.toList()
         val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
@@ -139,17 +134,19 @@ class GameViewModel @Inject constructor(
             GameUiState(
                 wordLength = state.wordLength,
                 wordList   = state.wordList,
-                targetWord = state.wordList.randomOrNull()?.uppercase() ?: "",
+                targetWord = state.wordList.randomOrNull()?.normalizeForWordle() ?: "",
                 board      = List(MAX_GUESSES) { List(state.wordLength) { Tile() } }
             )
         }
     }
 
     private fun evaluateGuess(guess: String, target: String): List<Tile> {
-        val wordLength      = uiState.value.wordLength
+        val g               = guess.normalizeForWordle()
+        val t               = target.normalizeForWordle()
+        val wordLength      = t.length
         val result          = Array(wordLength) { TileState.WRONG }
-        val targetArr       = target.toCharArray()
-        val guessArr        = guess.toCharArray()
+        val targetArr       = t.toCharArray()
+        val guessArr        = g.toCharArray()
         val remainingTarget = targetArr.toMutableList()
 
         for (i in guessArr.indices) {

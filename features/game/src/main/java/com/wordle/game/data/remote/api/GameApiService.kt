@@ -9,6 +9,9 @@ interface GameApiService {
     suspend fun getWords(
         @Query("filters[language][\$eq]") language: String,
         @Query("filters[length][\$eq]") length: Int,
+        /** Strapi often caps pageSize (e.g. 100); [GameRemoteDataSourceImpl] requests all pages. */
+        @Query("pagination[page]") page: Int = 1,
+        @Query("pagination[pageSize]") pageSize: Int = 100,
         @Query("fields[0]") field0: String = "text",
         @Query("fields[1]") field1: String = "language",
         @Query("fields[2]") field2: String = "length",

@@ -15,6 +15,9 @@ interface WordDAO {
     @Query("SELECT * FROM word_table WHERE language = :language AND length = :length")
     suspend fun getWords(language: String, length: Int): List<WordEntity>
 
+    @Query("DELETE FROM word_table WHERE language = :language AND length = :length")
+    suspend fun deleteWords(language: String, length: Int)
+
     @Query("SELECT COUNT(*) FROM word_table WHERE language = :language AND length = :length")
     suspend fun getWordCount(language: String, length: Int): Int
 
