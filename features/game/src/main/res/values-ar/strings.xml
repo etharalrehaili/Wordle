@@ -2,18 +2,19 @@
 
     <!-- Home Screen -->
     <string name="welcome_to">مرحبا بك في</string>
-    <string name="Kalimati">كلمتي</string>
+    <string name="Khammin">خمّن</string>
     <string name="quick_play">لعب سريع</string>
     <string name="take_challenge">تحدي</string>
     <string name="leaderboard">قائمة المتصدرين</string>
     <string name="home_description">خمّن الكلمة المخفية</string>
-    <string name="wordle_letters">كلمة</string>
+    <string name="wordle_letters">خمن</string>
 
     <!-- Countdown -->
     <string name="countdown_next_word">الكلمة التالية متاحة خلال</string>
 
     <!-- Challenge Screen -->
     <string name="challenge_next_word_label">الكلمة الجديدة ستكون متاحة خلال</string>
+    <string name="not_in_word_list">ليست في قائمة الكلمات</string>
 
     <!-- Leaderboard Screen -->
     <string name="filter_all_time">كل الأوقات</string>

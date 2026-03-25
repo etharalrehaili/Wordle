@@ -79,4 +79,7 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.2.1")
+
+    // SQLCipher for encrypted database
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
 }

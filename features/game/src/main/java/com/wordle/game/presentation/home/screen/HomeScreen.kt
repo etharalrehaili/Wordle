@@ -193,7 +193,7 @@ fun HomeContent(
 //                Spacer(modifier = Modifier.height(GameDesignTheme.spacing.xxs))
 
                 WordleText(
-                    text          = stringResource(R.string.Kalimati),
+                    text          = stringResource(R.string.Khammin),
                     color         = colors.title,
                     fontSize      = GameDesignTheme.typography.displayMedium,
                     fontWeight    = FontWeight.ExtraBold,

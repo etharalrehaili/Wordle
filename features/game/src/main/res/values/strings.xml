@@ -2,15 +2,16 @@
 
     <!-- Home Screen -->
     <string name="welcome_to">WELCOME TO</string>
-    <string name="Kalimati">KALIMATI</string>
+    <string name="Khammin">Khamin</string>
     <string name="quick_play">Quick Play</string>
     <string name="take_challenge">Take Challenge</string>
     <string name="leaderboard">Leaderboard</string>
     <string name="home_description">Get a chance to guess the hidden word</string>
-    <string name="wordle_letters">WORD</string>
+    <string name="wordle_letters">Khmn</string>
 
     <!-- Countdown -->
     <string name="countdown_next_word">Next word available in</string>
+    <string name="not_in_word_list">Not in word list</string>
 
     <!-- Leaderboard Screen -->
     <string name="filter_all_time">All Time</string>

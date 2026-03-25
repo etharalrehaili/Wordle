@@ -18,7 +18,7 @@ sealed interface ChallengeIntent: UiIntent {
 
 sealed interface ChallengeEffect: UiEffect {
     object InvalidWord : ChallengeEffect
-    data object NotInWordList : ChallengeEffect
+//    data object NotInWordList : ChallengeEffect
     object RowShake    : ChallengeEffect
     data class ShowGameDialog(val isWin: Boolean, val targetWord: String) : ChallengeEffect
 }

@@ -40,7 +40,7 @@ object GameModule {
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit = Retrofit.Builder()
-        .baseUrl("http://192.168.0.140:1337/api/")
+        .baseUrl("http://192.168.100.26:1337/api/")
 //        .baseUrl("http://10.0.2.2:1337/api/") // Use this for Android emulator
         .addConverterFactory(GsonConverterFactory.create())
         .build()

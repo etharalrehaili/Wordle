@@ -135,12 +135,12 @@ class ChallengeViewModel @Inject constructor(
 
         val guess        = state.board[state.currentRow].map { it.letter }.joinToString("")
 
-        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
-        if (!isInWordList) {
-            sendEffect { ChallengeEffect.NotInWordList }
-            sendEffect { ChallengeEffect.RowShake }
-            return
-        }
+//        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
+//        if (!isInWordList) {
+//            sendEffect { ChallengeEffect.NotInWordList }
+//            sendEffect { ChallengeEffect.RowShake }
+//            return
+//        }
 
         val evaluatedRow = evaluateGuess(guess, state.targetWord)
         val newBoard     = state.board.toMutableList().also { it[state.currentRow] = evaluatedRow }.toList()
