@@ -1,7 +1,6 @@
 package com.wordle.game.presentation.challenge.vm
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -13,6 +12,7 @@ import com.wordle.game.domain.usecases.challenge.GetDailyChallengeUseCase
 import com.wordle.game.domain.usecases.profile.GetProfileUseCase
 import com.wordle.game.domain.usecases.challenge.LoadTodayChallengeUseCase
 import com.wordle.game.domain.usecases.challenge.SaveChallengeStateUseCase
+import com.wordle.game.domain.usecases.game.GetWordsUseCase
 import com.wordle.game.domain.usecases.profile.UpdateProfileUseCase
 import com.wordle.game.presentation.challenge.contract.ChallengeEffect
 import com.wordle.game.presentation.challenge.contract.ChallengeIntent
@@ -27,6 +27,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ChallengeViewModel @Inject constructor(
     private val getDailyChallengeUseCase: GetDailyChallengeUseCase,
+    private val getWordsUseCase: GetWordsUseCase,
     private val loadTodayChallengeUseCase: LoadTodayChallengeUseCase,
     private val saveChallengeStateUseCase: SaveChallengeStateUseCase,
     private val getProfileUseCase: GetProfileUseCase,
@@ -135,12 +136,12 @@ class ChallengeViewModel @Inject constructor(
 
         val guess        = state.board[state.currentRow].map { it.letter }.joinToString("")
 
-//        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
-//        if (!isInWordList) {
-//            sendEffect { ChallengeEffect.NotInWordList }
-//            sendEffect { ChallengeEffect.RowShake }
-//            return
-//        }
+        val isInWordList = state.wordList.any { it.equals(guess, ignoreCase = true) }
+        if (!isInWordList) {
+            sendEffect { ChallengeEffect.NotInWordList }
+            sendEffect { ChallengeEffect.RowShake }
+            return
+        }
 
         val evaluatedRow = evaluateGuess(guess, state.targetWord)
         val newBoard     = state.board.toMutableList().also { it[state.currentRow] = evaluatedRow }.toList()

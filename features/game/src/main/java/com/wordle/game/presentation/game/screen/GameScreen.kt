@@ -19,8 +19,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.wordle.game.R
 import com.wordle.core.alias.Action
 import com.wordle.core.presentation.components.CustomSnackbarHost
 import com.wordle.core.presentation.components.GameBoard
@@ -53,6 +55,7 @@ fun GameScreen(
     val uiState by viewModel.uiState.collectAsState()
     var dialogState by remember { mutableStateOf<GameDialogState>(GameDialogState.None) }
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
+    val context = LocalContext.current
 
     LaunchedEffect(currentLanguage) {
         viewModel.onEvent(GameIntent.LoadWords(currentLanguage.code, wordLength))
@@ -62,10 +65,7 @@ fun GameScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is GameEffect.ShowGameDialog -> dialogState = GameDialogState.Result(effect.isWin, effect.targetWord)
-                GameEffect.NotInWordList -> snackbarState = SnackbarState(
-                    message = "Not in word list",
-                    type    = SnackbarType.WARNING
-                )
+                GameEffect.NotInWordList -> snackbarState = SnackbarState(context.getString(R.string.not_in_word_list), SnackbarType.WARNING)
                 GameEffect.InvalidWord -> { }
                 GameEffect.RowShake    -> { }
             }

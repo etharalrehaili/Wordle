@@ -7,7 +7,7 @@
     <string name="take_challenge">تحدي</string>
     <string name="leaderboard">قائمة المتصدرين</string>
     <string name="home_description">خمّن الكلمة المخفية</string>
-    <string name="wordle_letters">خمن</string>
+    <string name="wordle_letters">العب</string>
 
     <!-- Countdown -->
     <string name="countdown_next_word">الكلمة التالية متاحة خلال</string>

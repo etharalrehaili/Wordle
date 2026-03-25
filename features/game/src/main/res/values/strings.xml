@@ -7,7 +7,7 @@
     <string name="take_challenge">Take Challenge</string>
     <string name="leaderboard">Leaderboard</string>
     <string name="home_description">Get a chance to guess the hidden word</string>
-    <string name="wordle_letters">Khmn</string>
+    <string name="wordle_letters">Play</string>
 
     <!-- Countdown -->
     <string name="countdown_next_word">Next word available in</string>

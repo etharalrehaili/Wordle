@@ -216,8 +216,7 @@ fun HomeContent(
                                 Types.CORRECT,
                                 Types.PRESENT,
                                 Types.ABSENT,
-                                Types.ABSENT,
-                                Types.CORRECT
+                                Types.ABSENT
                             )[index],
                             height = 62.dp
                         )
