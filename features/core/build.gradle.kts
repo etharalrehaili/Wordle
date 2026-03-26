@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.wordle.core"
+    namespace = "com.khammin.core"
     compileSdk = 36
 
     defaultConfig {

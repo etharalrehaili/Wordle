@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.wordle.authentication"
+    namespace = "com.khammin.authentication"
     compileSdk = 36
 
     defaultConfig {

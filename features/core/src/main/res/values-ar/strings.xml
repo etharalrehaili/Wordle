@@ -76,5 +76,6 @@
     <string name="error_connection">خطأ في الاتصال. تحقق من الإنترنت</string>
     <string name="error_timeout">انتهت مهلة الطلب. حاول مجدداً</string>
     <string name="error_unexpected">حدث خطأ ما. يرجى المحاولة مجدداً</string>
+    <string name="error_email_already_in_use">البريد الإلكتروني مرتبط بحساب آخر بالفعل</string>
 
 </resources>

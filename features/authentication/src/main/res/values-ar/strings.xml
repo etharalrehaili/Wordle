@@ -25,7 +25,7 @@
     <string name="reset_password_title">إعادة تعيين كلمة المرور</string>
     <string name="reset_password_email">البريد الإلكتروني</string>
     <string name="reset_password_email_placeholder">your@email.com</string>
-    <string name="reset_password_send_email_button">ارسال الايميل</string>
+    <string name="reset_password_send_email_button">إرسال رابط إعادة التعيين</string>
     <string name="reset_password_email_sent">تم إرسال رسالة إعادة التعيين. تحقق من بريدك الوارد!</string>
 
     <!-- Change Email Screen -->

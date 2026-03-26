@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.wordle.onboarding"
+    namespace = "com.khammin.onboarding"
     compileSdk = 36
 
     defaultConfig {

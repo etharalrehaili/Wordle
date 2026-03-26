@@ -29,7 +29,6 @@
     <string name="settings_account_section">إعدادات الحساب</string>
     <string name="settings_app_section">إعدادات التطبيق</string>
     <string name="settings_support_section">الدعم</string>
-    <string name="settings_change_email">تغيير البريد الإلكتروني</string>
     <string name="settings_change_password">تغيير كلمة المرور</string>
     <string name="settings_notifications">الإشعارات</string>
     <string name="settings_support">الدعم</string>

@@ -75,5 +75,6 @@
     <string name="error_connection">Connection error. Please check your internet</string>
     <string name="error_timeout">Request timed out. Please try again</string>
     <string name="error_unexpected">Something went wrong. Please try again</string>
+    <string name="error_email_already_in_use">Email is already linked with another account</string>
 
 </resources>

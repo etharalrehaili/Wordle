@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.wordle.game"
+    namespace = "com.khammin.game"
     compileSdk = 36
 
     defaultConfig {
