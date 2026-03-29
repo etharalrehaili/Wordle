@@ -23,8 +23,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlin.compareTo
-import kotlin.text.set
 
 @HiltViewModel
 class ChallengeViewModel @Inject constructor(
@@ -155,7 +153,7 @@ class ChallengeViewModel @Inject constructor(
     private fun submitGuess() {
         val state = uiState.value
         if (state.isGameOver) return
-            if (state.currentCol < state.wordLength) {
+        if (state.currentCol < state.wordLength) {
             sendEffect { ChallengeEffect.InvalidWord }
             sendEffect { ChallengeEffect.RowShake }
             return

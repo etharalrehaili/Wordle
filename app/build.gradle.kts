@@ -72,4 +72,6 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     // Firebase
     implementation(libs.firebase.auth)
+    // OneSignal
+    implementation("com.onesignal:OneSignal:5.1.6")
 }

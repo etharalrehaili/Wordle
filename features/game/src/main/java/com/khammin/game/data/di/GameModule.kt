@@ -18,6 +18,7 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import com.khammin.game.data.remote.api.GameApiService
 import com.khammin.game.domain.repository.ProfileRepository
 import com.khammin.game.domain.usecases.leaderboard.GetLeaderboardUseCase
+import okhttp3.OkHttpClient
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
@@ -39,11 +40,22 @@ object GameModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit = Retrofit.Builder()
-        .baseUrl("http://192.168.0.140:1337/api/")
-//        .baseUrl("http://10.0.2.2:1337/api/") // Use this for Android emulator
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    fun provideRetrofit(): Retrofit {
+        val client = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .addHeader("Authorization", "Bearer 1f93d59225275a11bb7f592dec1d55ad755c1ec8d612b7354c311e5b0099262666285b710057b4bae5a1c5b82dce8873ad4589b656dad44e4437b7d0b46ebb70e0c3b31336f1600a6859781f9672d6f30671547e44d9013da6d0bdffbfe70662ac0931e7e444f5b0f935c1c81724945fdb75c2f3c5c0d107809a285b70110d91")
+                    .build()
+                chain.proceed(request)
+            }
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl("https://khammin.com/api/")
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
 
     @Provides
     @Singleton

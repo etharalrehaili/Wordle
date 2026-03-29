@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -129,16 +128,6 @@ fun SettingsContent(
                 icon    = Icons.Filled.Lock,
                 accent  = colors.buttonTaupe,
                 onClick = onChangePasswordClick,
-            )
-
-            // App Settings Section
-            SectionLabel(stringResource(R.string.settings_app_section))
-
-            SettingsItem(
-                label   = stringResource(R.string.settings_notifications),
-                icon    = Icons.Filled.Notifications,
-                accent  = colors.buttonTaupe,
-                onClick = {},
             )
 
             // Support Section
