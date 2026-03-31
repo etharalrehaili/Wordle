@@ -3,6 +3,10 @@ package com.khammin.game.presentation.home.screen
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.EaseOutBack
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,9 +19,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +31,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -61,6 +69,9 @@ import com.khammin.game.presentation.preferences.contract.PreferencesIntent
 import com.khammin.game.presentation.preferences.contract.PreferencesUiState
 import com.khammin.game.presentation.home.vm.HomeViewModel
 import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -204,6 +215,10 @@ fun HomeContent(
                 .fillMaxSize()
                 .background(colors.background)
         ) {
+
+            // Circles background
+            DecorativeBackground(modifier = Modifier.fillMaxSize())
+
             GameTopBar(
                 startIcon          = Icons.Filled.Menu,
                 onStartIconClicked = { scope.launch { drawerState.open() } },
@@ -246,15 +261,24 @@ fun HomeContent(
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
                     demoWord.forEachIndexed { index, char ->
+                        var flipped by remember { mutableStateOf(false) }
+
+                        LaunchedEffect(Unit) {
+                            delay(300L + index * 150L)
+                            flipped = true
+                        }
+
+                        val rotationY by animateFloatAsState(
+                            targetValue   = if (flipped) 0f else 90f,
+                            animationSpec = tween(durationMillis = 400, easing = EaseOutBack),
+                            label         = "flip$index"
+                        )
+
                         Square(
-                            content = SquareContent.Letter(char),
-                            type    = listOf(
-                                Types.CORRECT,
-                                Types.PRESENT,
-                                Types.ABSENT,
-                                Types.ABSENT
-                            )[index],
-                            height = 62.dp
+                            content  = SquareContent.Letter(char),
+                            type     = listOf(Types.CORRECT, Types.PRESENT, Types.ABSENT, Types.ABSENT)[index],
+                            height   = 62.dp,
+                            modifier = Modifier.graphicsLayer { this.rotationY = rotationY }
                         )
                     }
                 }
@@ -429,6 +453,21 @@ private fun NextWordCountdownRow(countdownSeconds: Long) {
                 fontWeight = FontWeight.SemiBold
             )
         }
+    }
+}
+
+@Composable
+fun DecorativeBackground(modifier: Modifier = Modifier) {
+    val colors = GameDesignTheme.colors
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        drawCircle(color = colors.decorativeTeal.copy(alpha = 0.25f),  radius = w * 0.35f, center = Offset(w * 0.0f,  h * 0.12f))
+        drawCircle(color = colors.decorativePink.copy(alpha = 0.15f),  radius = w * 0.28f, center = Offset(w * 1.05f, h * 0.08f))
+        drawCircle(color = colors.decorativeGreen.copy(alpha = 0.12f), radius = w * 0.45f, center = Offset(w * 0.05f, h * 0.45f))
+        drawCircle(color = colors.decorativePink.copy(alpha = 0.15f),  radius = w * 0.38f, center = Offset(w * 1.0f,  h * 0.88f))
+        drawCircle(color = colors.decorativeTeal.copy(alpha = 0.18f),  radius = w * 0.25f, center = Offset(w * 0.1f,  h * 0.92f))
     }
 }
 

@@ -55,6 +55,7 @@
     <string name="result_the_word_was">كانت الكلمة</string>
     <string name="result_play_again">العب مجدداً</string>
     <string name="result_close">إغلاق</string>
+    <string name="hint_message">Hint: the letter \'%1$c\' is at position %2$d</string>
 
     <!-- Error Messages -->
     <string name="error_name_empty">يرجى إدخال الاسم</string>

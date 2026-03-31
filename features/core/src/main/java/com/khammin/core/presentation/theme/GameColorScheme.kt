@@ -42,6 +42,9 @@ val LightCountdownBackground = Color(0xFFE3E6EC)
 val LightButtonPink   = Color(0xFFe7a1c8)
 val LightButtonTeal   = Color(0xFF92d0dc)
 val LightButtonTaupe  = Color(0xFFa59c97)
+val DecorativeTeal  = Color(0xFF4DD0E1)
+val DecorativeGreen = Color(0xFF4EC9A0)
+val DecorativePink  = Color(0xFFF06292)
 
 data class GameColorScheme(
     // Text Colors

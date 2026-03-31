@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -65,9 +66,9 @@ fun GameScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is GameEffect.ShowGameDialog -> dialogState = GameDialogState.Result(effect.isWin, effect.targetWord)
-                GameEffect.NotInWordList -> snackbarState = SnackbarState(context.getString(R.string.not_in_word_list), SnackbarType.WARNING)
-                GameEffect.InvalidWord -> { }
-                GameEffect.RowShake    -> { }
+                GameEffect.NotInWordList     -> snackbarState = SnackbarState(context.getString(R.string.not_in_word_list), SnackbarType.WARNING)
+                GameEffect.InvalidWord       -> { }
+                GameEffect.RowShake          -> { }
             }
         }
     }
@@ -126,8 +127,11 @@ fun GameContent(
             GameTopBar(
                 endIcon            = Icons.Filled.Close,
                 startIcon          = Icons.Filled.Info,
+                hintIcon           = Icons.Filled.Lightbulb,
+                hintsRemaining     = uiState.maxHints - uiState.hintsUsed,
                 onEndIconClicked   = onClose,
                 onStartIconClicked = onInfoClick,
+                onHintClicked      = { onIntent(GameIntent.UseHint) },
                 modifier           = Modifier.fillMaxWidth()
             )
 

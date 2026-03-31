@@ -39,7 +39,7 @@ data class ConfettiParticle(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameResultBottomSheet(
+fun GameMultiplayerResultBottomSheet(
     isWin: Boolean,
     targetWord: String,
     myName: String = "You",

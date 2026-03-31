@@ -53,7 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.R
-import com.khammin.core.presentation.components.bottomsheets.GameResultBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.GameMultiplayerResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
@@ -134,7 +134,7 @@ fun MultiplayerGameScreen(
     }
 
     if (showResultSheet) {
-        GameResultBottomSheet(
+        GameMultiplayerResultBottomSheet(
             isWin             = resultIsWin,
             targetWord        = resultWord,
             myName            = state.myName,

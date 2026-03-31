@@ -52,6 +52,7 @@
     <string name="result_the_word_was">The word was</string>
     <string name="result_play_again">Play Again</string>
     <string name="result_close">Close</string>
+    <string name="hint_message">Hint: the letter \'%1$c\' is at position %2$d</string>
 
     <!-- Error Messages -->
     <string name="error_name_empty">Name cannot be empty</string>

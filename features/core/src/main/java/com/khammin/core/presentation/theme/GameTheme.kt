@@ -76,6 +76,9 @@ data class WordleColors(
     val buttonPink: Color,
     val buttonTeal: Color,
     val buttonTaupe: Color,
+    val decorativeTeal: Color,
+    val decorativeGreen: Color,
+    val decorativePink: Color,
 )
 
 val DarkWordleColors = WordleColors(
@@ -98,6 +101,9 @@ val DarkWordleColors = WordleColors(
     buttonPink = DarkButtonPink,
     buttonTeal = DarkButtonTeal,
     buttonTaupe = DarkButtonTaupe,
+    decorativeTeal  = DecorativeTeal,
+    decorativeGreen = DecorativeGreen,
+    decorativePink  = DecorativePink,
 )
 
 val LightWordleColors = WordleColors(
@@ -120,7 +126,9 @@ val LightWordleColors = WordleColors(
     buttonPink = LightButtonPink,
     buttonTeal = LightButtonTeal,
     buttonTaupe = LightButtonTaupe,
-
-    )
+    decorativeTeal  = DecorativeTeal,
+    decorativeGreen = DecorativeGreen,
+    decorativePink  = DecorativePink,
+)
 
 val LocalWordleColors = compositionLocalOf { DarkWordleColors }

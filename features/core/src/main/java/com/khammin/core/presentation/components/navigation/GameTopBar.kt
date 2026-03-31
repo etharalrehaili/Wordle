@@ -1,5 +1,6 @@
 package com.khammin.core.presentation.components.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -13,10 +14,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,24 +35,48 @@ fun GameTopBar(
     title: String? = null,
     startIcon: ImageVector? = null,
     endIcon: ImageVector? = null,
+    hintIcon: ImageVector? = null,
+    hintsRemaining: Int = 0,
     onStartIconClicked: Action? = null,
     onEndIconClicked: Action? = null,
+    onHintClicked: Action? = null,
     containerColor: Color? = null,
 ) {
     val appBarColor = containerColor ?: colors.background
 
     TopAppBar(
         title = {
-            if (title != null) {
-                WordleText(
-                    text = title,
-                    color = colors.title,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center,
-                    letterSpacing = 3.sp,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (title != null) {
+                    WordleText(
+                        text = title,
+                        color = colors.title,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 3.sp,
+                    )
+                }
+                if (hintIcon != null && onHintClicked != null) {
+                    IconButton(
+                        onClick = onHintClicked,
+                        enabled = hintsRemaining > 0,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = hintIcon,
+                            contentDescription = "Use hint ($hintsRemaining remaining)",
+                            tint = if (hintsRemaining > 0) colors.body
+                            else colors.body.copy(alpha = 0.35f),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
             }
         },
         navigationIcon = {
@@ -75,28 +97,9 @@ fun GameTopBar(
             }
         },
         actions = {
-
             if (endIcon != null && onEndIconClicked != null) {
                 IconButton(
                     onClick = { onEndIconClicked() },
-//                    onClick = {
-//                        val now = System.currentTimeMillis()
-//                        if (now - lastClickTime > 200L) {
-//                            lastClickTime = now
-//                            onEndIconClicked()
-//                        }
-//                    },
-//                    onClick = {
-//                        val now = System.currentTimeMillis()
-//                        Log.d("GameTopBar", "Icon clicked, timeSinceLast=${now - lastClickTime}ms")
-//                        if (now - lastClickTime > 200L) {
-//                            lastClickTime = now
-//                            Log.d("GameTopBar", "Click accepted, navigating")
-//                            onEndIconClicked()
-//                        } else {
-//                            Log.w("GameTopBar", "Click REJECTED (too fast)")
-//                        }
-//                    },
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
