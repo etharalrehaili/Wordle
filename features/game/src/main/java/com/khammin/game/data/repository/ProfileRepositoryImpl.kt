@@ -25,10 +25,17 @@ class ProfileRepositoryImpl @Inject constructor(
      * Returns cached profile from Room if available.
      * Otherwise fetches from API, caches the result, and returns it.
      */
-    override suspend fun getProfile(firebaseUid: String): Profile? {
-        val cached = db.profileDao().getProfile(firebaseUid)
-        if (cached != null) return cached.toDomain()
+//    override suspend fun getProfile(firebaseUid: String): Profile? {
+//        val cached = db.profileDao().getProfile(firebaseUid)
+//        if (cached != null) return cached.toDomain()
+//
+//        val remote = remote.getProfile(firebaseUid) ?: return null
+//        db.profileDao().insertProfile(remote.toEntity())
+//        return remote.toDomain()
+//    }
 
+    // ProfileRepositoryImpl — add this
+    override suspend fun getProfile(firebaseUid: String): Profile? {
         val remote = remote.getProfile(firebaseUid) ?: return null
         db.profileDao().insertProfile(remote.toEntity())
         return remote.toDomain()

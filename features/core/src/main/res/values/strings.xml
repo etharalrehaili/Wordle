@@ -59,6 +59,59 @@
     <string name="sign_out_button_confirm">Yes, Sign Out</string>
     <string name="sign_out_button_cancel">Cancel</string>
 
+    <!-- Multiplayer Game Result Bottom Sheet -->
+    <string name="multiplayer_result_you_won">You Won!</string>
+    <string name="multiplayer_result_you_lost">You Lost!</string>
+    <string name="multiplayer_result_great_job">Great job! You guessed the word.</string>
+    <string name="multiplayer_result_better_luck">Better luck next time!</string>
+    <string name="multiplayer_result_opponent_left">%1$s has left the room.</string>
+    <string name="multiplayer_result_opponent_failed">%1$s has lost all their guesses.</string>
+    <string name="multiplayer_result_play_again">Play Again</string>
+    <string name="multiplayer_result_back_home">Back to Home</string>
+    <string name="multiplayer_result_vs">VS</string>
+    <string name="multiplayer_result_won_label">Won</string>
+    <string name="multiplayer_result_lost_label">Lost</string>
+    <string name="multiplayer_waiting_opponent">Waiting for opponent</string>
+    <string name="multiplayer_waiting_share">Share the code to invite</string>
+    <string name="multiplayer_room_code">Room Code</string>
+    <string name="multiplayer_room_tap_copy">Tap to copy</string>
+    <string name="room_code_copied_label">Room Code</string>
+
+    <!-- Join Room Bottom Sheet -->
+    <string name="join_room_title">Join Room</string>
+    <string name="join_room_subtitle">Enter the 6-character code shared by your friend</string>
+    <string name="join_room_placeholder">ABC123</string>
+    <string name="join_room_error_arabic">Invalid code. Use English characters only.</string>
+    <string name="join_room_joining">Joining…</string>
+    <string name="join_room_join">Join</string>
+
+    <!-- Leave Game Bottom Sheet -->
+    <string name="leave_game_title">Leave match?</string>
+    <string name="leave_game_subtitle">If you leave now, your opponent will win.</string>
+    <string name="leave_game_confirm">Yes, leave</string>
+    <string name="leave_game_stay">Stay</string>
+
+    <!-- No Internet Bottom Sheet -->
+    <string name="no_internet_title">No Internet Connection</string>
+    <string name="no_internet_subtitle">Check your connection and try again.</string>
+    <string name="no_internet_try_again">Try Again</string>
+    <string name="no_internet_cancel">Cancel</string>
+
+    <!-- Multiplayer Mode Bottom Sheet -->
+    <string name="multiplayer_mode_title">Multiplayer</string>
+    <string name="multiplayer_mode_subtitle">Challenge a friend to a word duel</string>
+    <string name="multiplayer_mode_creating">Creating…</string>
+    <string name="multiplayer_mode_create_room">Create Room</string>
+    <string name="multiplayer_mode_join_room">Join Room</string>
+
+    <!-- Game Mode Bottom Sheet -->
+    <string name="game_mode_title">Choose Mode</string>
+    <string name="game_mode_subtitle">How do you want to play today</string>
+    <string name="game_mode_single_player">Single Player</string>
+    <string name="game_mode_multiplayer">Multiplayer</string>
+    <string name="multiplayer_default_my_name">You</string>
+    <string name="multiplayer_default_guest_name">Guest</string>
+
     <!-- Theme and Language options -->
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>

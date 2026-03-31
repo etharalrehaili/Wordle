@@ -41,12 +41,16 @@ import com.khammin.core.presentation.components.Square
 import com.khammin.core.presentation.components.SquareContent
 import com.khammin.core.presentation.components.bottomsheets.AuthBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.GameMenuDrawerSheet
+import com.khammin.core.presentation.components.bottomsheets.GameModeBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.JoinRoomBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.MultiplayerModeBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.WordLengthSelectionBottomSheet
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.components.navigation.GameTopBar
 import com.khammin.core.presentation.components.text.WordleText
-import com.khammin.core.presentation.preview.GameDarkBackgroundPreview
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
@@ -62,6 +66,7 @@ import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
 @Composable
 fun HomeScreen(
     onPlayClick: IntAction,
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String) -> Unit,
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
@@ -72,17 +77,40 @@ fun HomeScreen(
     preferencesViewModel: PreferencesViewModel = hiltViewModel(),
     homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
-
     val homeUiState        by homeViewModel.uiState.collectAsStateWithLifecycle()
     val preferencesUiState by preferencesViewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(preferencesUiState.selectedLanguage) {
+        homeViewModel.prefetchWords(
+            if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en"
+        )
+    }
 
     HomeContent(
         uiState            = preferencesUiState,
         onPlayClick        = onPlayClick,
+        onMultiplayerClick = onMultiplayerClick,
+        onCreateRoom = { callback ->
+            homeViewModel.createRoom(
+                language = if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en",
+                onRoomCreated = { roomId, myId ->
+                    callback(roomId, myId)
+                }
+            )
+        },
+        onJoinRoom = { code, callback ->
+            homeViewModel.joinRoom(code) { roomId, myId ->
+                callback(roomId, myId)
+            }
+        },
+        joinRoomLoading  = homeUiState.joinRoomLoading,
+        createRoomLoading = homeUiState.createRoomLoading,
+        joinRoomError    = homeUiState.joinRoomError,
+        onClearJoinError = { homeViewModel.clearJoinRoomError() },
         onChallengeClick   = onChallengeClick,
         onLeaderboardClick = onLeaderboardClick,
         onProfileClick     = onProfileClick,
-        onIntent           = { intent ->
+        onIntent = { intent ->
             preferencesViewModel.onEvent(intent)
             when (intent) {
                 is PreferencesIntent.ChangeTheme    -> onThemeChanged(intent.theme)
@@ -93,6 +121,8 @@ fun HomeScreen(
         hasSolvedChallenge = homeUiState.hasSolvedChallenge,
         onLoginWithEmail   = onLoginWithEmail,
         onSignUpClick      = onSignUpClick,
+        noInternetError  = homeUiState.noInternetError,
+        onClearNoInternet = { homeViewModel.clearNoInternetError() },
     )
 }
 
@@ -102,6 +132,13 @@ fun HomeScreen(
 fun HomeContent(
     uiState: PreferencesUiState,
     onPlayClick: (Int) -> Unit,
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String) -> Unit = { _, _, _ -> },
+    onCreateRoom: (onRoomCreated: (roomId: String, myId: String) -> Unit) -> Unit = { _ -> },
+    onJoinRoom: (code: String, onJoined: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
+    joinRoomLoading: Boolean = false,
+    createRoomLoading: Boolean = false,
+    joinRoomError: String? = null,
+    onClearJoinError: () -> Unit = {},
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
@@ -110,13 +147,28 @@ fun HomeContent(
     hasSolvedChallenge: Boolean = false,
     onLoginWithEmail: Action = {},
     onSignUpClick: Action = {},
+    noInternetError: Boolean = false,
+    onClearNoInternet: () -> Unit = {}
 ) {
-
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var showAuthSheet by remember { mutableStateOf(false) }
-    var showLengthSheet by remember { mutableStateOf(false) }
-    var countdownSeconds by remember { mutableStateOf(secondsUntilMidnight()) }
+    var showAuthSheet         by remember { mutableStateOf(false) }
+    var showLengthSheet       by remember { mutableStateOf(false) }
+    var countdownSeconds      by remember { mutableStateOf(secondsUntilMidnight()) }
+    var showGameModeSheet     by remember { mutableStateOf(false) }
+    var showMultiplayerSheet  by remember { mutableStateOf(false) }
+    var showJoinRoomSheet     by remember { mutableStateOf(false) }
+    var lastFailedAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    if (noInternetError) {
+        NoInternetBottomSheet(
+            onRetry = {
+                onClearNoInternet()
+                lastFailedAction?.invoke()
+            },
+            onDismiss = { onClearNoInternet() }
+        )
+    }
 
     BackHandler(enabled = drawerState.isOpen) {
         scope.launch { drawerState.close() }
@@ -140,7 +192,7 @@ fun HomeContent(
                     scope.launch { drawerState.close() }
                     onProfileClick()
                 },
-                isLoggedIn       = isLoggedIn,
+                isLoggedIn         = isLoggedIn,
                 onLanguageSelected = { onIntent(PreferencesIntent.ChangeLanguage(it)) },
                 onThemeSelected    = { onIntent(PreferencesIntent.ChangeTheme(it)) },
             )
@@ -152,12 +204,9 @@ fun HomeContent(
                 .fillMaxSize()
                 .background(colors.background)
         ) {
-
             GameTopBar(
                 startIcon          = Icons.Filled.Menu,
-                onStartIconClicked = {
-                    scope.launch { drawerState.open() }
-                },
+                onStartIconClicked = { scope.launch { drawerState.open() } },
                 modifier           = Modifier.align(Alignment.TopCenter),
                 containerColor     = Color.Transparent
             )
@@ -178,8 +227,6 @@ fun HomeContent(
                     letterSpacing = 2.sp,
                     textAlign     = TextAlign.Center
                 )
-
-//                Spacer(modifier = Modifier.height(GameDesignTheme.spacing.xxs))
 
                 WordleText(
                     text          = stringResource(R.string.Khammin),
@@ -229,9 +276,23 @@ fun HomeContent(
                     backgroundColor = colors.buttonPink,
                     contentColor    = colors.title,
                     showBorder      = false,
-                    onClick         = { showLengthSheet = true },
+                    onClick         = { showGameModeSheet = true },
                     modifier        = Modifier.fillMaxWidth()
                 )
+
+                if (showGameModeSheet) {
+                    GameModeBottomSheet(
+                        onSinglePlayer = {
+                            showGameModeSheet = false
+                            showLengthSheet   = true
+                        },
+                        onMultiplayer = {
+                            showGameModeSheet    = false
+                            showMultiplayerSheet = true
+                        },
+                        onDismiss = { showGameModeSheet = false }
+                    )
+                }
 
                 if (showLengthSheet) {
                     WordLengthSelectionBottomSheet(
@@ -240,6 +301,51 @@ fun HomeContent(
                             onPlayClick(length)
                         },
                         onDismiss = { showLengthSheet = false }
+                    )
+                }
+
+                if (showMultiplayerSheet) {
+                    MultiplayerModeBottomSheet(
+                        isLoading    = createRoomLoading,
+                        onCreateRoom = {
+                            showMultiplayerSheet = false
+                            lastFailedAction = {
+                                onCreateRoom { roomId, myId ->
+                                    onMultiplayerClick(roomId, true, myId)
+                                }
+                            }
+                            onCreateRoom { roomId, myId ->
+                                onMultiplayerClick(roomId, true, myId)
+                            }
+                        },
+                        onJoinRoom = {
+                            showMultiplayerSheet = false
+                            showJoinRoomSheet    = true
+                        },
+                        onDismiss      = { showMultiplayerSheet = false }
+                    )
+                }
+
+                if (showJoinRoomSheet) {
+                    JoinRoomBottomSheet(
+                        onJoin = { code ->
+                            lastFailedAction = {
+                                onJoinRoom(code) { roomId, myId ->
+                                    showJoinRoomSheet = false
+                                    onMultiplayerClick(roomId, false, myId)
+                                }
+                            }
+                            onJoinRoom(code) { roomId, myId ->
+                                showJoinRoomSheet = false
+                                onMultiplayerClick(roomId, false, myId)
+                            }
+                        },
+                        onDismiss    = {
+                            showJoinRoomSheet = false
+                            onClearJoinError()
+                        },
+                        isLoading    = joinRoomLoading,
+                        errorMessage = joinRoomError,
                     )
                 }
 
@@ -259,12 +365,12 @@ fun HomeContent(
 
                 if (showAuthSheet) {
                     AuthBottomSheet(
-                        onDismiss         = { showAuthSheet = false },
-                        onLoginWithEmail  = {
+                        onDismiss        = { showAuthSheet = false },
+                        onLoginWithEmail = {
                             showAuthSheet = false
                             onLoginWithEmail()
                         },
-                        onSignUpClick     = {
+                        onSignUpClick    = {
                             showAuthSheet = false
                             onSignUpClick()
                         },
@@ -285,9 +391,7 @@ fun HomeContent(
                 Spacer(modifier = Modifier.height(GameDesignTheme.spacing.sm))
 
                 if (isLoggedIn && hasSolvedChallenge) {
-                    NextWordCountdownRow(
-                        countdownSeconds = countdownSeconds
-                    )
+                    NextWordCountdownRow(countdownSeconds = countdownSeconds)
                 }
             }
         }
@@ -295,10 +399,7 @@ fun HomeContent(
 }
 
 @Composable
-private fun NextWordCountdownRow(
-    countdownSeconds: Long
-) {
-
+private fun NextWordCountdownRow(countdownSeconds: Long) {
     Row(
         modifier = Modifier
             .wrapContentWidth()
@@ -352,20 +453,7 @@ private fun PreviewHomeScreenLightMode() {
     HomeContent(
         uiState            = PreferencesUiState(),
         onPlayClick        = {},
-        onChallengeClick   = {},
-        onLeaderboardClick = {},
-        onProfileClick     = {},
-        onIntent           = {}
-    )
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@GameDarkBackgroundPreview
-@Composable
-private fun PreviewHomeScreenDarkMode() {
-    HomeContent(
-        uiState            = PreferencesUiState(),
-        onPlayClick        = {},
+        onMultiplayerClick = { _, _, _ -> },
         onChallengeClick   = {},
         onLeaderboardClick = {},
         onProfileClick     = {},

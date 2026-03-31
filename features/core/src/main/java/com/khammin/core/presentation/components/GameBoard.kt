@@ -11,7 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.khammin.core.domain.model.PlayerState
 import com.khammin.core.presentation.components.enums.Types
+import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.core.presentation.theme.LocalWordleColors
 
 const val WORD_LENGTH = 4
@@ -30,36 +32,35 @@ fun GameBoard(
     currentCol: Int = 0,
     wordLength: Int = WORD_LENGTH
 ) {
-    val colors = LocalWordleColors.current
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
             .background(colors.background)
-            .padding(16.dp)
+            .padding(4.dp)
     ) {
         repeat(MAX_GUESSES) { rowIndex ->
             val guess = guesses.getOrNull(rowIndex) ?: GuessRow()
             val colCount = if (guess.letters.isEmpty()) wordLength else guess.letters.size
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 repeat(colCount) { colIndex ->
-                    val letter   = guess.letters.getOrNull(colIndex)
-                    val type     = guess.types.getOrNull(colIndex) ?: Types.DEFAULT
+                    val letter = guess.letters.getOrNull(colIndex)
+                    val type = guess.types.getOrNull(colIndex) ?: Types.DEFAULT
                     val isActive = rowIndex == currentRow && colIndex == currentCol
 
                     Square(
-                        content  = if (letter != null) SquareContent.Letter(letter)
+                        content = if (letter != null) SquareContent.Letter(letter)
                         else SquareContent.Empty,
-                        type     = type,
+                        type = type,
                         isActive = isActive,
-                        isKey    = false,
+                        isKey = false,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -67,6 +68,25 @@ fun GameBoard(
         }
     }
 }
+
+fun PlayerState.toGuessRows(wordLength: Int): List<GuessRow> {
+    val rows = guesses.mapIndexed { i, guessStr ->
+        val letters = guessStr.split(",").filter { it.isNotEmpty() }.map { it[0] }
+        val typeList = types.getOrNull(i)
+            ?.split(",")
+            ?.map { t ->
+                when (t) {
+                    "CORRECT" -> Types.CORRECT
+                    "PRESENT" -> Types.PRESENT
+                    "ABSENT"  -> Types.ABSENT
+                    else      -> Types.DEFAULT
+                }
+            } ?: emptyList()
+        GuessRow(letters, typeList)
+    }
+    return rows + List(MAX_GUESSES - rows.size) { GuessRow() }
+}
+
 // ─── Preview ──────────────────────────────────────────────────────────────────
 
 @Preview(showBackground = true, backgroundColor = 0xFF121213, name = "GameBoard")

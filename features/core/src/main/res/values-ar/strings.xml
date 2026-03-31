@@ -60,6 +60,59 @@
     <string name="sign_out_button_confirm">نعم، تسجيل الخروج</string>
     <string name="sign_out_button_cancel">إلغاء</string>
 
+    <!-- Multiplayer Game Result Bottom Sheet -->
+    <string name="multiplayer_result_you_won">فزت!</string>
+    <string name="multiplayer_result_you_lost">خسرت!</string>
+    <string name="multiplayer_result_great_job">أحسنت! لقد خمّنت الكلمة.</string>
+    <string name="multiplayer_result_better_luck">حظاً أوفر في المرة القادمة!</string>
+    <string name="multiplayer_result_opponent_left">الخصم غادر الغرفة.</string>
+    <string name="multiplayer_result_opponent_failed">لقد استنفد الخصم جميع محاولاته.</string>
+    <string name="multiplayer_result_play_again">العب مجدداً</string>
+    <string name="multiplayer_result_back_home">العودة للرئيسية</string>
+    <string name="multiplayer_result_vs">ضد</string>
+    <string name="multiplayer_result_won_label">فاز</string>
+    <string name="multiplayer_result_lost_label">خسر</string>
+    <string name="multiplayer_waiting_opponent">في انتظار المنافس</string>
+    <string name="multiplayer_waiting_share">شارك الرمز لدعوة صديق</string>
+    <string name="multiplayer_room_code">رمز الغرفة</string>
+    <string name="multiplayer_room_tap_copy">اضغط للنسخ</string>
+    <string name="room_code_copied_label">رمز الغرفة</string>
+
+    <!-- Join Room Bottom Sheet -->
+    <string name="join_room_title">الانضمام لغرفة</string>
+    <string name="join_room_subtitle">أدخل الرمز المكون من 6 أحرف الذي شاركه معك صديقك</string>
+    <string name="join_room_placeholder">ABC123</string>
+    <string name="join_room_error_arabic">رمز غير صالح. استخدم أحرفاً إنجليزية فقط.</string>
+    <string name="join_room_joining">جارٍ الانضمام…</string>
+    <string name="join_room_join">انضمام</string>
+
+    <!-- Leave Game Bottom Sheet -->
+    <string name="leave_game_title">مغادرة المباراة؟</string>
+    <string name="leave_game_subtitle">إذا غادرت الآن، سيفوز منافسك.</string>
+    <string name="leave_game_confirm">نعم، غادر</string>
+    <string name="leave_game_stay">ابقَ</string>
+
+    <!-- No Internet Bottom Sheet -->
+    <string name="no_internet_title">لا يوجد اتصال بالإنترنت</string>
+    <string name="no_internet_subtitle">تحقق من اتصالك وحاول مجدداً.</string>
+    <string name="no_internet_try_again">حاول مجدداً</string>
+    <string name="no_internet_cancel">إلغاء</string>
+
+    <!-- Multiplayer Mode Bottom Sheet -->
+    <string name="multiplayer_mode_title">اللعب الجماعي</string>
+    <string name="multiplayer_mode_subtitle">تحدَّ صديقاً في مبارزة كلمات</string>
+    <string name="multiplayer_mode_creating">جارٍ الإنشاء…</string>
+    <string name="multiplayer_mode_create_room">إنشاء غرفة</string>
+    <string name="multiplayer_mode_join_room">الانضمام لغرفة</string>
+
+    <!-- Game Mode Bottom Sheet -->
+    <string name="game_mode_title">اختر الوضع</string>
+    <string name="game_mode_subtitle">كيف تريد أن تلعب اليوم</string>
+    <string name="game_mode_single_player">لاعب منفرد</string>
+    <string name="game_mode_multiplayer">اللعب الجماعي</string>
+    <string name="multiplayer_default_my_name">أنت</string>
+    <string name="multiplayer_default_guest_name">ضيف</string>
+
     <!-- Theme and Language options -->
     <string name="theme_dark">داكن</string>
     <string name="theme_light">فاتح</string>

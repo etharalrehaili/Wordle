@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.enums.AppLanguage
@@ -54,7 +55,8 @@ fun GameKeyboard(
     keyStates: Map<Char, Types> = emptyMap(),
     onKey: (Char) -> Unit = {},
     onBackspace: Action,
-    language: AppLanguage = AppLanguage.ENGLISH
+    language: AppLanguage = AppLanguage.ENGLISH,
+    enabled: Boolean = true
 ) {
     val isArabic = language == AppLanguage.ARABIC
     val keyHeight = if (isArabic) KEY_HEIGHT_AR else KEY_HEIGHT_EN
@@ -65,6 +67,7 @@ fun GameKeyboard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 8.dp)
+            .alpha(if (enabled) 1f else 0.4f)
     ) {
         // ── Row 1 ─────────────────────────────────────────────────────────────
         KeyRow {

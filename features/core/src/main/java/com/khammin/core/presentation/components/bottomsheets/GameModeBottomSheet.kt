@@ -1,11 +1,8 @@
 package com.khammin.core.presentation.components.bottomsheets
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,13 +12,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.SentimentDissatisfied
+import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,24 +27,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.R
+import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.buttons.GameButton
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameResultsBottomSheet(
-    title: String,
-    answer: String,
-    accentColor: Color,
-    onRestart: () -> Unit,
-    onDismiss: () -> Unit = {},
+fun GameModeBottomSheet(
+    onSinglePlayer: Action,
+    onMultiplayer: Action,
+    onDismiss: Action,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
@@ -63,17 +55,14 @@ fun GameResultsBottomSheet(
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ── Top accent strip ──────────────────────────────────────
+            // Top accent strip
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
                     .background(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                colors.buttonPink,
-                                colors.buttonTeal,
-                            )
+                            colors = listOf(colors.buttonPink, colors.buttonTeal)
                         )
                     )
             )
@@ -85,8 +74,7 @@ fun GameResultsBottomSheet(
                     .padding(top = 36.dp, bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                // ── Icon ─────────────────────────────────────────────
+                // Icon
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -94,27 +82,25 @@ fun GameResultsBottomSheet(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    colors.buttonPink.copy(alpha = 0.25f),
-                                    colors.buttonPink.copy(alpha = 0.08f),
+                                    colors.buttonTeal.copy(alpha = 0.25f),
+                                    colors.buttonPink.copy(alpha = 0.10f),
                                 )
                             )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector        = if (accentColor == colors.correct)
-                            Icons.Outlined.EmojiEvents else Icons.Outlined.SentimentDissatisfied,
+                        imageVector        = Icons.Outlined.SportsEsports,
                         contentDescription = null,
-                        tint               = colors.buttonPink,
+                        tint               = colors.buttonTeal,
                         modifier           = Modifier.size(36.dp)
                     )
                 }
 
                 Spacer(Modifier.height(20.dp))
 
-                // ── Title ─────────────────────────────────────────────
-                Text(
-                    text          = title,
+                androidx.compose.material3.Text(
+                    text          = stringResource(R.string.game_mode_title),
                     color         = colors.title,
                     fontSize      = 22.sp,
                     fontWeight    = FontWeight.ExtraBold,
@@ -124,88 +110,37 @@ fun GameResultsBottomSheet(
 
                 Spacer(Modifier.height(8.dp))
 
-                Text(
-                    text      = stringResource(R.string.result_the_word_was),
-                    color     = colors.body.copy(alpha = 0.45f),
-                    fontSize  = 13.sp,
+                androidx.compose.material3.Text(
+                    text      = stringResource(R.string.game_mode_subtitle),
+                    color     = colors.body.copy(alpha = 0.75f),
+                    fontSize  = 14.sp,
                     textAlign = TextAlign.Center,
+                    lineHeight = 20.sp,
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(32.dp))
 
-                // ── Answer tiles ──────────────────────────────────────
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    answer.forEach { letter ->
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier         = Modifier
-                                .size(52.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(colors.buttonPink.copy(alpha = 0.15f))
-                                .border(
-                                    width = 1.dp,
-                                    color = colors.buttonPink.copy(alpha = 0.35f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                        ) {
-                            Text(
-                                text       = letter.toString(),
-                                color      = colors.buttonPink,
-                                fontSize   = 20.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(20.dp))
-
-                // ── Buttons ───────────────────────────────────────────
                 GameButton(
-                    label           = stringResource(R.string.game_result_play_again),
+                    label           = stringResource(R.string.game_mode_single_player),
                     backgroundColor = colors.buttonTeal,
                     contentColor    = colors.title,
                     showBorder      = false,
-                    onClick         = onRestart,
+                    onClick         = onSinglePlayer,
                     modifier        = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(10.dp))
 
                 GameButton(
-                    label           = stringResource(R.string.game_result_close),
+                    label           = stringResource(R.string.game_mode_multiplayer),
                     backgroundColor = Color.Transparent,
                     contentColor    = colors.title,
                     showBorder      = true,
-                    borderColor     = colors.border,
-                    onClick         = onDismiss,
+                    borderColor     = colors.buttonPink,
+                    onClick         = onMultiplayer,
                     modifier        = Modifier.fillMaxWidth()
                 )
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, backgroundColor = 0xFF121213)
-@Composable
-private fun PreviewGameOverBottomSheetLost() {
-    GameResultsBottomSheet(
-        title       = "Better Luck Next Time!",
-        answer      = "GHOST",
-        accentColor = Color(0xFFB59F3B),
-        onRestart   = {}
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, backgroundColor = 0xFF121213)
-@Composable
-private fun PreviewGameOverBottomSheetWon() {
-    GameResultsBottomSheet(
-        title       = "Brilliant! 🎉",
-        answer      = "GHOST",
-        accentColor = Color(0xFF538D4E),
-        onRestart   = {}
-    )
 }

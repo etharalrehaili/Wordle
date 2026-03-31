@@ -8,6 +8,10 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val isLoggedIn: Boolean = false,
     val hasSolvedChallenge: Boolean = false,
+    val joinRoomLoading: Boolean = false,
+    val joinRoomError: String? = null,
+    val createRoomLoading: Boolean = false,
+    val noInternetError: Boolean = false
 ) : UiState
 
 sealed interface HomeEffect : UiEffect

@@ -21,6 +21,7 @@ import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.game.presentation.challenge.screen.ChallengeScreen
 import com.khammin.game.presentation.game.screen.GameScreen
+import com.khammin.game.presentation.game.screen.MultiplayerGameScreen
 import com.khammin.game.presentation.home.screen.HomeScreen
 import com.khammin.game.presentation.leaderboard.screen.LeaderboardScreen
 import com.khammin.game.presentation.settings.screen.SettingsScreen
@@ -55,6 +56,11 @@ fun NavGraphBuilder.navGraph(
         HomeScreen(
             onPlayClick = { length ->
                 navController.navigate(Route.GameScreen(length)) {
+                    launchSingleTop = true
+                }
+            },
+            onMultiplayerClick = { roomId, isHost, userId ->
+                navController.navigate(Route.MultiplayerGameScreen(roomId, isHost, userId)) {
                     launchSingleTop = true
                 }
             },
@@ -97,6 +103,21 @@ fun NavGraphBuilder.navGraph(
             },
             currentLanguage = currentLanguage(),
             wordLength      = route.wordLength,
+        )
+    }
+
+    composable<Route.MultiplayerGameScreen> { backStackEntry ->
+        val route = backStackEntry.toRoute<Route.MultiplayerGameScreen>()
+        MultiplayerGameScreen(
+            onClose = {
+                if (navController.previousBackStackEntry != null) {
+                    navController.popBackStack()
+                }
+            },
+            currentLanguage = currentLanguage(),
+            roomId          = route.roomId,
+            isHost          = route.isHost,
+            userId          = route.userId,
         )
     }
 
@@ -270,6 +291,13 @@ sealed interface Route {
 
     @Serializable
     data class GameScreen(val wordLength: Int) : Route
+
+    @Serializable
+    data class MultiplayerGameScreen(
+        val roomId: String = "",
+        val isHost: Boolean = false,
+        val userId: String = ""
+    ) : Route
 
     @Serializable
     data object ChallengeScreen : Route

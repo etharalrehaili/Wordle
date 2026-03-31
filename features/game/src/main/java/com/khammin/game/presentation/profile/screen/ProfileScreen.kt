@@ -154,7 +154,7 @@ fun ProfileContent(
                 modifier            = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(spacing.xl))
+                Spacer(modifier = Modifier.height(spacing.md))
 
                 if (uiState.isEditMode) {
                     EditProfileSection(

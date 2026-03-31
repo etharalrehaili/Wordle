@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.PersonPin
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +47,7 @@ import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.PlayerCard
 import com.khammin.core.presentation.components.PodiumPlayer
 import com.khammin.core.presentation.components.TopThreePodium
+import com.khammin.core.presentation.components.buttons.GameButton
 import com.khammin.core.presentation.components.buttons.SegmentedButton
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.LeaderboardFilter
@@ -57,8 +61,8 @@ import com.khammin.game.presentation.leaderboard.contract.LeaderboardIntent
 import com.khammin.game.presentation.leaderboard.contract.LeaderboardUiState
 import com.khammin.game.presentation.leaderboard.vm.LeaderboardViewModel
 import java.time.Instant
-import kotlin.collections.get
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LeaderboardScreen(
@@ -120,6 +124,48 @@ fun LeaderboardContent(
                             color       = colors.buttonTeal,
                             strokeWidth = 2.dp,
                         )
+                    }
+                }
+
+                uiState.noInternet -> {
+                    Box(
+                        modifier         = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier            = Modifier.padding(horizontal = 32.dp)
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Outlined.WifiOff,
+                                contentDescription = null,
+                                tint               = colors.body.copy(alpha = 0.3f),
+                                modifier           = Modifier.size(48.dp)
+                            )
+                            WordleText(
+                                text      = "No Internet Connection",
+                                color     = colors.title,
+                                fontSize  = typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                            )
+                            WordleText(
+                                text      = "Please check your connection and try again",
+                                color     = colors.body.copy(alpha = 0.5f),
+                                fontSize  = typography.labelMedium,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            GameButton(
+                                label           = "Try Again",
+                                backgroundColor = colors.buttonTeal,
+                                contentColor    = colors.title,
+                                showBorder      = false,
+                                onClick         = { onIntent(LeaderboardIntent.ChangeLanguage(uiState.language)) },
+                                modifier        = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
 
