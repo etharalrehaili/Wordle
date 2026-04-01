@@ -1,5 +1,6 @@
 package com.khammin.game.presentation.game.vm
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.domain.model.PlayerState
@@ -24,6 +25,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val RESET_TAG = "MultiplayerReset"
 
 @HiltViewModel
 class MultiplayerGameViewModel @Inject constructor(
@@ -55,6 +58,7 @@ class MultiplayerGameViewModel @Inject constructor(
     }
 
     private var observingOpponentId: String = ""
+    private var cachedWords: List<String> = emptyList()
 
     private fun loadGame(roomId: String, language: String, isHost: Boolean, myUserId: String, defaultMyName: String, defaultGuestName: String) {
         val myId = myUserId.takeIf { it.isNotEmpty() }
@@ -74,10 +78,12 @@ class MultiplayerGameViewModel @Inject constructor(
             }
         }
 
+
         observeRoomUseCase(roomId).onEach { room ->
             if (room != null) {
                 val opponentId = if (room.hostId == myId) room.guestId else room.hostId
 
+                val previousWordLength = uiState.value.wordLength
                 setState {
                     copy(
                         targetWord = room.word.uppercase(),
@@ -87,6 +93,17 @@ class MultiplayerGameViewModel @Inject constructor(
                         board      = if (wordLength == room.wordLength) board
                         else List(board.size) { List(room.wordLength) { Tile() } }
                     )
+                }
+
+                // Populate (or refresh) the word cache whenever word length is first known or changes
+                if (cachedWords.isEmpty() || room.wordLength != previousWordLength) {
+                    viewModelScope.launch {
+                        val result = getWordsUseCase(language, room.wordLength)
+                        if (result is Resource.Success) {
+                            cachedWords = result.data
+                            Log.d(RESET_TAG, "[Room observer] Word cache populated — ${cachedWords.size} words | lang=$language | wordLength=${room.wordLength}")
+                        }
+                    }
                 }
 
                 // Show result when game first finishes
@@ -131,6 +148,9 @@ class MultiplayerGameViewModel @Inject constructor(
 
                 // When room resets to playing, reset local state for both players
                 if (room.status == "playing" && uiState.value.isGameOver) {
+                    val role = if (uiState.value.isHost) "HOST" else "GUEST"
+                    val receivedAt = System.currentTimeMillis()
+                    Log.d(RESET_TAG, "[$role] Firestore status='playing' received — resetting board now | word=${room.word} | ts=$receivedAt")
                     setState {
                         copy(
                             isGameOver     = false,
@@ -143,10 +163,13 @@ class MultiplayerGameViewModel @Inject constructor(
                             targetWord     = room.word.uppercase(),
                         )
                     }
+                    Log.d(RESET_TAG, "[$role] Board reset complete after Firestore update | elapsed=${System.currentTimeMillis() - receivedAt}ms")
                     sendEffect { MultiplayerGameEffect.DismissResultDialog }
                 }
 
                 if (room.status == "restarting" && uiState.value.isGameOver) {
+                    val role = if (uiState.value.isHost) "HOST" else "GUEST"
+                    Log.d(RESET_TAG, "[$role] Firestore status='restarting' received — dismissing result dialog | ts=${System.currentTimeMillis()}")
                     sendEffect { MultiplayerGameEffect.DismissResultDialog }
                 }
 
@@ -336,8 +359,12 @@ class MultiplayerGameViewModel @Inject constructor(
 
     private fun restartGame() {
         val s = uiState.value
+        val role = if (s.isHost) "HOST" else "GUEST"
+        val tapAt = System.currentTimeMillis()
 
-        // Reset local board immediately for the player who tapped
+        Log.d(RESET_TAG, "[$role] Play Again tapped — roomId=${s.roomId} | myId=${s.myUserId} | ts=$tapAt")
+
+        val localResetStart = System.currentTimeMillis()
         setState {
             copy(
                 currentRow     = 0,
@@ -347,29 +374,65 @@ class MultiplayerGameViewModel @Inject constructor(
                 isGameOver     = false,
             )
         }
+        Log.d(RESET_TAG, "[$role] Local board reset done — elapsed=${System.currentTimeMillis() - localResetStart}ms")
 
         viewModelScope.launch {
-            // Atomically claim the restart to prevent both players doing it simultaneously
+            Log.d(RESET_TAG, "[$role] Attempting claimRestart (Firestore write) — roomId=${s.roomId}")
+            val claimStart = System.currentTimeMillis()
             val claimed = try {
-                restartRoomUseCase.claimRestart(s.roomId)  // sets status to "restarting"
+                restartRoomUseCase.claimRestart(s.roomId)
+                Log.d(RESET_TAG, "[$role] claimRestart SUCCESS — elapsed=${System.currentTimeMillis() - claimStart}ms | total from tap=${System.currentTimeMillis() - tapAt}ms")
                 true
             } catch (e: Exception) {
+                Log.w(RESET_TAG, "[$role] claimRestart FAILED — opponent already claimed restart | error=${e.message} | elapsed=${System.currentTimeMillis() - claimStart}ms")
                 false
             }
 
-            if (!claimed) return@launch  // other player already claimed restart
+            if (!claimed) {
+                Log.d(RESET_TAG, "[$role] Not the claimer — waiting for Firestore status='playing' to reset board")
+                return@launch
+            }
 
-            // Clear both players' Firestore states
+            Log.d(RESET_TAG, "[$role] Clearing player states — myId=${s.myUserId} | opponentId=${s.opponentId}")
+            val clearStart = System.currentTimeMillis()
             updatePlayerStateUseCase(s.roomId, s.myUserId, PlayerState())
             if (s.opponentId.isNotEmpty()) {
                 updatePlayerStateUseCase(s.roomId, s.opponentId, PlayerState())
             }
+            Log.d(RESET_TAG, "[$role] Player states cleared — elapsed=${System.currentTimeMillis() - clearStart}ms")
 
-            // Fetch a new word and update the room
-            val result = getWordsUseCase(s.language, s.wordLength)
-            if (result is Resource.Success) {
-                val newWord = result.data.randomOrNull() ?: return@launch
-                restartRoomUseCase(s.roomId, newWord.uppercase(), s.wordLength)
+            val wordStart = System.currentTimeMillis()
+            val words = cachedWords.takeIf { it.isNotEmpty() }?.also {
+                Log.d(RESET_TAG, "[$role] Using cached word list (${it.size} words) — 0ms fetch")
+            } ?: run {
+                Log.d(RESET_TAG, "[$role] Cache empty — fetching word list from network | lang=${s.language} | wordLength=${s.wordLength}")
+                val result = getWordsUseCase(s.language, s.wordLength)
+                if (result is Resource.Success) result.data else null
+            }
+
+            if (words == null) {
+                Log.e(RESET_TAG, "[$role] Failed to get word list — restart aborted")
+                return@launch
+            }
+
+            val newWord = words.randomOrNull() ?: run {
+                Log.e(RESET_TAG, "[$role] Word list is empty — cannot restart")
+                return@launch
+            }
+            Log.d(RESET_TAG, "[$role] Word selected — elapsed=${System.currentTimeMillis() - wordStart}ms | word=${newWord.uppercase()}")
+
+            val restartStart = System.currentTimeMillis()
+            restartRoomUseCase(s.roomId, newWord.uppercase(), s.wordLength)
+            Log.d(RESET_TAG, "[$role] restartRoom Firestore write done — elapsed=${System.currentTimeMillis() - restartStart}ms | TOTAL from tap=${System.currentTimeMillis() - tapAt}ms")
+            Log.d(RESET_TAG, "[$role] Opponent will reset when their observer receives status='playing' from Firestore")
+
+            // Refresh cache in background for the next restart
+            viewModelScope.launch {
+                val refreshResult = getWordsUseCase(s.language, s.wordLength)
+                if (refreshResult is Resource.Success) {
+                    cachedWords = refreshResult.data
+                    Log.d(RESET_TAG, "[$role] Word cache refreshed — ${cachedWords.size} words")
+                }
             }
         }
     }

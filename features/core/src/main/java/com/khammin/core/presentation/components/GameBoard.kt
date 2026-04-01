@@ -2,13 +2,23 @@ package com.khammin.core.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.khammin.core.domain.model.PlayerState
@@ -33,16 +43,43 @@ fun GameBoard(
     wordLength: Int = WORD_LENGTH
 ) {
 
-    Column(
+    val listState = rememberLazyListState()
+    val density   = LocalDensity.current
+
+    // Captures the natural height of MAX_GUESSES rows on the very first layout,
+    // then stays fixed — so adding extra rows never resizes the board.
+    var lockedHeightPx by remember { mutableIntStateOf(0) }
+
+    // Scroll to the newest row whenever one is added (e.g. second chance)
+    LaunchedEffect(guesses.size) {
+        if (guesses.isNotEmpty()) {
+            listState.animateScrollToItem(guesses.size - 1)
+        }
+    }
+
+    LazyColumn(
+        state = listState,
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
+            // Lock to the captured height once we have it
+            .then(
+                if (lockedHeightPx > 0)
+                    Modifier.height(with(density) { lockedHeightPx.toDp() })
+                else
+                    Modifier
+            )
             .background(colors.background)
             .padding(4.dp)
+            // Measure the board height exactly once (on the initial MAX_GUESSES layout)
+            .onGloballyPositioned { coords ->
+                if (lockedHeightPx == 0 && coords.size.height > 0) {
+                    lockedHeightPx = coords.size.height
+                }
+            }
     ) {
-        repeat(MAX_GUESSES) { rowIndex ->
-            val guess = guesses.getOrNull(rowIndex) ?: GuessRow()
+        itemsIndexed(guesses) { rowIndex, guess ->
             val colCount = if (guess.letters.isEmpty()) wordLength else guess.letters.size
 
             Row(

@@ -29,7 +29,8 @@ class GameViewModel @Inject constructor(
             is GameIntent.DeleteLetter -> deleteLetter()
             is GameIntent.SubmitGuess  -> submitGuess()
             is GameIntent.RestartGame  -> restartGame()
-            is GameIntent.UseHint -> useHint()
+            is GameIntent.UseHint      -> useHint()
+            is GameIntent.SecondChance -> secondChance()
         }
     }
 
@@ -112,7 +113,7 @@ class GameViewModel @Inject constructor(
         val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
 
         val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
-        val isLast = state.currentRow == MAX_GUESSES - 1
+        val isLast = state.currentRow == state.board.size - 1
 
         setState {
             copy(
@@ -189,6 +190,24 @@ class GameViewModel @Inject constructor(
             }
         }
         return merged
+    }
+
+    private fun secondChance() {
+        val state = uiState.value
+        if (!state.isGameOver) return
+
+        val extraRow  = List(state.wordLength) { Tile() }
+        val newBoard  = state.board + listOf(extraRow)
+
+        setState {
+            copy(
+                board                = newBoard,
+                isGameOver           = false,
+                hasUsedSecondChance  = true,
+                currentRow           = newBoard.size - 1,
+                currentCol           = 0,
+            )
+        }
     }
 
     private fun useHint() {

@@ -1,5 +1,6 @@
 package com.khammin.game.data.remote.datasource.game
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.khammin.core.domain.model.GameRoom
 import com.khammin.core.domain.model.PlayerState
@@ -8,6 +9,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+
+private const val RESET_TAG = "MultiplayerReset"
 
 class MultiplayerDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore
@@ -93,6 +96,8 @@ class MultiplayerDataSourceImpl @Inject constructor(
     }
 
     override suspend fun restartRoom(roomId: String, newWord: String, wordLength: Int) {
+        val start = System.currentTimeMillis()
+        Log.d(RESET_TAG, "[Firestore] restartRoom → writing status='playing' | roomId=$roomId | word=$newWord")
         rooms.document(roomId)
             .update(mapOf(
                 "word"       to newWord,
@@ -101,11 +106,15 @@ class MultiplayerDataSourceImpl @Inject constructor(
                 "winnerId"   to null,
             ))
             .await()
-
+        Log.d(RESET_TAG, "[Firestore] restartRoom ack received — round-trip=${System.currentTimeMillis() - start}ms")
     }
+
     override suspend fun claimRestart(roomId: String) {
+        val start = System.currentTimeMillis()
+        Log.d(RESET_TAG, "[Firestore] claimRestart → writing status='restarting' | roomId=$roomId")
         rooms.document(roomId)
             .update("status", "restarting")
             .await()
+        Log.d(RESET_TAG, "[Firestore] claimRestart ack received — round-trip=${System.currentTimeMillis() - start}ms")
     }
 }

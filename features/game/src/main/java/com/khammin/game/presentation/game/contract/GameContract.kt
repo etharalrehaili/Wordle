@@ -19,7 +19,8 @@ data class GameUiState(
     val error: String? = null,
     val isGameOver: Boolean = false,
     val hintsUsed: Int = 0,
-    val maxHints: Int = 3
+    val maxHints: Int = 3,
+    val hasUsedSecondChance: Boolean = false
 ) : UiState
 
 sealed interface GameEffect : UiEffect {
@@ -36,6 +37,7 @@ sealed class GameIntent : UiIntent {
     data object SubmitGuess : GameIntent()
     data object RestartGame : GameIntent()
     data object UseHint : GameIntent()
+    data object SecondChance : GameIntent()
 }
 
 sealed interface GameDialogState {

@@ -53,6 +53,7 @@
     <string name="game_result_word_was">The word was</string>
     <string name="game_result_solved_in">Solved in %1$s attempts</string>
     <string name="game_result_play_again">Play Again</string>
+    <string name="game_result_second_chance">Second Chance</string>
     <string name="game_result_close">Close</string>
 
     <!-- Sign Out Bottom Sheet -->

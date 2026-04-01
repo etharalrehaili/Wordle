@@ -3,9 +3,10 @@ package com.khammin.game.presentation.game.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
@@ -22,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.CustomSnackbarHost
@@ -74,17 +76,21 @@ fun GameScreen(
     }
 
     GameContent(
-        uiState = uiState,
-        currentLanguage = currentLanguage,
-        dialogState = dialogState,
-        snackbarState   = snackbarState,
+        uiState           = uiState,
+        currentLanguage   = currentLanguage,
+        dialogState       = dialogState,
+        snackbarState     = snackbarState,
         onDismissSnackbar = { snackbarState = null },
-        onClose = onClose,
-        onInfoClick = { dialogState = GameDialogState.Info },
-        onDismissDialog = { dialogState = GameDialogState.None },
+        onClose           = onClose,
+        onInfoClick       = { dialogState = GameDialogState.Info },
+        onDismissDialog   = { dialogState = GameDialogState.None },
         onRestart = {
             dialogState = GameDialogState.None
             viewModel.onEvent(GameIntent.RestartGame)
+        },
+        onSecondChance = {
+            dialogState = GameDialogState.None
+            viewModel.onEvent(GameIntent.SecondChance)
         },
         onIntent = viewModel::onEvent,
     )
@@ -102,6 +108,7 @@ fun GameContent(
     onInfoClick: Action,
     onDismissDialog: Action,
     onRestart: Action,
+    onSecondChance: Action,
     onIntent: (GameIntent) -> Unit,
 ) {
     val colors = LocalWordleColors.current
@@ -135,6 +142,8 @@ fun GameContent(
                 modifier           = Modifier.fillMaxWidth()
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
             GameBoard(
                 guesses    = guessRows,
                 currentRow = uiState.currentRow,
@@ -142,7 +151,7 @@ fun GameContent(
                 wordLength = uiState.wordLength,
                 modifier   = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
+                    .weight(1f)
             )
 
             GameKeyboard(
@@ -152,6 +161,8 @@ fun GameContent(
                 language    = currentLanguage,
                 modifier    = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(102.dp))
         }
 
         snackbarState?.let {
@@ -171,13 +182,14 @@ fun GameContent(
             }
             is GameDialogState.Result -> {
                 GameResultsBottomSheet(
-                    title       = if (dialog.isWin) stringResource(CoreRes.string.result_win_title)
-                    else stringResource(CoreRes.string.result_lose_title),
-                    answer      = dialog.word,
-                    accentColor = if (dialog.isWin) colors.correct else colors.present,
-                    sheetState  = resultSheetState,
-                    onRestart   = onRestart,
-                    onDismiss   = onDismissDialog,
+                    title          = if (dialog.isWin) stringResource(CoreRes.string.result_win_title)
+                                     else stringResource(CoreRes.string.result_lose_title),
+                    answer         = dialog.word,
+                    accentColor    = if (dialog.isWin) colors.correct else colors.present,
+                    sheetState     = resultSheetState,
+                    onRestart      = onRestart,
+                    onSecondChance = if (!dialog.isWin) onSecondChance else null,
+                    onDismiss      = onDismissDialog,
                 )
             }
             GameDialogState.None -> Unit
