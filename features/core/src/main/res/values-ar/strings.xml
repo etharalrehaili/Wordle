@@ -74,6 +74,7 @@
     <string name="multiplayer_result_vs">ضد</string>
     <string name="multiplayer_result_won_label">فاز</string>
     <string name="multiplayer_result_lost_label">خسر</string>
+    <string name="multiplayer_result_title">النتيجة</string>
     <string name="multiplayer_waiting_opponent">في انتظار المنافس</string>
     <string name="multiplayer_waiting_share">شارك الرمز لدعوة صديق</string>
     <string name="multiplayer_room_code">رمز الغرفة</string>

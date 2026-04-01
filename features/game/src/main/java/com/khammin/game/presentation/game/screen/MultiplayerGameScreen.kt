@@ -41,6 +41,7 @@ import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -148,7 +149,10 @@ fun MultiplayerGameScreen(
                     viewModel.onEvent(MultiplayerGameIntent.RestartGame)
                 }
             },
-            onDismiss = {
+            // Swipe-down / tap-outside: just hide the sheet, stay in the game
+            onDismiss  = { showResultSheet = false },
+            // "Back Home" button: hide the sheet AND leave the match
+            onBackHome = {
                 showResultSheet = false
                 viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
             }
@@ -156,16 +160,19 @@ fun MultiplayerGameScreen(
     }
 
     MultiplayerGameContent(
-        currentLanguage = currentLanguage,
-        onClose         = {
+        currentLanguage  = currentLanguage,
+        onClose          = {
             if (state.opponentId.isNotEmpty()) showLeaveSheet = true
             else onClose()
         },
-        roomId          = roomId,
-        isHost          = isHost,
-        state           = state,
-        opponentGuesses = opponentGuesses,
-        onIntent        = viewModel::onEvent,
+        roomId           = roomId,
+        isHost           = isHost,
+        state            = state,
+        opponentGuesses  = opponentGuesses,
+        onIntent         = viewModel::onEvent,
+        showResultButton = !showResultSheet && resultWord.isNotEmpty(),
+        resultIsWin      = resultIsWin,
+        onShowResult     = { showResultSheet = true },
     )
 }
 
@@ -178,6 +185,9 @@ fun MultiplayerGameContent(
     state: MultiplayerGameUiState,
     opponentGuesses: List<GuessRow>,
     onIntent: (MultiplayerGameIntent) -> Unit,
+    showResultButton: Boolean = false,
+    resultIsWin: Boolean = false,
+    onShowResult: () -> Unit = {},
 ) {
 
     Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
@@ -201,11 +211,14 @@ fun MultiplayerGameContent(
             ) {
                 if (state.opponentId.isNotEmpty()) {
                     GuestCard(
-                        name      = state.opponentName,
-                        avatarUrl = state.opponentAvatarUrl,
-                        guesses   = opponentGuesses,
+                        name       = state.opponentName,
+                        avatarUrl  = state.opponentAvatarUrl,
+                        guesses    = opponentGuesses,
                         wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
                     )
+                    if (showResultButton) {
+                        ResultButton(isWin = resultIsWin, onClick = onShowResult)
+                    }
                 } else {
                     Box(
                         modifier = Modifier
@@ -255,8 +268,6 @@ fun MultiplayerGameContent(
                 modifier   = Modifier.fillMaxWidth().weight(1f)
             )
 
-//            Spacer(Modifier.weight(1f))
-
             GameKeyboard(
                 enabled   = state.opponentId.isNotEmpty(),
                 keyStates = state.keyboardStates.mapValues { (_, tileState) ->
@@ -271,6 +282,38 @@ fun MultiplayerGameContent(
                 onBackspace = { if (state.opponentId.isNotEmpty()) onIntent(MultiplayerGameIntent.DeleteLetter) },
                 language    = currentLanguage,
                 modifier    = Modifier.fillMaxWidth().padding(bottom = 32.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResultButton(isWin: Boolean, onClick: () -> Unit) {
+    val accent = if (isWin) colors.buttonTeal else colors.buttonPink
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(accent.copy(alpha = 0.12f))
+            .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+            .clickable(
+                indication        = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick           = onClick
+            )
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(text = "🏆", fontSize = 22.sp)
+            Text(
+                text       = stringResource(R.string.multiplayer_result_title),
+                color      = accent,
+                fontSize   = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
             )
         }
     }

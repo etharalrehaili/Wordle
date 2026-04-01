@@ -49,6 +49,7 @@ fun GameMultiplayerResultBottomSheet(
     opponentLeft: Boolean = false,
     opponentFailed: Boolean = false,
     onDismiss: () -> Unit,
+    onBackHome: () -> Unit = onDismiss,
     onPlayAgain: (() -> Unit)? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
@@ -152,7 +153,7 @@ fun GameMultiplayerResultBottomSheet(
                         contentColor    = colors.title,
                         showBorder      = true,
                         borderColor     = colors.border,
-                        onClick         = onDismiss,
+                        onClick         = onBackHome,
                         modifier        = Modifier.fillMaxWidth()
                     )
                 }

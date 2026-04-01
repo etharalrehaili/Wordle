@@ -77,6 +77,7 @@
     <string name="multiplayer_result_vs">VS</string>
     <string name="multiplayer_result_won_label">Won</string>
     <string name="multiplayer_result_lost_label">Lost</string>
+    <string name="multiplayer_result_title">Result</string>
     <string name="multiplayer_waiting_opponent">Waiting for opponent</string>
     <string name="multiplayer_waiting_share">Share the code to invite</string>
     <string name="multiplayer_room_code">Room Code</string>
