@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Path
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalBottomSheet
@@ -147,6 +150,19 @@ fun WordleInfoBottomSheet(
                         description = stringResource(R.string.info_example_3_desc),
                     )
 
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    ExampleRow(
+                        letters   = stringResource(R.string.info_example_4_letters).toList(),
+                        highlight = 3,
+                        color     = Color.Transparent,
+                        isSimilar = true
+                    )
+                    HighlightCaption(
+                        letter      = stringResource(R.string.info_example_4_letter).first(),
+                        description = stringResource(R.string.info_example_4_desc),
+                    )
+
                     Spacer(modifier = Modifier.height(4.dp))
                     HorizontalDivider(color = colors.divider, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -179,18 +195,44 @@ private fun RuleItem(text: String) {
 private fun ExampleRow(
     letters: List<Char>,
     highlight: Int,
-    color: Color
+    color: Color,
+    isSimilar: Boolean = false
 ) {
+    val wordleColors = LocalWordleColors.current
+    val correctColor = wordleColors.correct
+    val purpleColor  = wordleColors.purpleButton
+    val tileShape    = RoundedCornerShape(4.dp)
+
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         letters.forEachIndexed { index, letter ->
             val isHighlighted = index == highlight
+            val showSplit = isHighlighted && isSimilar
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(42.dp)
-                    .background(
-                        color = if (isHighlighted) color else Color(0xFF1A2535),
-                        shape = RoundedCornerShape(4.dp)
+                    .clip(tileShape)
+                    .then(
+                        if (showSplit) {
+                            Modifier.drawBehind {
+                                val w = size.width
+                                val h = size.height
+                                val topLeft = Path().apply {
+                                    moveTo(0f, 0f); lineTo(w, 0f); lineTo(0f, h); close()
+                                }
+                                val bottomRight = Path().apply {
+                                    moveTo(w, 0f); lineTo(w, h); lineTo(0f, h); close()
+                                }
+                                drawPath(topLeft,     color = correctColor)
+                                drawPath(bottomRight, color = purpleColor)
+                            }
+                        } else {
+                            Modifier.background(
+                                color = if (isHighlighted) color else Color(0xFF1A2535),
+                                shape = tileShape
+                            )
+                        }
                     )
             ) {
                 Text(

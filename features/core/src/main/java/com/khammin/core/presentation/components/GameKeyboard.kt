@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -18,17 +19,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.Types
@@ -151,12 +153,13 @@ private fun RowScope.LetterKey(
 ) {
     val colors = LocalWordleColors.current
     val bgColor = when (type) {
-        Types.CORRECT -> colors.correct
-        Types.PRESENT -> colors.present
-        Types.ABSENT  -> colors.absent
-        Types.DEFAULT -> colors.key
+        Types.CORRECT  -> colors.correct
+        Types.PRESENT  -> colors.present
+        Types.ABSENT   -> colors.absent
+        Types.SIMILAR  -> Color.Transparent // handled by KeyContainer's diagonal split
+        Types.DEFAULT  -> colors.key
     }
-    KeyContainer(bgColor = bgColor, weight = 1f, keyHeight = keyHeight, onClick = onClick) {
+    KeyContainer(bgColor = bgColor, type = type, weight = 1f, keyHeight = keyHeight, onClick = onClick) {
         Text(
             text = letter.toString(),
             color = colors.title,
@@ -213,15 +216,37 @@ private fun RowScope.KeyContainer(
     weight: Float,
     keyHeight: Dp,
     onClick: () -> Unit,
+    type: Types = Types.DEFAULT,
     content: @Composable () -> Unit
 ) {
+    val colors = LocalWordleColors.current
+    val correctColor = colors.correct
+    val purpleColor  = colors.purpleButton
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .weight(weight)
             .height(keyHeight)
             .clip(KEY_SHAPE)
-            .background(bgColor, KEY_SHAPE)
+            .then(
+                if (type == Types.SIMILAR) {
+                    Modifier.drawBehind {
+                        val w = size.width
+                        val h = size.height
+                        val topLeft = Path().apply {
+                            moveTo(0f, 0f); lineTo(w, 0f); lineTo(0f, h); close()
+                        }
+                        val bottomRight = Path().apply {
+                            moveTo(w, 0f); lineTo(w, h); lineTo(0f, h); close()
+                        }
+                        drawPath(topLeft,     color = correctColor)
+                        drawPath(bottomRight, color = purpleColor)
+                    }
+                } else {
+                    Modifier.background(bgColor, KEY_SHAPE)
+                }
+            )
             .noRippleClickable(onClick)
     ) {
         content()

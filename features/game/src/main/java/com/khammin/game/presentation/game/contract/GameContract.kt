@@ -50,6 +50,7 @@ fun TileState.toTypes(): Types = when (this) {
     TileState.CORRECT   -> Types.CORRECT
     TileState.MISPLACED -> Types.PRESENT
     TileState.WRONG     -> Types.ABSENT
+    TileState.SIMILAR   -> Types.SIMILAR
     TileState.FILLED,
     TileState.EMPTY     -> Types.DEFAULT
 }

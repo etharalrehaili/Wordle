@@ -16,7 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -51,14 +53,16 @@ fun Square(
 ) {
     val hasContent = content !is SquareContent.Empty
     val colors = LocalWordleColors.current
+    val isSimilar = type == Types.SIMILAR
 
-    // Animated background
+    // Animated background (SIMILAR uses transparent — the split is drawn via drawBehind)
     val backgroundColor by animateColorAsState(
         targetValue = when (type) {
-            Types.CORRECT -> colors.correct
-            Types.PRESENT -> colors.present
-            Types.ABSENT  -> colors.absent
-            Types.DEFAULT -> if (isKey) colors.key else colors.background
+            Types.CORRECT  -> colors.correct
+            Types.PRESENT  -> colors.present
+            Types.ABSENT   -> colors.absent
+            Types.SIMILAR  -> Color.Transparent
+            Types.DEFAULT  -> if (isKey) colors.key else colors.background
         },
         animationSpec = tween(durationMillis = 300),
         label = "bgColor"
@@ -93,13 +97,42 @@ fun Square(
     val shape = RoundedCornerShape(if (isKey) 8.dp else 4.dp)
     val sizeModifier = if (width != null) Modifier.size(width, height) else Modifier.size(height)
 
+    // Capture colors for use inside drawBehind lambda
+    val correctColor  = colors.correct
+    val purpleColor   = colors.purpleButton
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .then(sizeModifier)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(shape)
-            .background(backgroundColor, shape)
+            .then(
+                if (isSimilar) {
+                    // Diagonal split: top-left triangle = correct (green),
+                    // bottom-right triangle = purpleButton
+                    Modifier.drawBehind {
+                        val w = size.width
+                        val h = size.height
+                        val topLeft = Path().apply {
+                            moveTo(0f, 0f)
+                            lineTo(w, 0f)
+                            lineTo(0f, h)
+                            close()
+                        }
+                        val bottomRight = Path().apply {
+                            moveTo(w, 0f)
+                            lineTo(w, h)
+                            lineTo(0f, h)
+                            close()
+                        }
+                        drawPath(topLeft,    color = correctColor)
+                        drawPath(bottomRight, color = purpleColor)
+                    }
+                } else {
+                    Modifier.background(backgroundColor, shape)
+                }
+            )
             .border(borderWidth, borderColor, shape)
     ) {
         when (content) {

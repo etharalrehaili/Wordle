@@ -4,7 +4,8 @@ enum class Types {
     CORRECT, // the letter is in the correct position
     PRESENT, // the letter is in the word but in the wrong position
     ABSENT,  // the letter is not in the word
-    DEFAULT  // default state for empty
+    DEFAULT, // default state for empty
+    SIMILAR  // right position, but typed a phonetically similar letter (e.g. ه ↔ ة)
 }
 
 enum class AppLanguage(val code: String) {
@@ -27,5 +28,6 @@ enum class TileState {
     FILLED,
     CORRECT,
     MISPLACED,
-    WRONG
+    WRONG,
+    SIMILAR  // right position, phonetically similar letter (e.g. ه ↔ ة)
 }

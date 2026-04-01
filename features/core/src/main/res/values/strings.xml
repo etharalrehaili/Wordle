@@ -30,6 +30,9 @@
     <string name="info_example_2_desc"> is in the word but in the wrong spot.</string>
     <string name="info_example_3_letter">S</string>
     <string name="info_example_3_letters">FRIEND</string>
+    <string name="info_example_4_letter">ه</string>
+    <string name="info_example_4_letters">ورده</string>
+    <string name="info_example_4_desc"> موجود لكن تحقق من شكل الحرف (ة / ه).</string>
     <string name="info_example_3_desc"> is not in the word in any spot.</string>
     <string name="info_new_wordle">A new challenge word will be available each day!</string>
 
