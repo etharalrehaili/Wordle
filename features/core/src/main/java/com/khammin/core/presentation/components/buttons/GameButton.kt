@@ -63,7 +63,7 @@ fun GameButton(
         Modifier.border(
             width = 1.dp,
             color = resolvedBorderColor,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(28.dp)
         )
     else
         Modifier
@@ -71,9 +71,9 @@ fun GameButton(
     Box(
         modifier = modifier
             .scale(scale)
-            .widthIn(min = 240.dp)
+            .widthIn(min = 280.dp)
             .height(64.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(28.dp))
             .then(bgModifier)
             .then(borderModifier)
             .clickable(

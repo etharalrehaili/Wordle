@@ -6,6 +6,8 @@
     <string name="drawer_theme_desc">Change appearance</string>
     <string name="drawer_language">Language</string>
     <string name="drawer_language_desc">Switch language</string>
+    <string name="drawer_login">Sign in</string>
+    <string name="drawer_login_desc">Log in to your account</string>
 
     <!-- Word Length Sheet -->
     <string name="word_length_title">How long?</string>

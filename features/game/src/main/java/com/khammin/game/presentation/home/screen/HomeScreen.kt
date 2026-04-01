@@ -19,11 +19,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,9 +67,6 @@ import com.khammin.game.presentation.preferences.contract.PreferencesIntent
 import com.khammin.game.presentation.preferences.contract.PreferencesUiState
 import com.khammin.game.presentation.home.vm.HomeViewModel
 import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
-import kotlin.math.PI
-import kotlin.math.sin
-import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -204,6 +199,10 @@ fun HomeContent(
                     onProfileClick()
                 },
                 isLoggedIn         = isLoggedIn,
+                onLoginClick       = {
+                    scope.launch { drawerState.close() }
+                    onLoginWithEmail()
+                },
                 onLanguageSelected = { onIntent(PreferencesIntent.ChangeLanguage(it)) },
                 onThemeSelected    = { onIntent(PreferencesIntent.ChangeTheme(it)) },
             )

@@ -52,7 +52,7 @@ object GameModule {
             .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer 1f93d59225275a11bb7f592dec1d55ad755c1ec8d612b7354c311e5b0099262666285b710057b4bae5a1c5b82dce8873ad4589b656dad44e4437b7d0b46ebb70e0c3b31336f1600a6859781f9672d6f30671547e44d9013da6d0bdffbfe70662ac0931e7e444f5b0f935c1c81724945fdb75c2f3c5c0d107809a285b70110d91")
+                    .addHeader("Authorization", "Bearer 1120ff8946655caf08da294d425ff7b3174d059d66c76d1727b2dbb08e02e3dac380bae98654c67a5d7b8d8c252a1deda3b1d8c96c1dd77888d971ba48e830e64f076f90fbf0fc9abd2346350a68a15e1f81131085f21ca2818e9c09fad97f8b5f807eb069fc09ffca4eb267a633e02ef13e349b242fbc24426a7074a88a76a0")
                     .build()
                 chain.proceed(request)
             }

@@ -61,6 +61,7 @@ fun GameMenuDrawerSheet(
     selectedLanguage: AppLanguage = AppLanguage.ENGLISH,
     selectedTheme: AppColorTheme = AppColorTheme.DARK,
     isLoggedIn: Boolean = true,
+    onLoginClick: Action,
     onClose: Action,
     onProfile: Action,
     onLanguageSelected: (AppLanguage) -> Unit,
@@ -99,6 +100,7 @@ fun GameMenuDrawerSheet(
                     onLanguage = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
                     onProfile  = onProfile,
                     isLoggedIn = isLoggedIn,
+                    onLoginClick = onLoginClick
                 )
                 DrawerScreen.LANGUAGE -> LanguageScreen(
                     selectedLanguage = selectedLanguage,
@@ -127,9 +129,10 @@ fun GameMenuDrawerSheet(
 private fun MenuScreen(
     onClose: Action,
     isLoggedIn: Boolean,
+    onLoginClick: Action,
     onTheme: Action,
     onLanguage: Action,
-    onProfile: Action,
+    onProfile: Action
 ) {
     data class Entry(
         val icon: ImageVector,
@@ -141,10 +144,25 @@ private fun MenuScreen(
 
 
     val items = buildList {
-        if (isLoggedIn) add(Entry(Icons.Filled.Person,
-            stringResource(R.string.drawer_profile),  stringResource(R.string.drawer_profile_desc),     colors.buttonTaupe,  onProfile))
-        add(Entry(Icons.Filled.Palette,stringResource(R.string.drawer_theme),    stringResource(R.string.drawer_theme_desc),   colors.buttonTaupe,  onTheme))
-        add(Entry(Icons.Filled.Language,stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc),     colors.buttonTaupe, onLanguage))
+        if (isLoggedIn) {
+            add(Entry(
+                icon        = Icons.Filled.Person,
+                label       = stringResource(R.string.drawer_profile),
+                description = stringResource(R.string.drawer_profile_desc),
+                accent      = colors.buttonTaupe,
+                action      = onProfile
+            ))
+        } else {
+            add(Entry(
+                icon        = Icons.Filled.Person,
+                label       = stringResource(R.string.drawer_login),
+                description = stringResource(R.string.drawer_login_desc),
+                accent      = colors.buttonTeal,
+                action      = onLoginClick
+            ))
+        }
+        add(Entry(Icons.Filled.Palette,  stringResource(R.string.drawer_theme),    stringResource(R.string.drawer_theme_desc),    colors.buttonTaupe, onTheme))
+        add(Entry(Icons.Filled.Language, stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc), colors.buttonTaupe, onLanguage))
     }
 
     DrawerColumn {
