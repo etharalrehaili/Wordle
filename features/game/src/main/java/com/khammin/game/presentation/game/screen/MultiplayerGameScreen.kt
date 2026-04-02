@@ -83,7 +83,7 @@ fun MultiplayerGameScreen(
         ?: List(MAX_GUESSES) { GuessRow() }
 
     BackHandler {
-        if (state.opponentId.isNotEmpty()) {
+        if (state.opponentId.isNotEmpty() && !state.opponentLeft) {
             showLeaveSheet = true
         } else {
             onClose()
@@ -162,7 +162,7 @@ fun MultiplayerGameScreen(
     MultiplayerGameContent(
         currentLanguage  = currentLanguage,
         onClose          = {
-            if (state.opponentId.isNotEmpty()) showLeaveSheet = true
+            if (state.opponentId.isNotEmpty() && !state.opponentLeft) showLeaveSheet = true
             else onClose()
         },
         roomId           = roomId,
@@ -268,6 +268,8 @@ fun MultiplayerGameContent(
                 modifier   = Modifier.fillMaxWidth().weight(1f)
             )
 
+//            Spacer(Modifier.weight(1f))
+
             GameKeyboard(
                 enabled   = state.opponentId.isNotEmpty(),
                 keyStates = state.keyboardStates.mapValues { (_, tileState) ->
@@ -307,7 +309,7 @@ private fun ResultButton(isWin: Boolean, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            Text(text = "🏆", fontSize = 22.sp)
+            Text(text = if (isWin) "🏆" else "😔", fontSize = 22.sp)
             Text(
                 text       = stringResource(R.string.multiplayer_result_title),
                 color      = accent,
