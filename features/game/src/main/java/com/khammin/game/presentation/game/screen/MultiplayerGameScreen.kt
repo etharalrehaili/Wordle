@@ -101,6 +101,7 @@ fun MultiplayerGameScreen(
                 }
                 is MultiplayerGameEffect.DismissResultDialog -> {
                     showResultSheet = false
+                    resultWord      = ""
                 }
                 is MultiplayerGameEffect.NavigateBack -> onClose()
                 else -> Unit
@@ -146,6 +147,7 @@ fun MultiplayerGameScreen(
             onPlayAgain       = if (state.opponentLeft) null else {
                 {
                     showResultSheet = false
+                    resultWord      = ""
                     viewModel.onEvent(MultiplayerGameIntent.RestartGame)
                 }
             },
