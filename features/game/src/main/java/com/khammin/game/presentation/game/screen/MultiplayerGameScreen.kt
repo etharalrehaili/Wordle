@@ -213,6 +213,7 @@ fun MultiplayerGameContent(
                     GuestCard(
                         name       = state.opponentName,
                         avatarUrl  = state.opponentAvatarUrl,
+                        isLoading  = state.isOpponentProfileLoading,
                         guesses    = opponentGuesses,
                         wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
                     )

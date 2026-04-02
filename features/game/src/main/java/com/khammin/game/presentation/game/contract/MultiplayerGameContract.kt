@@ -24,6 +24,7 @@ data class MultiplayerGameUiState(
     val opponentAvatarUrl: String? = null,
     val opponentState: PlayerState? = null,
     val isLoading: Boolean = false,
+    val isOpponentProfileLoading: Boolean = false,
     val error: String? = null,
     val isGameOver: Boolean = false,
     val isHost: Boolean = false,

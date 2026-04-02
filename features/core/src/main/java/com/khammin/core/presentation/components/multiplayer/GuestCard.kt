@@ -1,5 +1,10 @@
 package com.khammin.core.presentation.components.multiplayer
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -7,15 +12,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +44,7 @@ fun GuestCard(
     modifier: Modifier = Modifier,
     name: String = "Guest",
     avatarUrl: String? = null,
+    isLoading: Boolean = false,
     guesses: List<GuessRow> = listOf(
         GuessRow(listOf('S','L','A','T'), listOf(Types.CORRECT, Types.ABSENT,  Types.ABSENT,  Types.PRESENT)),
         GuessRow(listOf('S','O','U','N'), listOf(Types.CORRECT, Types.CORRECT, Types.ABSENT,  Types.ABSENT)),
@@ -46,6 +56,16 @@ fun GuestCard(
     currentCol: Int = 0,
     wordLength: Int = WORD_LENGTH
 ) {
+    val shimmerAlpha by rememberInfiniteTransition(label = "shimmer").animateFloat(
+        initialValue    = 0.3f,
+        targetValue     = 0.7f,
+        animationSpec   = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "shimmerAlpha"
+    )
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -65,21 +85,41 @@ fun GuestCard(
                     .clip(CircleShape)
                     .background(colors.key)
             ) {
-                PlayerAvatar(
-                    name      = name,
-                    avatarUrl = avatarUrl,
-                    modifier  = Modifier.fillMaxSize(),
-                    fontSize  = 24.sp
-                )
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .alpha(shimmerAlpha)
+                            .background(colors.surface)
+                    )
+                } else {
+                    PlayerAvatar(
+                        name      = name,
+                        avatarUrl = avatarUrl,
+                        modifier  = Modifier.fillMaxSize(),
+                        fontSize  = 24.sp
+                    )
+                }
             }
 
-            Text(
-                text          = name,
-                color         = colors.title,
-                fontSize      = 14.sp,
-                fontWeight    = FontWeight.SemiBold,
-                letterSpacing = 0.sp
-            )
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .width(52.dp)
+                        .height(12.dp)
+                        .alpha(shimmerAlpha)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(colors.surface)
+                )
+            } else {
+                Text(
+                    text          = name,
+                    color         = colors.title,
+                    fontSize      = 14.sp,
+                    fontWeight    = FontWeight.SemiBold,
+                    letterSpacing = 0.sp
+                )
+            }
         }
 
         MiniBoard(

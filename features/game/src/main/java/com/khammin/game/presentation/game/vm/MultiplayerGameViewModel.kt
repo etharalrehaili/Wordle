@@ -190,6 +190,8 @@ class MultiplayerGameViewModel @Inject constructor(
             return
         }
 
+        setState { copy(isOpponentProfileLoading = true) }
+
         viewModelScope.launch {
             val result = getProfileUseCase(opponentId)
             when (result) {
@@ -197,12 +199,19 @@ class MultiplayerGameViewModel @Inject constructor(
                     android.util.Log.d("Avatar", "avatarUrl = ${result.data?.avatarUrl}")
                     setState {
                         copy(
-                            opponentName      = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultGuestName,
-                            opponentAvatarUrl = result.data?.avatarUrl
+                            opponentName             = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultGuestName,
+                            opponentAvatarUrl        = result.data?.avatarUrl,
+                            isOpponentProfileLoading = false
                         )
                     }
                 }
-                else -> setState { copy(opponentName = defaultGuestName, opponentAvatarUrl = null) }
+                else -> setState {
+                    copy(
+                        opponentName             = defaultGuestName,
+                        opponentAvatarUrl        = null,
+                        isOpponentProfileLoading = false
+                    )
+                }
             }
         }
     }
