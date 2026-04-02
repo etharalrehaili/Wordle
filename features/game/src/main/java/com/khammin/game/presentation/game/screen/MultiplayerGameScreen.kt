@@ -312,7 +312,7 @@ private fun ResultButton(isWin: Boolean, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            Text(text = if (isWin) "🏆" else "😔", fontSize = 22.sp)
+            Text(text = "🏆", fontSize = 22.sp)
             Text(
                 text       = stringResource(R.string.multiplayer_result_title),
                 color      = accent,

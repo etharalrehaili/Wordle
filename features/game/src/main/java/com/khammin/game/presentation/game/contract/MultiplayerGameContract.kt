@@ -40,6 +40,7 @@ sealed interface MultiplayerGameEffect : UiEffect {
     data object RowShake : MultiplayerGameEffect
     data object NavigateBack : MultiplayerGameEffect
     data object DismissResultDialog : MultiplayerGameEffect
+    data object OpponentDisconnected : MultiplayerGameEffect
 }
 
 sealed class MultiplayerGameIntent : UiIntent {

@@ -15,7 +15,6 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 private const val RESET_TAG    = "MultiplayerReset"
-private const val PRESENCE_TAG = "MultiplayerPresence"
 
 class MultiplayerDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -23,54 +22,6 @@ class MultiplayerDataSourceImpl @Inject constructor(
 ) : MultiplayerDataSource {
 
     private val rooms = firestore.collection("rooms")
-
-    // ── Presence ─────────────────────────────────────────────────────────────
-    // Uses Firebase Realtime Database onDisconnect so the server automatically
-    // marks the player offline if the app is force-killed.
-    // Note: RTDB detects disconnection via TCP keepalive, which typically takes
-    // 60–90 seconds on mobile networks before onDisconnect fires.
-
-    private fun presenceRef(roomId: String, userId: String) =
-        rtdb.getReference("presence/$roomId/$userId")
-
-    override fun setPresence(roomId: String, userId: String) {
-        val ref = presenceRef(roomId, userId)
-        Log.d(PRESENCE_TAG, "[DataSource] setPresence — path=${ref.path} | userId=$userId")
-        ref.onDisconnect().setValue(false)
-            .addOnSuccessListener { Log.d(PRESENCE_TAG, "[DataSource] onDisconnect registered ✅ | userId=$userId") }
-            .addOnFailureListener { e -> Log.e(PRESENCE_TAG, "[DataSource] onDisconnect register FAILED ❌ | userId=$userId | error=${e.message}") }
-        ref.setValue(true)
-            .addOnSuccessListener { Log.d(PRESENCE_TAG, "[DataSource] setValue(true) success ✅ | userId=$userId") }
-            .addOnFailureListener { e -> Log.e(PRESENCE_TAG, "[DataSource] setValue(true) FAILED ❌ | userId=$userId | error=${e.message}") }
-    }
-
-    override fun clearPresence(roomId: String, userId: String) {
-        val ref = presenceRef(roomId, userId)
-        Log.d(PRESENCE_TAG, "[DataSource] clearPresence — path=${ref.path} | userId=$userId")
-        ref.onDisconnect().cancel()
-        ref.removeValue()
-    }
-
-    override fun observePresence(roomId: String, userId: String): Flow<Boolean> = callbackFlow {
-        val ref = presenceRef(roomId, userId)
-        Log.d(PRESENCE_TAG, "[DataSource] Attaching RTDB listener — path=${ref.path} | userId=$userId")
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val isOnline = snapshot.getValue(Boolean::class.java) == true
-                Log.d(PRESENCE_TAG, "[DataSource] onDataChange — path=${ref.path} | value=${snapshot.value} | isOnline=$isOnline")
-                trySend(isOnline)
-            }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(PRESENCE_TAG, "[DataSource] onCancelled ❌ — path=${ref.path} | code=${error.code} | message=${error.message} | details=${error.details}")
-                close(error.toException())
-            }
-        }
-        ref.addValueEventListener(listener)
-        awaitClose {
-            Log.d(PRESENCE_TAG, "[DataSource] Removing RTDB listener — path=${ref.path}")
-            ref.removeEventListener(listener)
-        }
-    }
 
     override suspend fun createRoom(room: GameRoom): String {
         val doc = rooms.document()
@@ -170,5 +121,22 @@ class MultiplayerDataSourceImpl @Inject constructor(
             .update("status", "restarting")
             .await()
         Log.d(RESET_TAG, "[Firestore] claimRestart ack received — round-trip=${System.currentTimeMillis() - start}ms")
+    }
+
+    override suspend fun registerPresence(roomId: String, userId: String) {
+        val presenceRef = rtdb.getReference("presence/$roomId/$userId")
+        presenceRef.setValue(true).await()
+        presenceRef.onDisconnect().removeValue().await()
+    }
+
+    override fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean> = callbackFlow {
+        val ref = rtdb.getReference("presence/$roomId/$opponentId")
+        val listener = ref.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(snapshot.exists())
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+        awaitClose { ref.removeEventListener(listener) }
     }
 }
