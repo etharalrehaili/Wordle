@@ -58,7 +58,7 @@ class MultiplayerGameViewModel @Inject constructor(
     }
 
     private var observingOpponentId: String = ""
-    private var cachedWords: List<String> = emptyList()
+    private val wordCache: MutableMap<Int, List<String>> = mutableMapOf()
 
     private fun loadGame(roomId: String, language: String, isHost: Boolean, myUserId: String, defaultMyName: String, defaultGuestName: String) {
         val myId = myUserId.takeIf { it.isNotEmpty() }
@@ -78,30 +78,50 @@ class MultiplayerGameViewModel @Inject constructor(
             }
         }
 
+        // Pre-warm word cache for all lengths so Play Again restarts are instant
+        listOf(4, 5, 6).forEach { length ->
+            viewModelScope.launch {
+                val prefetchStart = System.currentTimeMillis()
+                val result = getWordsUseCase(language, length)
+                if (result is Resource.Success && result.data.isNotEmpty()) {
+                    wordCache[length] = result.data
+                    Log.d(RESET_TAG, "[Prefetch] Cached ${result.data.size} words for length=$length — elapsed=${System.currentTimeMillis() - prefetchStart}ms")
+                }
+            }
+        }
 
         observeRoomUseCase(roomId).onEach { room ->
             if (room != null) {
                 val opponentId = if (room.hostId == myId) room.guestId else room.hostId
 
                 val previousWordLength = uiState.value.wordLength
+                val observerRole = if (uiState.value.isHost) "HOST" else "GUEST"
+                if (previousWordLength != room.wordLength && room.wordLength > 0) {
+                    Log.d(RESET_TAG, "[$observerRole][Room observer] Board resize triggered — oldWidth=$previousWordLength → newWidth=${room.wordLength} | status=${room.status} | ts=${System.currentTimeMillis()}")
+                }
                 setState {
+                    val boardResized = wordLength != room.wordLength
                     copy(
                         targetWord = room.word.uppercase(),
                         wordLength = room.wordLength,
                         opponentId = opponentId,
                         isHost     = room.hostId == myId,
-                        board      = if (wordLength == room.wordLength) board
-                        else List(board.size) { List(room.wordLength) { Tile() } }
+                        board      = if (boardResized) List(board.size) { List(room.wordLength) { Tile() } } else board,
+                        currentRow = if (boardResized) 0 else currentRow,
+                        currentCol = if (boardResized) 0 else currentCol,
                     )
                 }
+                if (previousWordLength != room.wordLength && room.wordLength > 0) {
+                    Log.d(RESET_TAG, "[$observerRole][Room observer] Board resize APPLIED — UI now shows width=${room.wordLength} | ts=${System.currentTimeMillis()}")
+                }
 
-                // Populate (or refresh) the word cache whenever word length is first known or changes
-                if (cachedWords.isEmpty() || room.wordLength != previousWordLength) {
+                // Fill cache entry for this word length if not already present
+                if (room.wordLength > 0 && !wordCache.containsKey(room.wordLength)) {
                     viewModelScope.launch {
                         val result = getWordsUseCase(language, room.wordLength)
-                        if (result is Resource.Success) {
-                            cachedWords = result.data
-                            Log.d(RESET_TAG, "[Room observer] Word cache populated — ${cachedWords.size} words | lang=$language | wordLength=${room.wordLength}")
+                        if (result is Resource.Success && result.data.isNotEmpty()) {
+                            wordCache[room.wordLength] = result.data
+                            Log.d(RESET_TAG, "[Room observer] Word cache populated — ${result.data.size} words | lang=$language | wordLength=${room.wordLength}")
                         }
                     }
                 }
@@ -272,6 +292,9 @@ class MultiplayerGameViewModel @Inject constructor(
         val guess = s.board[s.currentRow].filter { it.letter != ' ' }.map { it.letter }
         val target = s.targetWord.uppercase().toList()
 
+        // Guard against board/word size mismatch that can briefly occur during restart transition
+        if (guess.size != s.wordLength || target.size != s.wordLength) return
+
         // Evaluate each letter
         val types = guess.mapIndexed { i, ch ->
             when {
@@ -284,7 +307,7 @@ class MultiplayerGameViewModel @Inject constructor(
         // Update board with evaluated types
         val newBoard = s.board.mapIndexed { r, row ->
             if (r == s.currentRow) row.mapIndexed { c, tile ->
-                tile.copy(state = when (types[c]) {
+                tile.copy(state = when (types.getOrElse(c) { Types.DEFAULT }) {
                     Types.CORRECT -> TileState.CORRECT
                     Types.PRESENT -> TileState.MISPLACED
                     Types.ABSENT  -> TileState.WRONG
@@ -374,6 +397,7 @@ class MultiplayerGameViewModel @Inject constructor(
         Log.d(RESET_TAG, "[$role] Play Again tapped — roomId=${s.roomId} | myId=${s.myUserId} | ts=$tapAt")
 
         val localResetStart = System.currentTimeMillis()
+        val oldWordLength = s.wordLength
         setState {
             copy(
                 currentRow     = 0,
@@ -383,7 +407,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 isGameOver     = false,
             )
         }
-        Log.d(RESET_TAG, "[$role] Local board reset done — elapsed=${System.currentTimeMillis() - localResetStart}ms")
+        Log.d(RESET_TAG, "[$role] Local board reset done — boardWidth=$oldWordLength (still OLD, new length not yet known) | elapsed=${System.currentTimeMillis() - localResetStart}ms | ts=${System.currentTimeMillis()}")
 
         viewModelScope.launch {
             Log.d(RESET_TAG, "[$role] Attempting claimRestart (Firestore write) — roomId=${s.roomId}")
@@ -410,13 +434,23 @@ class MultiplayerGameViewModel @Inject constructor(
             }
             Log.d(RESET_TAG, "[$role] Player states cleared — elapsed=${System.currentTimeMillis() - clearStart}ms")
 
+            val newWordLength = listOf(4, 5, 6).random()
+            Log.d(RESET_TAG, "[$role] New word length selected — $newWordLength (old was $oldWordLength) | ts=${System.currentTimeMillis()}")
+
             val wordStart = System.currentTimeMillis()
-            val words = cachedWords.takeIf { it.isNotEmpty() }?.also {
-                Log.d(RESET_TAG, "[$role] Using cached word list (${it.size} words) — 0ms fetch")
-            } ?: run {
-                Log.d(RESET_TAG, "[$role] Cache empty — fetching word list from network | lang=${s.language} | wordLength=${s.wordLength}")
-                val result = getWordsUseCase(s.language, s.wordLength)
-                if (result is Resource.Success) result.data else null
+            val cached = wordCache[newWordLength]
+            val words = if (cached != null) {
+                Log.d(RESET_TAG, "[$role] Word list served from cache — ${cached.size} words for length=$newWordLength | elapsed=0ms ✅")
+                cached
+            } else {
+                Log.w(RESET_TAG, "[$role] Cache miss for length=$newWordLength — falling back to API fetch | ts=$wordStart")
+                val result = getWordsUseCase(s.language, newWordLength)
+                val fetched = if (result is Resource.Success) result.data else null
+                if (fetched != null) {
+                    wordCache[newWordLength] = fetched
+                    Log.d(RESET_TAG, "[$role] API fetch DONE (fallback) — elapsed=${System.currentTimeMillis() - wordStart}ms | length=$newWordLength")
+                }
+                fetched
             }
 
             if (words == null) {
@@ -428,21 +462,14 @@ class MultiplayerGameViewModel @Inject constructor(
                 Log.e(RESET_TAG, "[$role] Word list is empty — cannot restart")
                 return@launch
             }
-            Log.d(RESET_TAG, "[$role] Word selected — elapsed=${System.currentTimeMillis() - wordStart}ms | word=${newWord.uppercase()}")
+            Log.d(RESET_TAG, "[$role] Word ready — word=${newWord.uppercase()} | newWordLength=$newWordLength | total word selection time=${System.currentTimeMillis() - wordStart}ms")
 
             val restartStart = System.currentTimeMillis()
-            restartRoomUseCase(s.roomId, newWord.uppercase(), s.wordLength)
-            Log.d(RESET_TAG, "[$role] restartRoom Firestore write done — elapsed=${System.currentTimeMillis() - restartStart}ms | TOTAL from tap=${System.currentTimeMillis() - tapAt}ms")
-            Log.d(RESET_TAG, "[$role] Opponent will reset when their observer receives status='playing' from Firestore")
-
-            // Refresh cache in background for the next restart
-            viewModelScope.launch {
-                val refreshResult = getWordsUseCase(s.language, s.wordLength)
-                if (refreshResult is Resource.Success) {
-                    cachedWords = refreshResult.data
-                    Log.d(RESET_TAG, "[$role] Word cache refreshed — ${cachedWords.size} words")
-                }
-            }
+            Log.d(RESET_TAG, "[$role] Firestore write START (restartRoom) — ts=$restartStart | TOTAL from tap=${restartStart - tapAt}ms (includes fetch)")
+            restartRoomUseCase(s.roomId, newWord.uppercase(), newWordLength)
+            val writeEnd = System.currentTimeMillis()
+            Log.d(RESET_TAG, "[$role] Firestore write DONE — roundtrip=${writeEnd - restartStart}ms | TOTAL from tap=${writeEnd - tapAt}ms")
+            Log.d(RESET_TAG, "[$role] ⏳ Waiting for room observer to fire and apply boardWidth=$newWordLength…")
         }
     }
 }
