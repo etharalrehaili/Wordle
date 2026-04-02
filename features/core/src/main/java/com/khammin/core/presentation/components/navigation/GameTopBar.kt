@@ -1,9 +1,13 @@
 package com.khammin.core.presentation.components.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Info
@@ -11,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -61,20 +66,45 @@ fun GameTopBar(
                     )
                 }
                 if (hintIcon != null && onHintClicked != null) {
-                    IconButton(
-                        onClick = onHintClicked,
-                        enabled = hintsRemaining > 0,
+                    Box(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .size(48.dp)
                     ) {
-                        Icon(
-                            imageVector = hintIcon,
-                            contentDescription = "Use hint ($hintsRemaining remaining)",
-                            tint = if (hintsRemaining > 0) colors.body
-                            else colors.body.copy(alpha = 0.35f),
-                            modifier = Modifier.size(26.dp)
-                        )
+                        IconButton(
+                            onClick = onHintClicked,
+                            enabled = hintsRemaining > 0,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = hintIcon,
+                                contentDescription = "Use hint ($hintsRemaining remaining)",
+                                tint = if (hintsRemaining > 0) colors.body
+                                else colors.body.copy(alpha = 0.35f),
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+
+                        // Badge showing hints remaining
+                        if (hintsRemaining == 0) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = 2.dp, y = (-2).dp)
+                                    .background(
+                                        color = colors.pinkText,
+                                        shape = RoundedCornerShape(6.dp)
+                                    )
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "Ad",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    lineHeight = 11.sp
+                                )
+                            }
+                        }
                     }
                 }
             }
