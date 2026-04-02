@@ -3,6 +3,7 @@ package com.khammin.game.data.di
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.google.firebase.database.FirebaseDatabase
 import com.khammin.game.data.remote.datasource.game.GameRemoteDataSource
 import com.khammin.game.data.remote.datasource.game.GameRemoteDataSourceImpl
 import com.khammin.game.domain.repository.GameRepository
@@ -82,5 +83,10 @@ object GameModule {
     @Provides @Singleton
     fun provideGetLeaderboardUseCase(repo: ProfileRepository): GetLeaderboardUseCase =
         GetLeaderboardUseCase(repo)
+
+    @Provides
+    @Singleton
+    fun provideFirebaseDatabase(): FirebaseDatabase =
+        FirebaseDatabase.getInstance("https://khammin-default-rtdb.asia-southeast1.firebasedatabase.app")
 
 }

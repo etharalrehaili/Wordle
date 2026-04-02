@@ -5,6 +5,9 @@ import com.khammin.core.domain.model.PlayerState
 import kotlinx.coroutines.flow.Flow
 
 interface MultiplayerRepository {
+    fun setPresence(roomId: String, userId: String)
+    fun clearPresence(roomId: String, userId: String)
+    fun observePresence(roomId: String, userId: String): Flow<Boolean>
     suspend fun createRoom(room: GameRoom): String
     suspend fun joinRoom(roomId: String, guestId: String)
     fun observeRoom(roomId: String): Flow<GameRoom?>
