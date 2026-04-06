@@ -2,6 +2,7 @@ package com.khammin.game.data.remote.datasource.profile
 
 import android.content.Context
 import android.net.Uri
+import com.khammin.core.data.ndk.KeyManager
 import com.khammin.game.data.remote.api.ProfileApiService
 import com.khammin.game.data.remote.model.CreateProfileData
 import com.khammin.game.data.remote.model.CreateProfileRequest
@@ -109,7 +110,7 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         val part        = MultipartBody.Part.createFormData("files", "avatar.$extension", requestBody)
 
         val relativePath = api.uploadAvatar(part).first().url
-        return "https://khammin.com$relativePath"
+        return "${KeyManager.getBaseHost()}$relativePath"
     }
 
     /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */
