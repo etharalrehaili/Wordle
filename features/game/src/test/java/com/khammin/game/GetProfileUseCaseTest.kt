@@ -45,9 +45,9 @@ class GetProfileUseCaseTest {
         useCase = GetProfileUseCase(repository)
     }
 
-    // -------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
     // Happy-path: profile found
-    // -------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
 
     @Test
     fun `returns Success with profile when repository returns a profile`() = runTest {
