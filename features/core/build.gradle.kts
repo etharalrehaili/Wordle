@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.library")
     alias(libs.plugins.kotlin.android)
@@ -7,6 +9,10 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
 android {
     namespace = "com.khammin.core"
     compileSdk = 36
@@ -14,6 +20,18 @@ android {
     defaultConfig {
         minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                arguments(
+                    "-DAUTH_TOKEN=${localProperties["AUTH_TOKEN"]}",
+                    "-DBASE_URL=${localProperties["BASE_URL"]}",
+                    "-DFIREBASE_DB_URL=${localProperties["FIREBASE_DB_URL"]}",
+                    "-DGOOGLE_API_KEY=${localProperties["GOOGLE_API_KEY"]}",
+                    "-DBASE_HOST=${localProperties["BASE_HOST"]}"
+                )
+            }
+        }
     }
 
     buildTypes {
@@ -34,6 +52,13 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 }
 
