@@ -28,8 +28,9 @@ class SqlCipherKeyManager @Inject constructor(
     }
 
     companion object {
+        private const val KEYSTORE_ALIAS = "sqlcipher_keystore_key"
         private val ENCRYPTED_KEY = stringPreferencesKey("encrypted_key")
-        private val ENCRYPTION_IV = stringPreferencesKey("encryption_iv")
+        private val ENCRYPTION_IV  = stringPreferencesKey("encryption_iv")
     }
 
     init {
@@ -47,50 +48,41 @@ class SqlCipherKeyManager @Inject constructor(
     }
 
     private fun generateKeystoreKeyIfNeeded() {
-        if (!keyStore.containsAlias("sqlcipher_keystore_key")) {
-            val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-            val keyGenSpec = KeyGenParameterSpec.Builder(
-                "sqlcipher_keystore_key",
-                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            )
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .build()
-            keyGenerator.init(keyGenSpec)
-            keyGenerator.generateKey()
-        }
+        if (keyStore.containsAlias(KEYSTORE_ALIAS)) return
+        val keyGenSpec = KeyGenParameterSpec.Builder(
+            KEYSTORE_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .build()
+        KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+            .apply { init(keyGenSpec) }
+            .generateKey()
     }
 
-    private fun generateAndEncryptSqlCipherKey() {
-        val secretKey = getSecretKey("sqlcipher_keystore_key")
+    // suspend — called from within the runBlocking in initialize(), avoiding nested runBlocking
+    private suspend fun generateAndEncryptSqlCipherKey() {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        cipher.init(Cipher.ENCRYPT_MODE, getSecretKey(KEYSTORE_ALIAS))
 
-        val sqlCipherKey = ByteArray(32)
-        SecureRandom().nextBytes(sqlCipherKey)
-
+        val sqlCipherKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
         val encryptedKey = cipher.doFinal(sqlCipherKey)
         val iv = cipher.iv
 
-        runBlocking {
-            dataStore.edit { preferences ->
-                preferences[ENCRYPTED_KEY] = Base64.encodeToString(encryptedKey, Base64.NO_WRAP)
-                preferences[ENCRYPTION_IV] = Base64.encodeToString(iv, Base64.NO_WRAP)
-            }
+        dataStore.edit { prefs ->
+            prefs[ENCRYPTED_KEY] = Base64.encodeToString(encryptedKey, Base64.NO_WRAP)
+            prefs[ENCRYPTION_IV]  = Base64.encodeToString(iv, Base64.NO_WRAP)
         }
 
-        // Zero out the key in memory
-        sqlCipherKey.fill(0)
+        sqlCipherKey.fill(0) // zero out plaintext key from memory
     }
 
-    private fun getDecryptedSqlCipherKey(keyAlias: String, key: String, iv: String): ByteArray {
-        val encryptedKey = Base64.decode(key, Base64.NO_WRAP)
-        val ivBytes = Base64.decode(iv, Base64.NO_WRAP)
-
-        val secretKey = getSecretKey(keyAlias)
+    private fun getDecryptedSqlCipherKey(encryptedKeyB64: String, ivB64: String): ByteArray {
+        val encryptedKey = Base64.decode(encryptedKeyB64, Base64.NO_WRAP)
+        val ivBytes      = Base64.decode(ivB64, Base64.NO_WRAP)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, ivBytes))
-
+        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(KEYSTORE_ALIAS), GCMParameterSpec(128, ivBytes))
         return cipher.doFinal(encryptedKey)
     }
 
@@ -98,21 +90,11 @@ class SqlCipherKeyManager @Inject constructor(
         (keyStore.getEntry(keyAlias, null) as KeyStore.SecretKeyEntry).secretKey
 
     fun getSupportFactory(): SupportFactory = runBlocking {
-        val preferences = dataStore.data.first()
-
-        val encryptedKey = preferences[ENCRYPTED_KEY]
-            ?: error("Encrypted key missing")
-
-        val iv = preferences[ENCRYPTION_IV]
-            ?: error("IV missing")
-
-        val decryptedKey = getDecryptedSqlCipherKey(
-            "sqlcipher_keystore_key",
-            encryptedKey,
-            iv
-        )
-
-        SupportFactory(decryptedKey, null, false)
+        val prefs = dataStore.data.first()
+        val encryptedKey = prefs[ENCRYPTED_KEY] ?: error("Encrypted SQLCipher key missing")
+        val iv           = prefs[ENCRYPTION_IV]  ?: error("SQLCipher IV missing")
+        val decryptedKey = getDecryptedSqlCipherKey(encryptedKey, iv)
+        // clearPassphrase = true: SQLCipher zeros the key array after opening the database
+        SupportFactory(decryptedKey, null, true)
     }
-
 }

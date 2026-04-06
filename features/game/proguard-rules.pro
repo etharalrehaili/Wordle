@@ -1,21 +1,39 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ─────────────────────────────────────────────────────────────────────────────
+# game module — consumer rules (applied when the app is built)
+# ─────────────────────────────────────────────────────────────────────────────
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ── Room ──────────────────────────────────────────────────────────────────────
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class * { *; }
+-keep @androidx.room.Dao interface * { *; }
+-keepclassmembers @androidx.room.Entity class * { *; }
+-dontwarn androidx.room.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── Retrofit / Gson API models ────────────────────────────────────────────────
+# These data classes have NO @SerializedName annotations — Gson maps JSON keys
+# directly to field names at runtime, so field names must not be obfuscated.
+-keep class com.khammin.game.data.remote.model.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── Domain models ─────────────────────────────────────────────────────────────
+-keep class com.khammin.game.domain.model.** { *; }
+
+# ── Repository and data layer (Hilt injection targets) ───────────────────────
+-keep class com.khammin.game.data.repository.** { *; }
+-keep class com.khammin.game.data.di.** { *; }
+
+# ── ProfileSyncWorker ─────────────────────────────────────────────────────────
+# WorkManager instantiates workers by class name via reflection.
+-keep class com.khammin.game.data.local.worker.** extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
+# ── SQLCipher ─────────────────────────────────────────────────────────────────
+-keep class net.sqlcipher.** { *; }
+-keep interface net.sqlcipher.** { *; }
+-dontwarn net.sqlcipher.**
+
+# ── Secure local classes ──────────────────────────────────────────────────────
+-keep class com.khammin.game.data.local.secure.** { *; }
+
+# ── Use cases ─────────────────────────────────────────────────────────────────
+-keep class com.khammin.game.domain.usecases.** { *; }
