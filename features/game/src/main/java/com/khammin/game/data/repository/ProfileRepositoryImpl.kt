@@ -24,26 +24,28 @@ class ProfileRepositoryImpl @Inject constructor(
 ) : ProfileRepository {
 
     /**
-     * Cache-first strategy:
-     * 1. Return the cached profile immediately if one exists.
-     * 2. Attempt a remote refresh in the background to keep the cache fresh.
-     * 3. If offline and no cache exists, return null.
-     * 4. If there is a pending local update (pendingSync = true), skip the remote
-     *    refresh so the user's unsaved changes are not overwritten.
+     * Cache-first strategy — local Room DB is the source of truth:
+     * 1. If a cached profile exists (with or without a pending sync), return it
+     *    immediately. The cache is always kept fresh by [updateProfile] and
+     *    [syncPendingUpdates], so there is no need to re-fetch from the server
+     *    on every screen open (which would risk overwriting fresh local data with
+     *    a stale server response).
+     * 2. Only go to the server when there is no cached profile at all (first
+     *    launch or new device installation), then populate the cache from the
+     *    server response.
+     * 3. If offline and still no cache, return null.
      */
     override suspend fun getProfile(firebaseUid: String): Profile? {
         val cached = db.profileDao().getProfile(firebaseUid)
+        if (cached != null) return cached.toDomain()
 
-        // Don't overwrite local pending changes with stale server data
-        if (cached?.pendingSync == true) return cached.toDomain()
-
+        // No local data — first launch or new device: fetch from server.
         return try {
-            val remoteProfile = remote.getProfile(firebaseUid)
-                ?: return cached?.toDomain()
+            val remoteProfile = remote.getProfile(firebaseUid) ?: return null
             db.profileDao().insertProfile(remoteProfile.toEntity())
             remoteProfile.toDomain()
         } catch (e: IOException) {
-            cached?.toDomain()
+            null
         }
     }
 
