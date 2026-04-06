@@ -31,7 +31,7 @@ object DatabaseModule {
         return Room.databaseBuilder(context, AppDatabase::class.java, "wordle_db")
             .openHelperFactory(keyManager.getSupportFactory())
             .addMigrations(AppDatabase.MIGRATION_3_4)
-            .fallbackToDestructiveMigration(false)
+            .fallbackToDestructiveMigration(true)
             .build()
     }
 
