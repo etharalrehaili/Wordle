@@ -1,16 +1,24 @@
 package com.khammin.core.presentation.components.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -21,19 +29,21 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.alias.Action
+import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.text.WordleText
 import com.khammin.core.presentation.preview.GameDarkBackgroundPreview
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameTopBar(
     modifier: Modifier = Modifier,
@@ -46,30 +56,99 @@ fun GameTopBar(
     onEndIconClicked: Action? = null,
     onHintClicked: Action? = null,
     containerColor: Color? = null,
+    isDarkMode: Boolean = true,
+    onThemeToggle: ((AppColorTheme) -> Unit)? = null,
+    showBackground: Boolean = true,
 ) {
-    val appBarColor = containerColor ?: colors.background
-
-    TopAppBar(
-        title = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                if (title != null) {
-                    WordleText(
-                        text = title,
-                        color = colors.title,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        textAlign = TextAlign.Center,
-                        letterSpacing = 3.sp,
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .then(
+                if (showBackground)
+                    Modifier
+                        .background(color = colors.topBarBackground)
+                        .border(
+                            width = 1.dp,
+                            color = colors.topBarBorder,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                else Modifier
+            )
+            .height(56.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // Start icon
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 8.dp)
+        ) {
+            if (startIcon != null && onStartIconClicked != null) {
+                IconButton(
+                    onClick = { onStartIconClicked() },
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = startIcon,
+                        contentDescription = null,
+                        tint = colors.body,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
-                if (hintIcon != null && onHintClicked != null) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
+            }
+        }
+
+        // Center: dot + title
+        if (title != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                WordleText(
+                    text = title.uppercase(),
+                    color = colors.title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 3.sp,
+                )
+            }
+        }
+
+        // End icon / hint icon
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Theme toggle — sun / moon
+                if (onThemeToggle != null) {
+                    IconButton(
+                        onClick = {
+                            val newTheme = if (isDarkMode) AppColorTheme.LIGHT else AppColorTheme.DARK
+                            onThemeToggle?.invoke(newTheme)
+                        },
+                        modifier = Modifier.size(48.dp)
                     ) {
+                        Icon(
+                            imageVector = if (isDarkMode)
+                                Icons.Outlined.LightMode   // sun → اضغط للـ light
+                            else
+                                Icons.Outlined.DarkMode,   // moon → اضغط للـ dark
+                            contentDescription = if (isDarkMode) "Switch to light mode" else "Switch to dark mode",
+                            tint = colors.body,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+                if (hintIcon != null && onHintClicked != null) {
+                    Box {
                         IconButton(
                             onClick = onHintClicked,
                             enabled = hintsRemaining > 0,
@@ -80,11 +159,9 @@ fun GameTopBar(
                                 contentDescription = "Use hint ($hintsRemaining remaining)",
                                 tint = if (hintsRemaining > 0) colors.body
                                 else colors.body.copy(alpha = 0.35f),
-                                modifier = Modifier.size(26.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                         }
-
-                        // Badge showing hints remaining
                         if (hintsRemaining == 0) {
                             Box(
                                 modifier = Modifier
@@ -106,54 +183,22 @@ fun GameTopBar(
                             }
                         }
                     }
+                } else if (endIcon != null && onEndIconClicked != null) {
+                    IconButton(
+                        onClick = { onEndIconClicked() },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = endIcon,
+                            contentDescription = null,
+                            tint = colors.body,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
-        },
-        navigationIcon = {
-            if (startIcon != null && onStartIconClicked != null) {
-                IconButton(
-                    onClick = { onStartIconClicked() },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = startIcon,
-                        contentDescription = null,
-                        tint = colors.body,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-            } else {
-                Spacer(modifier = Modifier.size(48.dp))
-            }
-        },
-        actions = {
-            if (endIcon != null && onEndIconClicked != null) {
-                IconButton(
-                    onClick = { onEndIconClicked() },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = endIcon,
-                        contentDescription = null,
-                        tint = colors.body,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-            } else {
-                Spacer(modifier = Modifier.size(48.dp))
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor             = appBarColor,
-            scrolledContainerColor     = appBarColor,
-            titleContentColor          = colors.title,
-            navigationIconContentColor = colors.body,
-            actionIconContentColor     = colors.body
-        ),
-        modifier = modifier
-    )
-
-    HorizontalDivider(color = colors.divider, thickness = 1.dp)
+        }
+    }
 }
 
 @GameDarkBackgroundPreview

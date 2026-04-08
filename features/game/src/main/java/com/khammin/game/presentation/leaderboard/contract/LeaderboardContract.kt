@@ -12,7 +12,7 @@ data class LeaderboardUiState(
     val isRefreshing: Boolean = false,
     val error: String? = null,
     val selectedFilter: LeaderboardFilter = LeaderboardFilter.ALL_TIME,
-    val language: String = "en",
+    val language: String = "ar",
     val noInternet: Boolean = false
 ) : UiState
 

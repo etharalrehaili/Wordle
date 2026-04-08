@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -120,7 +121,8 @@ fun ResetPasswordContent(
                 title              = stringResource(R.string.reset_password_title),
                 startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
                 onStartIconClicked = onBack,
-                modifier           = Modifier.fillMaxWidth(),
+                showBackground     = false,
+                modifier           = Modifier.fillMaxWidth().statusBarsPadding(),
                 containerColor     = Color.Transparent,
             )
 

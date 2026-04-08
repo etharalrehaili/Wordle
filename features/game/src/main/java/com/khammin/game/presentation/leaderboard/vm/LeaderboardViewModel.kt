@@ -22,10 +22,6 @@ class LeaderboardViewModel @Inject constructor(
     initialState = LeaderboardUiState()
 ) {
 
-    init {
-        android.util.Log.d("Network", "ViewModel init — isConnected = ${networkUtils.isConnected()}")
-    }
-
     @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
     override fun onEvent(intent: LeaderboardIntent) {
         when (intent) {
@@ -66,15 +62,11 @@ class LeaderboardViewModel @Inject constructor(
                         copy(
                             isLoading    = false,
                             isRefreshing = false,
-                            players      = result.data.filter {
-                                if (language == "ar") it.arWordsSolved >= 1
-                                else it.enWordsSolved >= 1
-                            }
+                            players = result.data.filter { it.arWordsSolved >= 1 }
                         )
                     }
                 }
                 is Resource.Error -> {
-                    android.util.Log.e("Network", "API error: ${result.message}")
                     val isNoInternet = result.message?.contains("Unable to resolve host") == true ||
                             result.message?.contains("No address associated") == true
                     setState {

@@ -14,7 +14,7 @@
     <string name="word_length_title">كم طول الكلمة؟</string>
     <string name="word_length_subtitle">اختر طول الكلمة للبدء</string>
     <string name="word_length_easy">سهل</string>
-    <string name="word_length_classic">كلاسيكي</string>
+    <string name="word_length_classic">متوسط</string>
     <string name="word_length_hard">صعب</string>
 
     <!-- Wordle Info Bottom Sheet -->

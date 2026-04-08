@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Home Screen -->
-    <string name="welcome_to">مرحبا بك في</string>
+    <string name="welcome_to">مرحبًا بك في</string>
     <string name="Khammin">خمّن</string>
     <string name="quick_play">لعب سريع</string>
     <string name="take_challenge">تحدي</string>

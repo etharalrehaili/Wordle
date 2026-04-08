@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -161,7 +162,8 @@ fun SignUpContent(
                 title              = stringResource(R.string.signup_title),
                 startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
                 onStartIconClicked = onBack,
-                modifier           = Modifier.fillMaxWidth()
+                showBackground     = false,
+                modifier           = Modifier.fillMaxWidth().statusBarsPadding(),
             )
 
             Column(

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,9 +73,8 @@ fun LeaderboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(currentLanguage) {
-        val code = if (currentLanguage == AppLanguage.ARABIC) "ar" else "en"
-        viewModel.onEvent(LeaderboardIntent.ChangeLanguage(code))
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(LeaderboardIntent.ChangeLanguage("ar"))
     }
 
     LeaderboardContent(
@@ -105,7 +105,10 @@ fun LeaderboardContent(
             endIcon          = Icons.Filled.Close,
             onEndIconClicked = onClose,
             containerColor   = Color.Transparent,
-            modifier         = Modifier.fillMaxWidth(),
+            showBackground     = false,
+            modifier           = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding(),
         )
 
         // ── PullToRefreshBox wraps only the scrollable content ────
@@ -203,7 +206,7 @@ fun LeaderboardContent(
 
                     val filteredPlayers = when (uiState.selectedFilter) {
                         LeaderboardFilter.THIS_WEEK -> uiState.players.filter { player ->
-                            val lastPlayed = if (uiState.language == "ar") player.arLastPlayedAt else player.enLastPlayedAt
+                            val lastPlayed = player.arLastPlayedAt
                             lastPlayed?.let {
                                 try {
                                     val time = Instant.parse(it).toEpochMilli()
@@ -213,7 +216,7 @@ fun LeaderboardContent(
                         }
 
                         LeaderboardFilter.THIS_MONTH -> uiState.players.filter { player ->
-                            val lastPlayed = if (uiState.language == "ar") player.arLastPlayedAt else player.enLastPlayedAt
+                            val lastPlayed = player.arLastPlayedAt
                             lastPlayed?.let {
                                 try {
                                     val time = Instant.parse(it).toEpochMilli()
@@ -307,14 +310,14 @@ fun LeaderboardContent(
                                 TopThreePodium(
                                     first = PodiumPlayer(
                                         top3[0].name,
-                                        if (uiState.language == "ar") top3[0].arCurrentPoints else top3[0].enCurrentPoints, // 👈
+                                        top3[0].arCurrentPoints,
                                         top3[0].avatarUrl,
                                         top3[0].firebaseUid == currentUid
                                     ),
                                     second = top3.getOrNull(1)?.let {
                                         PodiumPlayer(
                                             it.name,
-                                            if (uiState.language == "ar") it.arCurrentPoints else it.enCurrentPoints, // 👈 it, not top3[0]
+                                            it.arCurrentPoints,
                                             it.avatarUrl,
                                             it.firebaseUid == currentUid
                                         )
@@ -322,7 +325,7 @@ fun LeaderboardContent(
                                     third = top3.getOrNull(2)?.let {
                                         PodiumPlayer(
                                             it.name,
-                                            if (uiState.language == "ar") it.arCurrentPoints else it.enCurrentPoints, // 👈 it, not top3[0]
+                                            it.arCurrentPoints,
                                             it.avatarUrl,
                                             it.firebaseUid == currentUid
                                         )
@@ -367,7 +370,7 @@ fun LeaderboardContent(
                                 PlayerCard(
                                     rank = index + 4,
                                     name = player.name,
-                                    points = if (uiState.language == "ar") player.arCurrentPoints else player.enCurrentPoints, // 👈
+                                    points = player.arCurrentPoints,
                                     avatarUrl = player.avatarUrl,
                                     borderColor = if (isMe) colors.buttonTeal else colors.buttonTaupe,
                                     modifier = Modifier
@@ -420,7 +423,7 @@ fun LeaderboardContent(
                                         PlayerCard(
                                             rank = players.size + 1,
                                             name = me.name,
-                                            points      = if (uiState.language == "ar") me.arCurrentPoints else me.enCurrentPoints, // 👈
+                                            points      = me.arCurrentPoints,
                                             avatarUrl = me.avatarUrl,
                                             borderColor = colors.buttonPink,
                                             modifier = Modifier

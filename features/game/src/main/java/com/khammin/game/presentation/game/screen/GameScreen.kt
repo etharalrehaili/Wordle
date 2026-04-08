@@ -21,8 +21,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.khammin.core.alias.Action
@@ -75,25 +78,28 @@ fun GameScreen(
         }
     }
 
-    GameContent(
-        uiState           = uiState,
-        currentLanguage   = currentLanguage,
-        dialogState       = dialogState,
-        snackbarState     = snackbarState,
-        onDismissSnackbar = { snackbarState = null },
-        onClose           = onClose,
-        onInfoClick       = { dialogState = GameDialogState.Info },
-        onDismissDialog   = { dialogState = GameDialogState.None },
-        onRestart = {
-            dialogState = GameDialogState.None
-            viewModel.onEvent(GameIntent.RestartGame)
-        },
-        onSecondChance = {
-            dialogState = GameDialogState.None
-            viewModel.onEvent(GameIntent.SecondChance)
-        },
-        onIntent = viewModel::onEvent,
-    )
+    val layoutDirection = if (currentLanguage == AppLanguage.ARABIC) LayoutDirection.Rtl else LayoutDirection.Ltr
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        GameContent(
+            uiState           = uiState,
+            currentLanguage   = currentLanguage,
+            dialogState       = dialogState,
+            snackbarState     = snackbarState,
+            onDismissSnackbar = { snackbarState = null },
+            onClose           = onClose,
+            onInfoClick       = { dialogState = GameDialogState.Info },
+            onDismissDialog   = { dialogState = GameDialogState.None },
+            onRestart = {
+                dialogState = GameDialogState.None
+                viewModel.onEvent(GameIntent.RestartGame)
+            },
+            onSecondChance = {
+                dialogState = GameDialogState.None
+                viewModel.onEvent(GameIntent.SecondChance)
+            },
+            onIntent = viewModel::onEvent,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -139,151 +140,148 @@ fun LoginContent(
             .fillMaxSize()
             .background(colors.background)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
 
-            // ── Top bar ───────────────────────────────────────────────
-            GameTopBar(
-                title              = stringResource(R.string.login_title),
-                startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
-                onStartIconClicked = onBack,
-                modifier           = Modifier.fillMaxWidth(),
-                containerColor     = Color.Transparent,
+        // ── Top bar ───────────────────────────────────────────────
+        GameTopBar(
+            title              = stringResource(R.string.login_title),
+            startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
+            onStartIconClicked = onBack,
+            showBackground     = false,
+            containerColor     = Color.Transparent,
+            modifier           = Modifier.fillMaxWidth().statusBarsPadding()
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 32.dp)
+        ) {
+
+            // ── Email ─────────────────────────────────────────────
+            FieldLabel(stringResource(R.string.login_email_label))
+
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value         = email,
+                onValueChange = onEmailChanged,
+                placeholder   = { Text(stringResource(R.string.login_email_placeholder), color = colors.body.copy(alpha = 0.35f), fontSize = 14.sp) },
+                leadingIcon   = {
+                    Icon(
+                        Icons.Filled.Email,
+                        null,
+                        tint     = if (email.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                singleLine    = true,
+                isError       = emailError != null,
+                modifier      = Modifier.fillMaxWidth(),
+                colors        = textFieldColors(colors),
+                shape         = RoundedCornerShape(16.dp),
             )
+            if (resolvedEmailError != null) FieldError(resolvedEmailError)
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 28.dp),
-            ) {
+            Spacer(Modifier.height(20.dp))
 
-                Spacer(Modifier.height(16.dp))
+            // ── Password ──────────────────────────────────────────
+            FieldLabel(stringResource(R.string.login_password_label))
 
-                // ── Email ─────────────────────────────────────────────
-                FieldLabel(stringResource(R.string.login_email_label))
+            Spacer(Modifier.height(8.dp))
 
-                Spacer(Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value         = email,
-                    onValueChange = onEmailChanged,
-                    placeholder   = { Text(stringResource(R.string.login_email_placeholder), color = colors.body.copy(alpha = 0.35f), fontSize = 14.sp) },
-                    leadingIcon   = {
-                        Icon(
-                            Icons.Filled.Email,
-                            null,
-                            tint     = if (email.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    singleLine    = true,
-                    isError       = emailError != null,
-                    modifier      = Modifier.fillMaxWidth(),
-                    colors        = textFieldColors(colors),
-                    shape         = RoundedCornerShape(16.dp),
-                )
-                if (resolvedEmailError != null) FieldError(resolvedEmailError)
-
-                Spacer(Modifier.height(20.dp))
-
-                // ── Password ──────────────────────────────────────────
-                FieldLabel(stringResource(R.string.login_password_label))
-
-                Spacer(Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value                = password,
-                    onValueChange        = onPasswordChanged,
-                    placeholder          = { Text("••••••••", color = colors.body.copy(alpha = 0.35f), fontSize = 14.sp) },
-                    leadingIcon          = {
-                        Icon(
-                            Icons.Filled.Lock,
-                            null,
-                            tint     = if (password.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    trailingIcon         = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                imageVector        = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = null,
-                                tint               = colors.body.copy(alpha = 0.4f),
-                                modifier           = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    singleLine           = true,
-                    isError              = passwordError != null,
-                    modifier             = Modifier.fillMaxWidth(),
-                    colors               = textFieldColors(colors),
-                    shape                = RoundedCornerShape(16.dp),
-                )
-                if (resolvedPasswordError != null) FieldError(resolvedPasswordError)
-
-                Spacer(Modifier.height(16.dp))
-
-                // Forgot Password
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    WordleText(
-                        text       = stringResource(R.string.login_forgot_password),
-                        color      = colors.buttonPink,
-                        fontSize   = GameDesignTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable { onForgotPasswordClick() }
+            OutlinedTextField(
+                value                = password,
+                onValueChange        = onPasswordChanged,
+                placeholder          = { Text("••••••••", color = colors.body.copy(alpha = 0.35f), fontSize = 14.sp) },
+                leadingIcon          = {
+                    Icon(
+                        Icons.Filled.Lock,
+                        null,
+                        tint     = if (password.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
+                        modifier = Modifier.size(20.dp)
                     )
-                }
-
-                Spacer(Modifier.height(32.dp))
-
-                // ── Login button ──────────────────────────────────────
-                if (isLoading) {
-                    Box(
-                        modifier         = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DotsLoadingIndicator()
+                },
+                trailingIcon         = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector        = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = null,
+                            tint               = colors.body.copy(alpha = 0.4f),
+                            modifier           = Modifier.size(20.dp)
+                        )
                     }
-                } else {
-                    GameButton(
-                        label           = stringResource(R.string.login_button),
-                        backgroundColor = colors.buttonTeal,
-                        contentColor    = colors.title,
-                        showBorder      = false,
-                        onClick         = {
-                            focusManager.clearFocus()
-                            onLoginClick()
-                        },
-                        modifier        = Modifier.fillMaxWidth()
-                    )
-                }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                singleLine           = true,
+                isError              = passwordError != null,
+                modifier             = Modifier.fillMaxWidth(),
+                colors               = textFieldColors(colors),
+                shape                = RoundedCornerShape(16.dp),
+            )
+            if (resolvedPasswordError != null) FieldError(resolvedPasswordError)
 
-                Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-                // Don't have account
-                Row(
-                    modifier              = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment     = Alignment.CenterVertically,
+            // Forgot Password
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                WordleText(
+                    text       = stringResource(R.string.login_forgot_password),
+                    color      = colors.buttonPink,
+                    fontSize   = GameDesignTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { onForgotPasswordClick() }
+                )
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            // ── Login button ──────────────────────────────────────
+            if (isLoading) {
+                Box(
+                    modifier         = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    WordleText(
-                        text     = stringResource(R.string.login_no_account),
-                        color    = colors.body.copy(alpha = 0.5f),
-                        fontSize = GameDesignTheme.typography.labelSmall,
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    WordleText(
-                        text       = stringResource(R.string.login_sign_up_link),
-                        color      = colors.buttonTeal,
-                        fontSize   = GameDesignTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier   = Modifier.clickable { onNavigateToSignUp() }
-                    )
+                    DotsLoadingIndicator()
                 }
+            } else {
+                GameButton(
+                    label           = stringResource(R.string.login_button),
+                    backgroundColor = colors.buttonTeal,
+                    contentColor    = colors.title,
+                    showBorder      = false,
+                    onClick         = {
+                        focusManager.clearFocus()
+                        onLoginClick()
+                    },
+                    modifier        = Modifier.fillMaxWidth()
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Don't have account
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                WordleText(
+                    text     = stringResource(R.string.login_no_account),
+                    color    = colors.body.copy(alpha = 0.5f),
+                    fontSize = GameDesignTheme.typography.labelSmall,
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                WordleText(
+                    text       = stringResource(R.string.login_sign_up_link),
+                    color      = colors.buttonTeal,
+                    fontSize   = GameDesignTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier   = Modifier.clickable { onNavigateToSignUp() }
+                )
             }
         }
     }

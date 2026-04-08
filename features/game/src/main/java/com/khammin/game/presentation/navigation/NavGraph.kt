@@ -55,7 +55,7 @@ fun NavGraphBuilder.navGraph(
 
         HomeScreen(
             onPlayClick = { length ->
-                navController.navigate(Route.GameScreen(length)) {
+                navController.navigate(Route.GameScreen(length, currentLanguage().code)) {
                     launchSingleTop = true
                 }
             },
@@ -95,13 +95,15 @@ fun NavGraphBuilder.navGraph(
     }
     composable<Route.GameScreen> { backStackEntry ->
         val route = backStackEntry.toRoute<Route.GameScreen>()
+        val gameLanguage = AppLanguage.entries.find { it.code == route.gameLanguage }
+            ?: currentLanguage()
         GameScreen(
             onClose = {
                 if (navController.previousBackStackEntry != null) {
                     navController.popBackStack()
                 }
             },
-            currentLanguage = currentLanguage(),
+            currentLanguage = gameLanguage,
             wordLength      = route.wordLength,
         )
     }
@@ -290,7 +292,7 @@ sealed interface Route {
     data object HomeScreen : Route
 
     @Serializable
-    data class GameScreen(val wordLength: Int) : Route
+    data class GameScreen(val wordLength: Int, val gameLanguage: String) : Route
 
     @Serializable
     data class MultiplayerGameScreen(

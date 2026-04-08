@@ -92,4 +92,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Haze for state management
+    implementation("dev.chrisbanes.haze:haze:0.7.3")
 }

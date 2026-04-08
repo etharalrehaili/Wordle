@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.CustomSnackbarHost
+import com.khammin.core.presentation.components.GradientBackground
 import com.khammin.core.presentation.components.PlayerAvatar
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.enums.SnackbarType
@@ -132,22 +134,23 @@ fun ProfileContent(
             .fillMaxSize()
             .background(colors.background)
     ) {
+
+        GradientBackground()
+
         Column(modifier = Modifier.fillMaxSize()) {
 
             // Topbar Section
-            Box(
-                modifier = Modifier
+            GameTopBar(
+                startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
+                onStartIconClicked = onBack,
+                endIcon            = Icons.Filled.Settings,
+                onEndIconClicked   = onSettingsClick,
+                containerColor     = Color.Transparent,
+                showBackground     = false,
+                modifier           = Modifier
                     .fillMaxWidth()
-            ) {
-                GameTopBar(
-                    startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
-                    onStartIconClicked = onBack,
-                    endIcon            = Icons.Filled.Settings,
-                    onEndIconClicked   = onSettingsClick,
-                    containerColor     = Color.Transparent,
-                    modifier           = Modifier.fillMaxWidth(),
-                )
-            }
+                    .statusBarsPadding(),
+            )
 
             // Avatar + Name Centered
             Column(
@@ -260,35 +263,33 @@ fun ProfileContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(spacing.md))
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    colors.buttonPink.copy(alpha = 0.20f),
-                                    colors.buttonTeal.copy(alpha = 0.20f),
-                                )
-                            )
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(colors.cardBackground)
+                        .border(
+                            width = 1.dp,
+                            color = colors.cardBorder,
+                            shape = RoundedCornerShape(20.dp)
                         )
                         .padding(horizontal = spacing.md, vertical = spacing.md)
                 ) {
                     Row(
-                        modifier              = Modifier.fillMaxWidth(),
-                        verticalAlignment     = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
                             WordleText(
-                                text          = stringResource(R.string.profile_total_points),
-                                color         = colors.body.copy(alpha = 0.55f),
-                                fontSize      = typography.labelSmall,
-                                fontWeight    = FontWeight.Medium,
+                                text = stringResource(R.string.profile_total_points),
+                                color = colors.body.copy(alpha = 0.55f),
+                                fontSize = typography.labelSmall,
+                                fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.5.sp,
                             )
                             Spacer(modifier = Modifier.height(spacing.xxs))
                             WordleText(
-                                text       = "%,d".format(uiState.enCurrentPoints + uiState.arCurrentPoints),
-                                color      = colors.title,
-                                fontSize   = typography.displaySmall,
+                                text = "%,d".format(uiState.enCurrentPoints + uiState.arCurrentPoints),
+                                color = colors.title,
+                                fontSize = typography.displaySmall,
                                 fontWeight = FontWeight.ExtraBold,
                             )
                         }
@@ -300,45 +301,46 @@ fun ProfileContent(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector        = Icons.Filled.Star,
+                                imageVector = Icons.Filled.Star,
                                 contentDescription = null,
-                                tint               = colors.buttonPink,
-                                modifier           = Modifier.size(spacing.lg)
+                                tint = colors.buttonPink,
+                                modifier = Modifier.size(spacing.lg)
                             )
                         }
                     }
                 }
 
                 Row(
-                    modifier              = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(spacing.xs)
                 ) {
                     // Stats cards — sum both languages
                     MiniStatCard(
-                        icon      = Icons.Filled.Games,
-                        label     = stringResource(R.string.profile_stat_played),
-                        value     = (uiState.enGamesPlayed + uiState.arGamesPlayed).toString(),
-                        accent    = colors.buttonTaupe,
-                        modifier  = Modifier.weight(1f),
+                        icon = Icons.Filled.Games,
+                        label = stringResource(R.string.profile_stat_played),
+                        value = (uiState.enGamesPlayed + uiState.arGamesPlayed).toString(),
+                        accent = colors.buttonTaupe,
+                        modifier = Modifier.weight(1f),
                     )
                     MiniStatCard(
-                        icon      = Icons.Filled.Check,
-                        label     = stringResource(R.string.profile_stat_solved),
-                        value     = (uiState.enWordsSolved + uiState.arWordsSolved).toString(),
-                        accent    = colors.buttonTeal,
-                        modifier  = Modifier.weight(1f),
+                        icon = Icons.Filled.Check,
+                        label = stringResource(R.string.profile_stat_solved),
+                        value = (uiState.enWordsSolved + uiState.arWordsSolved).toString(),
+                        accent = colors.buttonTeal,
+                        modifier = Modifier.weight(1f),
                     )
                     MiniStatCard(
-                        icon     = Icons.Outlined.EmojiEvents,
-                        label    = stringResource(R.string.profile_stat_win_rate),
-                        value    = run {
-                            val totalGames  = uiState.enGamesPlayed + uiState.arGamesPlayed
+                        icon = Icons.Outlined.EmojiEvents,
+                        label = stringResource(R.string.profile_stat_win_rate),
+                        value = run {
+                            val totalGames = uiState.enGamesPlayed + uiState.arGamesPlayed
                             val totalSolved = uiState.enWordsSolved + uiState.arWordsSolved
-                            val rate = if (totalGames > 0) (totalSolved * 100 / totalGames) else 0
+                            val rate =
+                                if (totalGames > 0) (totalSolved * 100 / totalGames) else 0
                             "$rate%"
                         },
-                        accent    = colors.buttonPink,
-                        modifier  = Modifier.weight(1f),
+                        accent = colors.buttonPink,
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -353,18 +355,24 @@ private fun MiniStatCard(
     value: String,
     accent: Color,
     modifier: Modifier = Modifier,
-    subtitles: List<Pair<String, String>> = emptyList(), // label to value
+    subtitles: List<Pair<String, String>> = emptyList(),
 ) {
     Column(
         modifier            = modifier
             .clip(RoundedCornerShape(spacing.md))
-            .background(accent.copy(alpha = 0.10f))
+            .background(colors.cardBackground)
+            .border(
+                width = 1.dp,
+                color = colors.cardBorder,
+                shape = RoundedCornerShape(20.dp)
+            )
             .padding(vertical = spacing.md, horizontal = spacing.sm),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing.xs)
     ) {
         Box(
-            modifier         = Modifier.size(spacing.xxl)
+            modifier = Modifier
+                .size(spacing.xxl)
                 .clip(CircleShape)
                 .background(accent.copy(alpha = 0.18f)),
             contentAlignment = Alignment.Center
@@ -396,7 +404,12 @@ private fun MiniStatCard(
                 modifier              = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(spacing.xs))
-                    .background(accent.copy(alpha = 0.10f))
+                    .background(Color.White.copy(alpha = 0.35f))
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.6f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
                     .padding(horizontal = spacing.xs, vertical = spacing.xxs),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment     = Alignment.CenterVertically,

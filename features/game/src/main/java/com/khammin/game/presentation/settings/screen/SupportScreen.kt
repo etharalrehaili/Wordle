@@ -27,6 +27,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -62,7 +63,8 @@ fun SupportContent(onBack: Action) {
                 title              = stringResource(R.string.support_title),
                 startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
                 onStartIconClicked = onBack,
-                modifier           = Modifier.fillMaxWidth(),
+                showBackground     = false,
+                modifier           = Modifier.fillMaxWidth().statusBarsPadding(),
                 containerColor     = Color.Transparent,
             )
 

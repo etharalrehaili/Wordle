@@ -64,8 +64,7 @@ fun GameMenuDrawerSheet(
     onLoginClick: Action,
     onClose: Action,
     onProfile: Action,
-    onLanguageSelected: (AppLanguage) -> Unit,
-    onThemeSelected: (AppColorTheme) -> Unit
+    onLanguageSelected: (AppLanguage) -> Unit
 ) {
 
     var currentScreen by remember { mutableStateOf(DrawerScreen.MENU) }
@@ -96,7 +95,6 @@ fun GameMenuDrawerSheet(
             when (screen) {
                 DrawerScreen.MENU -> MenuScreen(
                     onClose    = onClose,
-                    onTheme    = { isNavigatingForward = true; currentScreen = DrawerScreen.THEME },
                     onLanguage = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
                     onProfile  = onProfile,
                     isLoggedIn = isLoggedIn,
@@ -111,15 +109,6 @@ fun GameMenuDrawerSheet(
                         currentScreen = DrawerScreen.MENU
                     }
                 )
-                DrawerScreen.THEME -> ThemeScreen(
-                    selectedTheme = selectedTheme,
-                    onBack   = { isNavigatingForward = false; currentScreen = DrawerScreen.MENU },
-                    onSelect = { theme ->
-                        onThemeSelected(theme)
-                        isNavigatingForward = false
-                        currentScreen = DrawerScreen.MENU
-                    }
-                )
             }
         }
     }
@@ -130,7 +119,6 @@ private fun MenuScreen(
     onClose: Action,
     isLoggedIn: Boolean,
     onLoginClick: Action,
-    onTheme: Action,
     onLanguage: Action,
     onProfile: Action
 ) {
@@ -141,7 +129,6 @@ private fun MenuScreen(
         val accent: Color,
         val action: () -> Unit,
     )
-
 
     val items = buildList {
         if (isLoggedIn) {
@@ -161,7 +148,6 @@ private fun MenuScreen(
                 action      = onLoginClick
             ))
         }
-        add(Entry(Icons.Filled.Palette,  stringResource(R.string.drawer_theme),    stringResource(R.string.drawer_theme_desc),    colors.buttonTaupe, onTheme))
         add(Entry(Icons.Filled.Language, stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc), colors.buttonTaupe, onLanguage))
     }
 
@@ -258,33 +244,6 @@ private fun LanguageScreen(
                 isSelected = lang == selectedLanguage,
                 accent     = colors.buttonTeal,
                 onClick    = { onSelect(lang) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ThemeScreen(
-    selectedTheme: AppColorTheme,
-    onBack: () -> Unit,
-    onSelect: (AppColorTheme) -> Unit,
-) {
-
-    DrawerColumn {
-
-        SelectionHeader(title = stringResource(R.string.drawer_theme), onBack = onBack)
-
-        AppColorTheme.entries.forEach { theme ->
-            SelectionRow(
-                label = stringResource(
-                    when (theme) {
-                        AppColorTheme.DARK  -> R.string.theme_dark
-                        AppColorTheme.LIGHT -> R.string.theme_light
-                    }
-                ),
-                isSelected = theme == selectedTheme,
-                accent     = colors.buttonTeal,
-                onClick    = { onSelect(theme) }
             )
         }
     }

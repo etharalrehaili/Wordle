@@ -34,6 +34,7 @@ fun GameButton(
     label: String,
     icon: ImageVector? = null,
     backgroundColor: Color? = null,
+    backgroundBrush: Brush? = null,
     contentColor: Color = Color.White,
     showBorder: Boolean = true,
     borderColor: Color? = null,
@@ -48,13 +49,19 @@ fun GameButton(
         label = "buttonScale"
     )
 
-    val defaultBrush = Brush.linearGradient(
-        colors = listOf(Color(0xFF1A2535), Color(0xFF0F1923))
-    )
-    val bgModifier = if (backgroundColor != null)
-        Modifier.background(backgroundColor, RoundedCornerShape(16.dp))
-    else
-        Modifier.background(brush = defaultBrush, shape = RoundedCornerShape(16.dp))
+    val bgModifier = when {
+        backgroundBrush != null ->
+            Modifier.background(brush = backgroundBrush, shape = RoundedCornerShape(16.dp))
+        backgroundColor != null ->
+            Modifier.background(backgroundColor, RoundedCornerShape(16.dp))
+        else ->
+            Modifier.background(
+                brush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF1A2535), Color(0xFF0F1923))
+                ),
+                shape = RoundedCornerShape(16.dp)
+            )
+    }
 
     val resolvedBorderColor = borderColor
         ?: if (isPressed) Color(0xFF4A6080) else Color(0xFF2A3A50)
