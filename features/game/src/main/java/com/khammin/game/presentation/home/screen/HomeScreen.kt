@@ -126,6 +126,8 @@ fun HomeScreen(
         isLoggedIn         = homeUiState.isLoggedIn,
         isEmailVerified    = homeUiState.isEmailVerified,
         hasSolvedChallenge = homeUiState.hasSolvedChallenge,
+        easyWordsSolved    = homeUiState.easyWordsSolved,
+        classicWordsSolved = homeUiState.classicWordsSolved,
         onLoginWithEmail   = onLoginWithEmail,
         onSignUpClick      = onSignUpClick,
         noInternetError  = homeUiState.noInternetError,
@@ -153,6 +155,8 @@ fun HomeContent(
     isLoggedIn: Boolean = false,
     isEmailVerified: Boolean = false,
     hasSolvedChallenge: Boolean = false,
+    easyWordsSolved: Int = 0,
+    classicWordsSolved: Int = 0,
     onLoginWithEmail: Action = {},
     onSignUpClick: Action = {},
     noInternetError: Boolean = false,
@@ -296,7 +300,9 @@ fun HomeContent(
 
                 if (showLengthSheet) {
                     WordLengthSelectionBottomSheet(
-                        onLengthSelected = { length ->
+                        easyWordsSolved    = easyWordsSolved,
+                        classicWordsSolved = classicWordsSolved,
+                        onLengthSelected   = { length ->
                             showLengthSheet = false
                             onPlayClick(length)
                         },

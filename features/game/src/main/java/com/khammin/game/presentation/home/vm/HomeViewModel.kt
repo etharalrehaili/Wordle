@@ -11,6 +11,7 @@ import com.khammin.game.domain.usecases.challenge.GetChallengeSolvedStateUseCase
 import com.khammin.game.domain.usecases.game.CreateRoomUseCase
 import com.khammin.game.domain.usecases.game.FindRoomByCodeUseCase
 import com.khammin.game.domain.usecases.game.GetRoomUseCase
+import com.khammin.game.domain.usecases.game.GetGameProgressUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.JoinRoomUseCase
 import com.khammin.game.domain.usecases.profile.CreateProfileUseCase
@@ -27,6 +28,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     getAuthState : GetAuthStateUseCase,
     getChallengeSolvedState: GetChallengeSolvedStateUseCase,
+    getGameProgressUseCase: GetGameProgressUseCase,
     private val getProfileUseCase   : GetProfileUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val createRoomUseCase: CreateRoomUseCase,
@@ -46,6 +48,16 @@ class HomeViewModel @Inject constructor(
                     (FirebaseAuth.getInstance().currentUser?.isEmailVerified == true)
                 setState { copy(isLoggedIn = isLoggedIn, isEmailVerified = verified) }
                 if (isLoggedIn) ensureProfileExists()
+            }
+        }
+        viewModelScope.launch {
+            getGameProgressUseCase().collect { progress ->
+                setState {
+                    copy(
+                        easyWordsSolved    = progress.easyWordsSolved,
+                        classicWordsSolved = progress.classicWordsSolved,
+                    )
+                }
             }
         }
         viewModelScope.launch {

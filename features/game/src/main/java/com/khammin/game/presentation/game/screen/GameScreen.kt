@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -14,6 +17,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +50,7 @@ import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.presentation.components.navigation.GameTopBar
+import com.khammin.core.presentation.theme.GameDesignTheme.spacing
 import com.khammin.core.presentation.theme.LocalWordleColors
 import com.khammin.game.R
 import com.khammin.core.R as CoreRes
@@ -77,25 +83,32 @@ fun GameScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
-                is GameEffect.ShowGameDialog -> dialogState = GameDialogState.Result(effect.isWin, effect.targetWord)
-                GameEffect.NotInWordList     -> snackbarState = SnackbarState(context.getString(R.string.not_in_word_list), SnackbarType.WARNING)
-                GameEffect.InvalidWord       -> { }
-                GameEffect.RowShake          -> { }
+                is GameEffect.ShowGameDialog -> dialogState =
+                    GameDialogState.Result(effect.isWin, effect.targetWord)
+
+                GameEffect.NotInWordList -> snackbarState = SnackbarState(
+                    context.getString(R.string.not_in_word_list),
+                    SnackbarType.WARNING
+                )
+
+                GameEffect.InvalidWord -> {}
+                GameEffect.RowShake -> {}
             }
         }
     }
 
-    val layoutDirection = if (currentLanguage == AppLanguage.ARABIC) LayoutDirection.Rtl else LayoutDirection.Ltr
+    val layoutDirection =
+        if (currentLanguage == AppLanguage.ARABIC) LayoutDirection.Rtl else LayoutDirection.Ltr
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         GameContent(
-            uiState           = uiState,
-            currentLanguage   = currentLanguage,
-            dialogState       = dialogState,
-            snackbarState     = snackbarState,
+            uiState = uiState,
+            currentLanguage = currentLanguage,
+            dialogState = dialogState,
+            snackbarState = snackbarState,
             onDismissSnackbar = { snackbarState = null },
-            onClose           = onClose,
-            onInfoClick       = { dialogState = GameDialogState.Info },
-            onDismissDialog   = { dialogState = GameDialogState.None },
+            onClose = onClose,
+            onInfoClick = { dialogState = GameDialogState.Info },
+            onDismissDialog = { dialogState = GameDialogState.None },
             onRestart = {
                 dialogState = GameDialogState.None
                 viewModel.onEvent(GameIntent.RestartGame)
@@ -125,88 +138,113 @@ fun GameContent(
     onIntent: (GameIntent) -> Unit,
 ) {
     val colors = LocalWordleColors.current
-    val infoSheetState   = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val resultSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val guessRows = uiState.board.map { row ->
         GuessRow(
             letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
-            types   = row.map { tile -> tile.state.toTypes() }
+            types = row.map { tile -> tile.state.toTypes() }
         )
     }
 
     val keyStates = uiState.keyboardStates.mapValues { (_, tileState) -> tileState.toTypes() }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background)
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
 
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = colors.background,
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
             GameTopBar(
-                endIcon            = Icons.Filled.Close,
-                startIcon          = Icons.Filled.Info,
-                hintIcon           = Icons.Filled.Lightbulb,
-                hintsRemaining     = uiState.maxHints - uiState.hintsUsed,
-                onEndIconClicked   = onClose,
+                endIcon = Icons.Filled.Close,
+                startIcon = Icons.Filled.Info,
+                hintIcon = Icons.Filled.Lightbulb,
+                hintsRemaining = uiState.maxHints - uiState.hintsUsed,
+                onEndIconClicked = onClose,
                 onStartIconClicked = onInfoClick,
-                onHintClicked      = { onIntent(GameIntent.UseHint) },
+                onHintClicked = { onIntent(GameIntent.UseHint) },
                 showBackground = false,
-                modifier           = Modifier.fillMaxWidth().statusBarsPadding(),
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            GameBoard(
-                guesses    = guessRows,
-                currentRow = uiState.currentRow,
-                currentCol = uiState.currentCol,
-                wordLength = uiState.wordLength,
-                modifier   = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .statusBarsPadding(),
             )
-
+        },
+        bottomBar = {
             GameKeyboard(
-                keyStates   = keyStates,
-                onKey       = { char -> onIntent(GameIntent.EnterLetter(char)) },
+                keyStates = keyStates,
+                onKey = { char -> onIntent(GameIntent.EnterLetter(char)) },
                 onBackspace = { onIntent(GameIntent.DeleteLetter) },
-                language    = currentLanguage,
-                modifier    = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(102.dp))
-        }
-
-        snackbarState?.let {
-            CustomSnackbarHost(
-                state     = it,
-                onDismiss = onDismissSnackbar,
+                language = currentLanguage,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(bottom = 8.dp)
             )
         }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
 
-        when (val dialog = dialogState) {
-            GameDialogState.Info -> {
-                WordleInfoBottomSheet(
-                    sheetState = infoSheetState,
-                    onDismiss  = onDismissDialog,
+                GameBoard(
+                    guesses = guessRows,
+                    currentRow = uiState.currentRow,
+                    currentCol = uiState.currentCol,
                     wordLength = uiState.wordLength,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    thickness = 1.dp,
+                    color = colors.body.copy(alpha = 0f)
+                )
+
+                Spacer(modifier = Modifier.height(140.dp))
+
+            }
+
+            snackbarState?.let {
+                CustomSnackbarHost(
+                    state = it,
+                    onDismiss = onDismissSnackbar,
                 )
             }
-            is GameDialogState.Result -> {
-                GameResultsBottomSheet(
-                    title          = if (dialog.isWin) stringResource(CoreRes.string.result_win_title)
-                                     else stringResource(CoreRes.string.result_lose_title),
-                    answer         = dialog.word,
-                    accentColor    = if (dialog.isWin) colors.correct else colors.present,
-                    sheetState     = resultSheetState,
-                    onRestart      = onRestart,
-                    onSecondChance = if (!dialog.isWin) onSecondChance else null,
-                    onDismiss      = onDismissDialog,
-                )
+
+            when (val dialog = dialogState) {
+                GameDialogState.Info -> {
+                    WordleInfoBottomSheet(
+                        sheetState = infoSheetState,
+                        onDismiss = onDismissDialog,
+                        wordLength = uiState.wordLength,
+                    )
+                }
+
+                is GameDialogState.Result -> {
+                    GameResultsBottomSheet(
+                        title = if (dialog.isWin) stringResource(CoreRes.string.result_win_title)
+                        else stringResource(CoreRes.string.result_lose_title),
+                        answer = dialog.word,
+                        accentColor = if (dialog.isWin) colors.correct else colors.present,
+                        sheetState = resultSheetState,
+                        onRestart = onRestart,
+                        onSecondChance = if (!dialog.isWin) onSecondChance else null,
+                        onDismiss = onDismissDialog,
+                    )
+                }
+
+                GameDialogState.None -> Unit
             }
-            GameDialogState.None -> Unit
         }
-    }
+    } // Scaffold
 }

@@ -16,6 +16,8 @@
     <string name="word_length_easy">سهل</string>
     <string name="word_length_classic">متوسط</string>
     <string name="word_length_hard">صعب</string>
+    <string name="word_length_classic_requirement">حل %1$d / %2$d كلمة سهلة للفتح</string>
+    <string name="word_length_hard_requirement">حل %1$d / %2$d كلمة متوسطة للفتح</string>
 
     <!-- Wordle Info Bottom Sheet -->
     <string name="info_how_to_play">كيفية اللعب</string>

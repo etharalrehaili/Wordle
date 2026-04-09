@@ -7,6 +7,7 @@ import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
+import com.khammin.game.domain.usecases.game.RecordWinUseCase
 import com.khammin.game.presentation.game.contract.GameEffect
 import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
-    private val getWordsUseCase: GetWordsUseCase
+    private val getWordsUseCase: GetWordsUseCase,
+    private val recordWinUseCase: RecordWinUseCase,
 ) : BaseMviViewModel<GameIntent, GameUiState, GameEffect>(
     initialState = GameUiState()
 ) {
@@ -126,6 +128,9 @@ class GameViewModel @Inject constructor(
         }
 
         if (isWin || isLast) {
+            if (isWin) {
+                viewModelScope.launch { recordWinUseCase(state.wordLength) }
+            }
             sendEffect { GameEffect.ShowGameDialog(isWin = isWin, targetWord = state.targetWord) }
         }
     }
