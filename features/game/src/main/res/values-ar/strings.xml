@@ -1,6 +1,9 @@
 <resources>
 
     <!-- Home Screen -->
+    <string name="verify_email_title">البريد الإلكتروني غير مُفعَّل</string>
+    <string name="verify_email_message">يرجى التحقق من بريدك الإلكتروني قبل الوصول إلى هذه الميزة. تحقق من صندوق الوارد للحصول على رابط التحقق.</string>
+    <string name="ok">حسنًا</string>
     <string name="welcome_to">مرحبًا بك في</string>
     <string name="Khammin">خمّن</string>
     <string name="quick_play">لعب سريع</string>

@@ -1,6 +1,9 @@
 <resources>
 
     <!-- Home Screen -->
+    <string name="verify_email_title">Email Not Verified</string>
+    <string name="verify_email_message">Please verify your email address before accessing this feature. Check your inbox for a verification link.</string>
+    <string name="ok">OK</string>
     <string name="welcome_to">Welcome To</string>
     <string name="Khammin">KHAMMIN</string>
     <string name="quick_play">Quick Play</string>

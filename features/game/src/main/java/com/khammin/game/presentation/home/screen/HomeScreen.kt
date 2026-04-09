@@ -124,6 +124,7 @@ fun HomeScreen(
             }
         },
         isLoggedIn         = homeUiState.isLoggedIn,
+        isEmailVerified    = homeUiState.isEmailVerified,
         hasSolvedChallenge = homeUiState.hasSolvedChallenge,
         onLoginWithEmail   = onLoginWithEmail,
         onSignUpClick      = onSignUpClick,
@@ -150,6 +151,7 @@ fun HomeContent(
     onProfileClick: Action,
     onIntent: (PreferencesIntent) -> Unit,
     isLoggedIn: Boolean = false,
+    isEmailVerified: Boolean = false,
     hasSolvedChallenge: Boolean = false,
     onLoginWithEmail: Action = {},
     onSignUpClick: Action = {},
@@ -158,12 +160,13 @@ fun HomeContent(
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var showAuthSheet         by remember { mutableStateOf(false) }
-    var showLengthSheet       by remember { mutableStateOf(false) }
-    var countdownSeconds      by remember { mutableStateOf(secondsUntilMidnight()) }
-    var showGameModeSheet     by remember { mutableStateOf(false) }
-    var showMultiplayerSheet  by remember { mutableStateOf(false) }
-    var showJoinRoomSheet     by remember { mutableStateOf(false) }
+    var showAuthSheet           by remember { mutableStateOf(false) }
+    var showVerifyEmailDialog   by remember { mutableStateOf(false) }
+    var showLengthSheet         by remember { mutableStateOf(false) }
+    var countdownSeconds        by remember { mutableStateOf(secondsUntilMidnight()) }
+    var showGameModeSheet       by remember { mutableStateOf(false) }
+    var showMultiplayerSheet    by remember { mutableStateOf(false) }
+    var showJoinRoomSheet       by remember { mutableStateOf(false) }
     var lastFailedAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     if (noInternetError) {
@@ -196,7 +199,11 @@ fun HomeContent(
                 onClose            = { scope.launch { drawerState.close() } },
                 onProfile          = {
                     scope.launch { drawerState.close() }
-                    onProfileClick()
+                    when {
+                        !isLoggedIn        -> showAuthSheet = true
+                        !isEmailVerified   -> showVerifyEmailDialog = true
+                        else               -> onProfileClick()
+                    }
                 },
                 isLoggedIn         = isLoggedIn,
                 onLoginClick       = {
@@ -350,8 +357,11 @@ fun HomeContent(
                     contentColor    = colors.title,
                     showBorder      = false,
                     onClick         = {
-                        if (isLoggedIn) onChallengeClick()
-                        else showAuthSheet = true
+                        when {
+                            !isLoggedIn      -> showAuthSheet = true
+                            !isEmailVerified -> showVerifyEmailDialog = true
+                            else             -> onChallengeClick()
+                        }
                     },
                     modifier        = Modifier.fillMaxWidth()
                 )
@@ -367,6 +377,41 @@ fun HomeContent(
                             showAuthSheet = false
                             onSignUpClick()
                         },
+                    )
+                }
+
+                if (showVerifyEmailDialog) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { showVerifyEmailDialog = false },
+                        title = {
+                            WordleText(
+                                text       = stringResource(R.string.verify_email_title),
+                                color      = colors.title,
+                                fontSize   = GameDesignTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        },
+                        text = {
+                            WordleText(
+                                text  = stringResource(R.string.verify_email_message),
+                                color = colors.body,
+                                fontSize = GameDesignTheme.typography.labelMedium,
+                            )
+                        },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(
+                                onClick = { showVerifyEmailDialog = false }
+                            ) {
+                                WordleText(
+                                    text      = stringResource(R.string.ok),
+                                    color     = colors.buttonTeal,
+                                    fontSize  = GameDesignTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        },
+                        containerColor = colors.background,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                     )
                 }
 

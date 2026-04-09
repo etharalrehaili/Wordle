@@ -10,6 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 
 @HiltAndroidApp
 class MyApp : Application(), Configuration.Provider {
@@ -25,7 +27,10 @@ class MyApp : Application(), Configuration.Provider {
         super.onCreate()
         FirebaseApp.initializeApp(this)
 
-        OneSignal.initWithContext(this, "837992e0-4742-4dfc-ab23-13c939090da2")
+        val providerFactory = PlayIntegrityAppCheckProviderFactory.getInstance()
+        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(providerFactory)
+
+        OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID)
         CoroutineScope(Dispatchers.IO).launch {
             OneSignal.Notifications.requestPermission(true)
         }

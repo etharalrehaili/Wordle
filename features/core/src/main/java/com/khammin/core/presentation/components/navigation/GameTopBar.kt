@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Info
@@ -59,6 +61,7 @@ fun GameTopBar(
     isDarkMode: Boolean = true,
     onThemeToggle: ((AppColorTheme) -> Unit)? = null,
     showBackground: Boolean = true,
+    onCloseClicked: Action? = null
 ) {
     Box(
         modifier = modifier
@@ -83,12 +86,12 @@ fun GameTopBar(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 8.dp)
+                .padding(start = 0.dp)
         ) {
             if (startIcon != null && onStartIconClicked != null) {
                 IconButton(
                     onClick = { onStartIconClicked() },
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = startIcon,
@@ -100,7 +103,7 @@ fun GameTopBar(
             }
         }
 
-        // Center: dot + title
+        // title
         if (title != null) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -122,10 +125,11 @@ fun GameTopBar(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 8.dp)
+                .padding(end = 0.dp)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Theme toggle — sun / moon
                 if (onThemeToggle != null) {
@@ -134,13 +138,13 @@ fun GameTopBar(
                             val newTheme = if (isDarkMode) AppColorTheme.LIGHT else AppColorTheme.DARK
                             onThemeToggle?.invoke(newTheme)
                         },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             imageVector = if (isDarkMode)
-                                Icons.Outlined.LightMode   // sun → اضغط للـ light
+                                Icons.Outlined.LightMode
                             else
-                                Icons.Outlined.DarkMode,   // moon → اضغط للـ dark
+                                Icons.Outlined.DarkMode,
                             contentDescription = if (isDarkMode) "Switch to light mode" else "Switch to dark mode",
                             tint = colors.body,
                             modifier = Modifier.size(22.dp)
@@ -152,41 +156,54 @@ fun GameTopBar(
                         IconButton(
                             onClick = onHintClicked,
                             enabled = hintsRemaining > 0,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
                                 imageVector = hintIcon,
                                 contentDescription = "Use hint ($hintsRemaining remaining)",
                                 tint = if (hintsRemaining > 0) colors.body
                                 else colors.body.copy(alpha = 0.35f),
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(26.dp)
                             )
                         }
-                        if (hintsRemaining == 0) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = 2.dp, y = (-2).dp)
-                                    .background(
-                                        color = colors.pinkText,
-                                        shape = RoundedCornerShape(6.dp)
-                                    )
-                                    .padding(horizontal = 4.dp, vertical = 1.dp)
-                            ) {
-                                Text(
-                                    text = "Ad",
-                                    color = Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    lineHeight = 11.sp
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 10.dp, y = (-8).dp)
+                                .defaultMinSize(minWidth = 22.dp)
+                                .background(
+                                    color = if (hintsRemaining > 0) colors.buttonTeal else colors.pinkText,
+                                    shape = RoundedCornerShape(6.dp)
                                 )
-                            }
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (hintsRemaining > 0) "$hintsRemaining" else "Ad",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 11.sp
+                            )
                         }
+                    }
+                }
+                if (onCloseClicked != null) {
+                    IconButton(
+                        onClick  = { onCloseClicked() },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Filled.Close,
+                            contentDescription = null,
+                            tint               = colors.body,
+                            modifier           = Modifier.size(22.dp)
+                        )
                     }
                 } else if (endIcon != null && onEndIconClicked != null) {
                     IconButton(
                         onClick = { onEndIconClicked() },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             imageVector = endIcon,

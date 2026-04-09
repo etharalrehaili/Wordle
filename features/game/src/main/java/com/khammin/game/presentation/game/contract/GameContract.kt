@@ -19,7 +19,7 @@ data class GameUiState(
     val error: String? = null,
     val isGameOver: Boolean = false,
     val hintsUsed: Int = 0,
-    val maxHints: Int = 1,
+    val maxHints: Int = 0,
     val hasUsedSecondChance: Boolean = false
 ) : UiState
 

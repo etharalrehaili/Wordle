@@ -1,3 +1,10 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,6 +26,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "ONESIGNAL_APP_ID", "\"${localProperties["ONESIGNAL_APP_ID"]}\"")
     }
 
     buildTypes {
@@ -40,6 +49,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -78,4 +88,7 @@ dependencies {
     // Hilt WorkManager integration
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation(libs.firebase.auth)
 }

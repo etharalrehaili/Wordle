@@ -42,7 +42,9 @@ class HomeViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             getAuthState().collect { isLoggedIn ->
-                setState { copy(isLoggedIn = isLoggedIn) }
+                val verified = isLoggedIn &&
+                    (FirebaseAuth.getInstance().currentUser?.isEmailVerified == true)
+                setState { copy(isLoggedIn = isLoggedIn, isEmailVerified = verified) }
                 if (isLoggedIn) ensureProfileExists()
             }
         }
