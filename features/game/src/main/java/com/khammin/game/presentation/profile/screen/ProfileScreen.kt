@@ -525,7 +525,7 @@ private fun EditProfileSection(
 
         OutlinedTextField(
             value         = editName,
-            onValueChange = onNameChanged,
+            onValueChange = { if (it.length <= 25) onNameChanged(it) },
             label         = { Text(stringResource(R.string.profile_display_name_label), fontSize = typography.labelMedium) },
             singleLine    = true,
             modifier      = Modifier.fillMaxWidth(0.78f),

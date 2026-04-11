@@ -48,7 +48,7 @@ class MultiplayerGameViewModel @Inject constructor(
         when (intent) {
             is MultiplayerGameIntent.LoadGame -> loadGame(
                 intent.roomId, intent.language, intent.isHost, intent.myUserId,
-                intent.defaultMyName, intent.defaultGuestName
+                intent.isCustomWord, intent.defaultMyName, intent.defaultGuestName
             )
             is MultiplayerGameIntent.EnterLetter -> enterLetter(intent.letter)
             MultiplayerGameIntent.DeleteLetter   -> deleteLetter()
@@ -62,13 +62,16 @@ class MultiplayerGameViewModel @Inject constructor(
     private val wordCache: MutableMap<Int, List<String>> = mutableMapOf()
     private var presenceStarted = false
 
-    private fun loadGame(roomId: String, language: String, isHost: Boolean, myUserId: String, defaultMyName: String, defaultGuestName: String) {
+    private fun loadGame(roomId: String, language: String, isHost: Boolean, myUserId: String, isCustomWord: Boolean, defaultMyName: String, defaultGuestName: String) {
         val myId = myUserId.takeIf { it.isNotEmpty() }
             ?: auth.currentUser?.uid
             ?: uiState.value.myUserId.takeIf { it.isNotEmpty() }
             ?: return
 
-        setState { copy(roomId = roomId, myUserId = myId, isHost = isHost, language = language, defaultMyName = defaultMyName, defaultGuestName = defaultGuestName, myName = defaultMyName) }
+        val isAnonymous = auth.currentUser?.isAnonymous == true || myId.startsWith("guest_")
+        val initialMyName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
+
+        setState { copy(roomId = roomId, myUserId = myId, isHost = isHost, isCustomWord = isCustomWord, language = language, defaultMyName = defaultMyName, defaultGuestName = defaultGuestName, myName = initialMyName) }
 
         // Register my own presence (onDisconnect auto-removes on app kill)
         viewModelScope.launch {
@@ -76,7 +79,7 @@ class MultiplayerGameViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            if (!myId.startsWith("guest_")) {
+            if (!isAnonymous) {
                 val result = getProfileUseCase(myId)
                 if (result is Resource.Success) {
                     val name = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
@@ -213,11 +216,20 @@ class MultiplayerGameViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    private fun guestNameFromId(id: String): String {
+        val suffix = if (id.startsWith("guest_"))
+            id.removePrefix("guest_").take(5)
+        else
+            id.take(5)
+        return "Guest-${suffix.uppercase()}"
+    }
+
     private fun fetchOpponentName(opponentId: String) {
-        val defaultGuestName = uiState.value.defaultGuestName
+        android.util.Log.d("GuestName", "fetchOpponentName: $opponentId")
+        android.util.Log.d("GuestName", "starts with guest_: ${opponentId.startsWith("guest_")}")
 
         if (opponentId.startsWith("guest_")) {
-            setState { copy(opponentName = defaultGuestName, opponentAvatarUrl = null) }
+            setState { copy(opponentName = guestNameFromId(opponentId), opponentAvatarUrl = null) }
             return
         }
 
@@ -225,17 +237,25 @@ class MultiplayerGameViewModel @Inject constructor(
 
         viewModelScope.launch {
             val result = getProfileUseCase(opponentId)
+            android.util.Log.d("GuestName", "profile result: $result")
+            android.util.Log.d("GuestName", "profile name: ${(result as? Resource.Success)?.data?.name}")
+
             when (result) {
-                is Resource.Success -> setState {
-                    copy(
-                        opponentName             = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultGuestName,
-                        opponentAvatarUrl        = result.data?.avatarUrl,
-                        isOpponentProfileLoading = false
-                    )
+                is Resource.Success -> {
+                    val profileName = result.data?.name?.takeIf { it.isNotBlank() }
+                    val isRealName = profileName != null && profileName != opponentId
+                    val name = if (isRealName) profileName else null
+                    setState {
+                        copy(
+                            opponentName             = name ?: guestNameFromId(opponentId),
+                            opponentAvatarUrl        = if (name != null) result.data?.avatarUrl else null,
+                            isOpponentProfileLoading = false
+                        )
+                    }
                 }
                 else -> setState {
                     copy(
-                        opponentName             = defaultGuestName,
+                        opponentName             = guestNameFromId(opponentId),
                         opponentAvatarUrl        = null,
                         isOpponentProfileLoading = false
                     )

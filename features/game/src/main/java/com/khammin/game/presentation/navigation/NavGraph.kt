@@ -59,8 +59,8 @@ fun NavGraphBuilder.navGraph(
                     launchSingleTop = true
                 }
             },
-            onMultiplayerClick = { roomId, isHost, userId ->
-                navController.navigate(Route.MultiplayerGameScreen(roomId, isHost, userId)) {
+            onMultiplayerClick = { roomId, isHost, userId, isCustomWord ->
+                navController.navigate(Route.MultiplayerGameScreen(roomId, isHost, userId, isCustomWord)) {
                     launchSingleTop = true
                 }
             },
@@ -120,6 +120,7 @@ fun NavGraphBuilder.navGraph(
             roomId          = route.roomId,
             isHost          = route.isHost,
             userId          = route.userId,
+            isCustomWord    = route.isCustomWord,
         )
     }
 
@@ -298,7 +299,8 @@ sealed interface Route {
     data class MultiplayerGameScreen(
         val roomId: String = "",
         val isHost: Boolean = false,
-        val userId: String = ""
+        val userId: String = "",
+        val isCustomWord: Boolean = false,
     ) : Route
 
     @Serializable

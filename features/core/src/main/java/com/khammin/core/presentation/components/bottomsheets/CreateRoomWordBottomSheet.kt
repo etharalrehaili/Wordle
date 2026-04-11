@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,8 +43,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -65,9 +73,16 @@ fun CreateRoomWordBottomSheet(
 ) {
     val colors = GameDesignTheme.colors
     val typography = GameDesignTheme.typography
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var customWord by remember { mutableStateOf("") }
     var error      by remember { mutableStateOf<String?>(null) }
+
+    fun dismissKeyboard() {
+        focusManager.clearFocus()
+        keyboardController?.hide()
+    }
 
     fun submitCustomWord() {
         when {
@@ -87,7 +102,15 @@ fun CreateRoomWordBottomSheet(
         Column(
             modifier            = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                // intercept every touch down before children handle it — clears focus
+                // without consuming the event, so child clicks still work normally
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(pass = PointerEventPass.Initial)
+                        dismissKeyboard()
+                    }
+                },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Top accent strip
@@ -265,8 +288,9 @@ fun CreateRoomWordBottomSheet(
                                     fontSize = typography.labelMedium,
                                 )
                             },
-                            singleLine    = true,
-                            isError       = error != null,
+                            textStyle  = TextStyle(color = colors.title),
+                            singleLine = true,
+                            isError    = error != null,
                             supportingText = {
                                 val msg = error ?: stringResource(R.string.create_room_custom_length_hint)
                                 WordleText(
@@ -281,15 +305,22 @@ fun CreateRoomWordBottomSheet(
                                 imeAction      = ImeAction.Done,
                             ),
                             keyboardActions = KeyboardActions(
-                                onDone = { submitCustomWord() }
+                                onDone = {
+                                    dismissKeyboard()
+                                    submitCustomWord()
+                                }
                             ),
                             colors  = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor   = colors.buttonPink,
-                                unfocusedBorderColor = colors.border,
-                                focusedTextColor     = colors.title,
-                                unfocusedTextColor   = colors.title,
-                                cursorColor          = colors.buttonPink,
-                                errorBorderColor     = colors.absent,
+                                focusedBorderColor      = colors.buttonPink,
+                                unfocusedBorderColor    = colors.border,
+                                focusedTextColor        = colors.title,
+                                unfocusedTextColor      = colors.title,
+                                cursorColor             = colors.buttonPink,
+                                errorBorderColor        = colors.absent,
+                                errorTextColor          = colors.title,
+                                focusedContainerColor   = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                errorContainerColor     = Color.Transparent,
                             ),
                             shape    = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth(),

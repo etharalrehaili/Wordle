@@ -50,6 +50,7 @@
     <string name="profile_updated_successfully">Profile Updated Successfully</string>
     <string name="profile_stat_arabic">ar</string>
     <string name="profile_stat_english">en</string>
+    <string name="error_name_too_long">Name must not exceed 25 characters</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>

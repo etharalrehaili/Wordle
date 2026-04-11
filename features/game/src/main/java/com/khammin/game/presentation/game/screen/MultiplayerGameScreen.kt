@@ -42,6 +42,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +70,7 @@ fun MultiplayerGameScreen(
     roomId: String = "",
     isHost: Boolean = false,
     userId: String = "",
+    isCustomWord: Boolean = false,
     viewModel: MultiplayerGameViewModel = hiltViewModel()
 ) {
 
@@ -118,6 +121,7 @@ fun MultiplayerGameScreen(
                     isHost           = isHost,
                     myUserId         = userId.takeIf { it.isNotEmpty() }
                         ?: FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    isCustomWord     = isCustomWord,
                     defaultMyName    = defaultMyName,
                     defaultGuestName = defaultGuestName,
                 )
@@ -139,7 +143,8 @@ fun MultiplayerGameScreen(
         GameMultiplayerResultBottomSheet(
             isWin             = resultIsWin,
             targetWord        = resultWord,
-            myName            = state.myName,
+            myName       = state.myName.takeIf { it.isNotBlank() }
+                ?: guestNameFromId(state.myUserId),
             opponentName      = state.opponentName,
             opponentAvatarUrl = state.opponentAvatarUrl,
             opponentLeft      = state.opponentLeft,
@@ -199,7 +204,8 @@ fun MultiplayerGameContent(
                 endIcon          = Icons.Filled.Close,
                 startIcon        = Icons.Filled.Info,
                 onEndIconClicked = onClose,
-                modifier         = Modifier.fillMaxWidth()
+                showBackground = false,
+                modifier         = Modifier.fillMaxWidth().statusBarsPadding()
             )
 
             Spacer(Modifier.height(16.dp))
@@ -258,36 +264,43 @@ fun MultiplayerGameContent(
                 }
             }
 
-            GameBoard(
-                guesses    = state.board.map { row ->
-                    GuessRow(
-                        letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
-                        types   = row.map { tile -> tile.state.toTypes() }
-                    )
-                },
-                currentRow = state.currentRow,
-                currentCol = state.currentCol,
-                wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                modifier   = Modifier.fillMaxWidth().weight(1f)
-            )
+            if (state.isHost && state.isCustomWord) {
+                SpectatorView(
+                    word           = state.targetWord,
+                    opponentName   = state.opponentName,
+                    opponentJoined = state.opponentId.isNotEmpty(),
+                    modifier       = Modifier.fillMaxWidth().weight(1f)
+                )
+            } else {
+                GameBoard(
+                    guesses    = state.board.map { row ->
+                        GuessRow(
+                            letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
+                            types   = row.map { tile -> tile.state.toTypes() }
+                        )
+                    },
+                    currentRow = state.currentRow,
+                    currentCol = state.currentCol,
+                    wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
+                    modifier   = Modifier.fillMaxWidth().weight(1f)
+                )
 
-//            Spacer(Modifier.weight(1f))
-
-            GameKeyboard(
-                enabled   = state.opponentId.isNotEmpty(),
-                keyStates = state.keyboardStates.mapValues { (_, tileState) ->
-                    when (tileState) {
-                        TileState.CORRECT   -> Types.CORRECT
-                        TileState.MISPLACED -> Types.PRESENT
-                        TileState.WRONG     -> Types.ABSENT
-                        else                -> Types.DEFAULT
-                    }
-                },
-                onKey       = { if (state.opponentId.isNotEmpty()) onIntent(MultiplayerGameIntent.EnterLetter(it)) },
-                onBackspace = { if (state.opponentId.isNotEmpty()) onIntent(MultiplayerGameIntent.DeleteLetter) },
-                language    = currentLanguage,
-                modifier    = Modifier.fillMaxWidth().padding(bottom = 32.dp)
-            )
+                GameKeyboard(
+                    enabled   = state.opponentId.isNotEmpty(),
+                    keyStates = state.keyboardStates.mapValues { (_, tileState) ->
+                        when (tileState) {
+                            TileState.CORRECT   -> Types.CORRECT
+                            TileState.MISPLACED -> Types.PRESENT
+                            TileState.WRONG     -> Types.ABSENT
+                            else                -> Types.DEFAULT
+                        }
+                    },
+                    onKey       = { if (state.opponentId.isNotEmpty()) onIntent(MultiplayerGameIntent.EnterLetter(it)) },
+                    onBackspace = { if (state.opponentId.isNotEmpty()) onIntent(MultiplayerGameIntent.DeleteLetter) },
+                    language    = currentLanguage,
+                    modifier    = Modifier.fillMaxWidth().padding(bottom = 32.dp)
+                )
+            }
         }
     }
 }
@@ -372,4 +385,73 @@ private fun RoomCodeCard(roomId: String) {
             fontSize = 9.sp,
         )
     }
+}
+
+@Composable
+private fun SpectatorView(
+    word: String,
+    opponentName: String,
+    opponentJoined: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier         = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier            = Modifier.padding(horizontal = 32.dp),
+        ) {
+            Text(text = "👀", fontSize = 48.sp)
+            Text(
+                text       = stringResource(R.string.spectator_title),
+                color      = colors.title,
+                fontSize   = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign  = TextAlign.Center,
+            )
+            if (word.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    word.forEach { letter ->
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.surface)
+                                .border(1.5.dp, colors.buttonTeal, RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text       = letter.toString(),
+                                color      = colors.title,
+                                fontSize   = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
+                        }
+                    }
+                }
+            }
+            Text(
+                text      = if (opponentJoined)
+                    stringResource(R.string.spectator_watching, opponentName)
+                else
+                    stringResource(R.string.spectator_waiting),
+                color     = colors.body.copy(alpha = 0.65f),
+                fontSize  = 14.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+private fun guestNameFromId(id: String): String {
+    val suffix = if (id.startsWith("guest_"))
+        id.removePrefix("guest_").take(5)
+    else
+        id.take(5)
+    return "Guest-$suffix"
 }

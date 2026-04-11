@@ -110,6 +110,19 @@
     <string name="multiplayer_mode_create_room">إنشاء غرفة</string>
     <string name="multiplayer_mode_join_room">الانضمام لغرفة</string>
 
+    <!-- Create Room Word Bottom Sheet -->
+    <string name="create_room_word_title">اختر الكلمة</string>
+    <string name="create_room_word_subtitle">حدد كيف يتم اختيار الكلمة السرية لهذه الغرفة</string>
+    <string name="create_room_random_title">كلمة عشوائية</string>
+    <string name="create_room_random_subtitle">جلب كلمة عشوائية من قائمة الكلمات</string>
+    <string name="create_room_random_action">استخدام كلمة عشوائية</string>
+    <string name="create_room_or">أو</string>
+    <string name="create_room_custom_title">كلمتي الخاصة</string>
+    <string name="create_room_custom_subtitle">اكتب الكلمة التي سيخمّنها صديقك</string>
+    <string name="create_room_custom_hint">اكتب كلمة…</string>
+    <string name="create_room_custom_length_hint">يجب أن تكون 4 أو 5 أو 6 أحرف</string>
+    <string name="create_room_custom_action">استخدام هذه الكلمة</string>
+
     <!-- Game Mode Bottom Sheet -->
     <string name="game_mode_title">اختر الوضع</string>
     <string name="game_mode_subtitle">كيف تريد أن تلعب اليوم</string>
@@ -117,6 +130,9 @@
     <string name="game_mode_multiplayer">اللعب الجماعي</string>
     <string name="multiplayer_default_my_name">أنت</string>
     <string name="multiplayer_default_guest_name">ضيف</string>
+    <string name="spectator_title">أنت اخترت الكلمة!</string>
+    <string name="spectator_watching">تراقب %s يلعب…</string>
+    <string name="spectator_waiting">في انتظار انضمام خصمك…</string>
 
     <!-- Theme and Language options -->
     <string name="theme_dark">داكن</string>

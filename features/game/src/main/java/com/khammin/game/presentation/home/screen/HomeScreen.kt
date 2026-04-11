@@ -45,6 +45,7 @@ import com.khammin.core.presentation.components.GradientBackground
 import com.khammin.core.presentation.components.Square
 import com.khammin.core.presentation.components.SquareContent
 import com.khammin.core.presentation.components.bottomsheets.AuthBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.CreateRoomWordBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.GameMenuDrawerSheet
 import com.khammin.core.presentation.components.bottomsheets.GameModeBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.JoinRoomBottomSheet
@@ -72,7 +73,7 @@ import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
 @Composable
 fun HomeScreen(
     onPlayClick: IntAction,
-    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String) -> Unit,
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean) -> Unit,
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
@@ -96,9 +97,10 @@ fun HomeScreen(
         uiState            = preferencesUiState,
         onPlayClick        = onPlayClick,
         onMultiplayerClick = onMultiplayerClick,
-        onCreateRoom = { callback ->
+        onCreateRoom = { customWord, callback ->
             homeViewModel.createRoom(
-                language = if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en",
+                language   = if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en",
+                customWord = customWord,
                 onRoomCreated = { roomId, myId ->
                     callback(roomId, myId)
                 }
@@ -141,8 +143,8 @@ fun HomeScreen(
 fun HomeContent(
     uiState: PreferencesUiState,
     onPlayClick: (Int) -> Unit,
-    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String) -> Unit = { _, _, _ -> },
-    onCreateRoom: (onRoomCreated: (roomId: String, myId: String) -> Unit) -> Unit = { _ -> },
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean) -> Unit = { _, _, _, _ -> },
+    onCreateRoom: (customWord: String?, onRoomCreated: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
     onJoinRoom: (code: String, onJoined: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
     joinRoomLoading: Boolean = false,
     createRoomLoading: Boolean = false,
@@ -170,6 +172,7 @@ fun HomeContent(
     var countdownSeconds        by remember { mutableStateOf(secondsUntilMidnight()) }
     var showGameModeSheet       by remember { mutableStateOf(false) }
     var showMultiplayerSheet    by remember { mutableStateOf(false) }
+    var showWordPickerSheet     by remember { mutableStateOf(false) }
     var showJoinRoomSheet       by remember { mutableStateOf(false) }
     var lastFailedAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -315,20 +318,42 @@ fun HomeContent(
                         isLoading    = createRoomLoading,
                         onCreateRoom = {
                             showMultiplayerSheet = false
-                            lastFailedAction = {
-                                onCreateRoom { roomId, myId ->
-                                    onMultiplayerClick(roomId, true, myId)
-                                }
-                            }
-                            onCreateRoom { roomId, myId ->
-                                onMultiplayerClick(roomId, true, myId)
-                            }
+                            showWordPickerSheet  = true
                         },
                         onJoinRoom = {
                             showMultiplayerSheet = false
                             showJoinRoomSheet    = true
                         },
-                        onDismiss      = { showMultiplayerSheet = false }
+                        onDismiss = { showMultiplayerSheet = false }
+                    )
+                }
+
+                if (showWordPickerSheet) {
+                    CreateRoomWordBottomSheet(
+                        isLoading    = createRoomLoading,
+                        onRandomWord = {
+                            showWordPickerSheet = false
+                            lastFailedAction = {
+                                onCreateRoom(null) { roomId, myId ->
+                                    onMultiplayerClick(roomId, true, myId, false)
+                                }
+                            }
+                            onCreateRoom(null) { roomId, myId ->
+                                onMultiplayerClick(roomId, true, myId, false)
+                            }
+                        },
+                        onCustomWord = { word ->
+                            showWordPickerSheet = false
+                            lastFailedAction = {
+                                onCreateRoom(word) { roomId, myId ->
+                                    onMultiplayerClick(roomId, true, myId, true)
+                                }
+                            }
+                            onCreateRoom(word) { roomId, myId ->
+                                onMultiplayerClick(roomId, true, myId, true)
+                            }
+                        },
+                        onDismiss = { showWordPickerSheet = false }
                     )
                 }
 
@@ -338,12 +363,12 @@ fun HomeContent(
                             lastFailedAction = {
                                 onJoinRoom(code) { roomId, myId ->
                                     showJoinRoomSheet = false
-                                    onMultiplayerClick(roomId, false, myId)
+                                    onMultiplayerClick(roomId, false, myId, false)
                                 }
                             }
                             onJoinRoom(code) { roomId, myId ->
                                 showJoinRoomSheet = false
-                                onMultiplayerClick(roomId, false, myId)
+                                onMultiplayerClick(roomId, false, myId, false)
                             }
                         },
                         onDismiss    = {
@@ -488,19 +513,4 @@ private fun Long.toHhMmSs(): String {
     val m = (this % 3600) / 60
     val s = this % 60
     return "%02d : %02d : %02d".format(h, m, s)
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@GameLightBackgroundPreview
-@Composable
-private fun PreviewHomeScreenLightMode() {
-    HomeContent(
-        uiState            = PreferencesUiState(),
-        onPlayClick        = {},
-        onMultiplayerClick = { _, _, _ -> },
-        onChallengeClick   = {},
-        onLeaderboardClick = {},
-        onProfileClick     = {},
-        onIntent           = {}
-    )
 }

@@ -7,6 +7,7 @@ import com.khammin.core.domain.model.GameRoom
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
+import kotlinx.coroutines.tasks.await
 import com.khammin.game.domain.usecases.challenge.GetChallengeSolvedStateUseCase
 import com.khammin.game.domain.usecases.game.CreateRoomUseCase
 import com.khammin.game.domain.usecases.game.FindRoomByCodeUseCase
@@ -89,10 +90,12 @@ class HomeViewModel @Inject constructor(
     private fun ensureProfileExists() {
         viewModelScope.launch {
             val user  = FirebaseAuth.getInstance().currentUser ?: return@launch
+
+            if (user.isAnonymous) return@launch
+
             val uid   = user.uid
             val email = user.email ?: uid
 
-            // Only create if no profile exists yet
             when (val result = getProfileUseCase(uid)) {
                 is Resource.Success -> {
                     if (result.data == null) {
@@ -100,7 +103,6 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 is Resource.Error -> {
-                    // Profile fetch failed — attempt creation anyway as a fallback
                     createProfileUseCase(uid, email.substringBefore("@"))
                 }
                 else -> Unit
@@ -108,39 +110,56 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun createRoom(language: String, onRoomCreated: (String, String) -> Unit) {
+    fun createRoom(
+        language: String,
+        customWord: String? = null,
+        onRoomCreated: (String, String) -> Unit,
+    ) {
         viewModelScope.launch {
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
                 return@launch
             }
 
-            val myId = FirebaseAuth.getInstance().currentUser?.uid
+            setState { copy(createRoomLoading = true) }
+
+            // Anonymous auth is required to associate the room with a host ID,
+            // but we don't want to force users to create an account just to play with friends.
+            // If they're not logged in, sign them in anonymously. This way they can still create/join
+            // rooms and have a consistent identity across sessions until they choose to log out or create an account.
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) {
+                try { auth.signInAnonymously().await() } catch (_: Exception) { /* proceed as guest */ }
+            }
+
+            val myId = auth.currentUser?.uid
                 ?: "guest_${System.currentTimeMillis()}"
 
-            val wordLength = listOf(4, 5, 6).random()
-            val cacheKey = "$language-$wordLength"
-
-            // Use cache if available, otherwise fetch
-            val words = cachedWords[cacheKey] ?: run {
-                val result = getWordsUseCase(language, wordLength)
-                if (result is Resource.Success) {
-                    cachedWords[cacheKey] = result.data
-                    result.data
-                } else {
+            val (word, wordLength) = if (customWord != null) {
+                customWord.uppercase() to customWord.length
+            } else {
+                val length = listOf(4, 5, 6).random()
+                val cacheKey = "$language-$length"
+                val words = cachedWords[cacheKey] ?: run {
+                    val result = getWordsUseCase(language, length)
+                    if (result is Resource.Success) {
+                        cachedWords[cacheKey] = result.data
+                        result.data
+                    } else {
+                        setState { copy(createRoomLoading = false) }
+                        return@launch
+                    }
+                }
+                val randomWord = words.randomOrNull() ?: run {
                     setState { copy(createRoomLoading = false) }
                     return@launch
                 }
-            }
-
-            val word = words.randomOrNull() ?: run {
-                setState { copy(createRoomLoading = false) }
-                return@launch
+                randomWord.uppercase() to length
             }
 
             val room = GameRoom(
                 hostId     = myId,
-                word       = word.uppercase(),
+                word       = word,
                 language   = language,
                 wordLength = wordLength
             )
@@ -158,7 +177,12 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
 
-            val myId = FirebaseAuth.getInstance().currentUser?.uid
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) {
+                try { auth.signInAnonymously().await() } catch (_: Exception) { /* proceed as guest */ }
+            }
+
+            val myId = auth.currentUser?.uid
                 ?: "guest_${System.currentTimeMillis()}"
 
             val fullRoomId = findRoomByCodeUseCase(code.trim())

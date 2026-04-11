@@ -135,12 +135,12 @@ fun LoginContent(
     val resolvedPasswordError = passwordError?.resolve(context)
     val focusManager = LocalFocusManager.current
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
+            .verticalScroll(rememberScrollState())
     ) {
-
         // ── Top bar ───────────────────────────────────────────────
         GameTopBar(
             title              = stringResource(R.string.login_title),
@@ -154,7 +154,6 @@ fun LoginContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 32.dp)
         ) {
 

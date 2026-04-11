@@ -107,8 +107,14 @@ class ProfileViewModel @Inject constructor(
              */
             ProfileIntent.OnSaveProfileClick -> {
                 val trimmed = uiState.value.editName.trim()
+
                 if (trimmed.isBlank()) {
                     sendEffect { ProfileEffect.ShowError(context.getString(R.string.error_name_empty)) }
+                    return
+                }
+
+                if (trimmed.length > 25) {
+                    sendEffect { ProfileEffect.ShowError(context.getString(R.string.error_name_too_long)) }
                     return
                 }
 

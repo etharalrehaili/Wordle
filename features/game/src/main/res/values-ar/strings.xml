@@ -53,6 +53,7 @@
     <string name="profile_updated_successfully">تم تحديث الملف الشخصي بنجاح</string>
     <string name="profile_stat_arabic">عربي</string>
     <string name="profile_stat_english">إنجليزي</string>
+    <string name="error_name_too_long">الاسم يجب أن لا يتجاوز 25 حرفاً</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>

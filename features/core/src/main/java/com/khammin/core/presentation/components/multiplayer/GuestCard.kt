@@ -113,11 +113,13 @@ fun GuestCard(
                 )
             } else {
                 Text(
-                    text          = name,
+                    text          = name.take(15),
                     color         = colors.title,
                     fontSize      = 14.sp,
                     fontWeight    = FontWeight.SemiBold,
-                    letterSpacing = 0.sp
+                    letterSpacing = 0.sp,
+                    maxLines      = 1,
+                    overflow      = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
         }

@@ -55,6 +55,10 @@ android {
 
 dependencies {
 
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
+    implementation(libs.firebase.auth)
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    implementation("com.google.firebase:firebase-appcheck-debug")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -81,14 +85,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
-    // Firebase
-    implementation(libs.firebase.auth)
     // OneSignal
     implementation("com.onesignal:OneSignal:5.1.6")
     // Hilt WorkManager integration
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity")
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-    implementation(libs.firebase.auth)
 }

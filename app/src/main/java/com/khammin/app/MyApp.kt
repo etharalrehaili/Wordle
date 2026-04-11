@@ -4,14 +4,14 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.onesignal.OneSignal
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 
 @HiltAndroidApp
 class MyApp : Application(), Configuration.Provider {
@@ -27,8 +27,14 @@ class MyApp : Application(), Configuration.Provider {
         super.onCreate()
         FirebaseApp.initializeApp(this)
 
-        val providerFactory = PlayIntegrityAppCheckProviderFactory.getInstance()
-        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(providerFactory)
+        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+            try {
+                val clazz = Class.forName("com.google.firebase.appcheck.debug.FirebaseAppCheckDebugProviderFactory")
+                clazz.getDeclaredConstructor().newInstance() as com.google.firebase.appcheck.AppCheckProviderFactory
+            } catch (e: Exception) {
+                PlayIntegrityAppCheckProviderFactory.getInstance()
+            }
+        )
 
         OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID)
         CoroutineScope(Dispatchers.IO).launch {

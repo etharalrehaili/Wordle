@@ -114,6 +114,19 @@
     <string name="multiplayer_mode_create_room">Create Room</string>
     <string name="multiplayer_mode_join_room">Join Room</string>
 
+    <!-- Create Room Word Bottom Sheet -->
+    <string name="create_room_word_title">Choose the Word</string>
+    <string name="create_room_word_subtitle">Pick how the secret word will be selected for this room</string>
+    <string name="create_room_random_title">Random Word</string>
+    <string name="create_room_random_subtitle">Fetch a random word from the word list</string>
+    <string name="create_room_random_action">Use Random Word</string>
+    <string name="create_room_or">or</string>
+    <string name="create_room_custom_title">My Own Word</string>
+    <string name="create_room_custom_subtitle">Write the word your friend will guess</string>
+    <string name="create_room_custom_hint">Type a word…</string>
+    <string name="create_room_custom_length_hint">Must be 4, 5, or 6 letters</string>
+    <string name="create_room_custom_action">Use This Word</string>
+
     <!-- Game Mode Bottom Sheet -->
     <string name="game_mode_title">Choose Mode</string>
     <string name="game_mode_subtitle">How do you want to play today</string>
@@ -121,6 +134,9 @@
     <string name="game_mode_multiplayer">Multiplayer</string>
     <string name="multiplayer_default_my_name">You</string>
     <string name="multiplayer_default_guest_name">Guest</string>
+    <string name="spectator_title">You set the word!</string>
+    <string name="spectator_watching">Watching %s play…</string>
+    <string name="spectator_waiting">Waiting for your opponent to join…</string>
 
     <!-- Theme and Language options -->
     <string name="theme_dark">Dark</string>

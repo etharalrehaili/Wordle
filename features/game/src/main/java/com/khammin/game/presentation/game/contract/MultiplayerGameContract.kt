@@ -28,6 +28,7 @@ data class MultiplayerGameUiState(
     val error: String? = null,
     val isGameOver: Boolean = false,
     val isHost: Boolean = false,
+    val isCustomWord: Boolean = false,
     val language: String = "",
     val defaultMyName: String = "You",
     val defaultGuestName: String = "Guest",
@@ -49,6 +50,7 @@ sealed class MultiplayerGameIntent : UiIntent {
         val language: String,
         val isHost: Boolean,
         val myUserId: String = "",
+        val isCustomWord: Boolean = false,
         val defaultMyName: String = "You",
         val defaultGuestName: String = "Guest",
     ) : MultiplayerGameIntent()
