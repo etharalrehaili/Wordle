@@ -25,18 +25,18 @@
     <string name="info_rule_1">Each guess must be a valid %d-letter word.</string>
     <string name="info_rule_2">The color of the tiles will change to show how close your guess was.</string>
     <string name="info_examples">Examples</string>
-    <string name="info_example_1_letter">P</string>
-    <string name="info_example_1_letters">PLAY</string>
     <string name="info_example_1_desc"> is in the word and in the correct spot.</string>
-    <string name="info_example_2_letter">U</string>
-    <string name="info_example_2_letters">HOUSE</string>
     <string name="info_example_2_desc"> is in the word but in the wrong spot.</string>
-    <string name="info_example_3_letter">S</string>
-    <string name="info_example_3_letters">FRIEND</string>
+    <string name="info_example_1_letter">ك</string>
+    <string name="info_example_1_letters">كتاب</string>
+    <string name="info_example_2_letter">د</string>
+    <string name="info_example_2_letters">صديق</string>
+    <string name="info_example_3_letter">ق</string>
+    <string name="info_example_3_letters">رفيق</string>
+    <string name="info_example_3_desc"> is not in the word in any spot.</string>
     <string name="info_example_4_letter">ه</string>
     <string name="info_example_4_letters">ورده</string>
-    <string name="info_example_4_desc"> موجود لكن تحقق من شكل الحرف (ة / ه).</string>
-    <string name="info_example_3_desc"> is not in the word in any spot.</string>
+    <string name="info_example_4_desc"> is in the word but check the letter shape (ة / ه).</string>
     <string name="info_new_wordle">A new challenge word will be available each day!</string>
 
     <!-- challenge -->

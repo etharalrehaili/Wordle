@@ -15,7 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Menu
+
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
@@ -29,8 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -45,12 +43,10 @@ import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.bottomsheets.GameResultsBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.WordleInfoBottomSheet
-import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.presentation.components.navigation.GameTopBar
-import com.khammin.core.presentation.theme.GameDesignTheme.spacing
 import com.khammin.core.presentation.theme.LocalWordleColors
 import com.khammin.game.R
 import com.khammin.core.R as CoreRes
@@ -60,24 +56,26 @@ import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
 import com.khammin.game.presentation.game.contract.toTypes
 import com.khammin.game.presentation.game.vm.GameViewModel
-import com.khammin.game.presentation.preferences.contract.PreferencesIntent
-import kotlinx.coroutines.launch
+import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreen(
     viewModel: GameViewModel = hiltViewModel(),
+    preferencesViewModel: PreferencesViewModel = hiltViewModel(),
     onClose: Action,
-    currentLanguage: AppLanguage,
     wordLength: Int,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val preferencesUiState by preferencesViewModel.uiState.collectAsStateWithLifecycle()
+    val currentLanguage = preferencesUiState.selectedLanguage
     var dialogState by remember { mutableStateOf<GameDialogState>(GameDialogState.None) }
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
     val context = LocalContext.current
 
-    LaunchedEffect(currentLanguage) {
-        viewModel.onEvent(GameIntent.LoadWords(currentLanguage.code, wordLength))
+    LaunchedEffect(wordLength) {
+        viewModel.onEvent(GameIntent.LoadWords("ar", wordLength))
     }
 
     LaunchedEffect(Unit) {
@@ -97,8 +95,7 @@ fun GameScreen(
         }
     }
 
-    val layoutDirection =
-        if (currentLanguage == AppLanguage.ARABIC) LayoutDirection.Rtl else LayoutDirection.Ltr
+    val layoutDirection = LayoutDirection.Rtl
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         GameContent(
             uiState = uiState,
@@ -106,17 +103,13 @@ fun GameScreen(
             dialogState = dialogState,
             snackbarState = snackbarState,
             onDismissSnackbar = { snackbarState = null },
-            onClose = onClose,
             onInfoClick = { dialogState = GameDialogState.Info },
             onDismissDialog = { dialogState = GameDialogState.None },
             onRestart = {
                 dialogState = GameDialogState.None
                 viewModel.onEvent(GameIntent.RestartGame)
             },
-            onSecondChance = {
-                dialogState = GameDialogState.None
-                viewModel.onEvent(GameIntent.SecondChance)
-            },
+            onClose = onClose,
             onIntent = viewModel::onEvent,
         )
     }
@@ -134,7 +127,6 @@ fun GameContent(
     onInfoClick: Action,
     onDismissDialog: Action,
     onRestart: Action,
-    onSecondChance: Action,
     onIntent: (GameIntent) -> Unit,
 ) {
     val colors = LocalWordleColors.current
@@ -238,7 +230,10 @@ fun GameContent(
                         accentColor = if (dialog.isWin) colors.correct else colors.present,
                         sheetState = resultSheetState,
                         onRestart = onRestart,
-                        onSecondChance = if (!dialog.isWin) onSecondChance else null,
+                        onClose   = {
+                            onDismissDialog()
+                            onClose()
+                        },
                         onDismiss = onDismissDialog,
                     )
                 }

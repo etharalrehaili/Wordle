@@ -95,16 +95,13 @@ fun NavGraphBuilder.navGraph(
     }
     composable<Route.GameScreen> { backStackEntry ->
         val route = backStackEntry.toRoute<Route.GameScreen>()
-        val gameLanguage = AppLanguage.entries.find { it.code == route.gameLanguage }
-            ?: currentLanguage()
         GameScreen(
             onClose = {
                 if (navController.previousBackStackEntry != null) {
                     navController.popBackStack()
                 }
             },
-            currentLanguage = gameLanguage,
-            wordLength      = route.wordLength,
+            wordLength = route.wordLength,
         )
     }
 

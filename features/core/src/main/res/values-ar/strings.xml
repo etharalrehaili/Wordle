@@ -35,6 +35,9 @@
     <string name="info_example_3_letters">اصدقاء</string>
     <string name="info_example_3_desc"> غير موجود في الكلمة في أي مكان.</string>
     <string name="info_new_wordle">كلمة تحدي جديدة ستكون متاحة كل يوم!</string>
+    <string name="info_example_4_letter">ه</string>
+    <string name="info_example_4_letters">ورده</string>
+    <string name="info_example_4_desc"> موجود لكن تحقق من شكل الحرف (ة / ه).</string>
 
     <!-- challenge -->
     <string name="result_win_title">رائع!</string>

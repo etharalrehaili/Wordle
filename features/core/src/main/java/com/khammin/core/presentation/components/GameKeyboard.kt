@@ -36,11 +36,6 @@ import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.theme.LocalWordleColors
 
-// ─── English layout ───────────────────────────────────────────────────────────
-private val ROW_1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
-private val ROW_2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
-private val ROW_3 = listOf('Z', 'X', 'C', 'V', 'B', 'N', 'M')
-
 // ─── Arabic layout ────────────────────────────────────────────────────────────
 private val AR_ROW_1 = listOf('ج', 'ح', 'خ', 'ه', 'ع', 'غ', 'ف', 'ق', 'ث', 'ص', 'ض')
 private val AR_ROW_2 = listOf('ط', 'ك', 'م', 'ن', 'ت', 'ا', 'ل', 'ب', 'ي', 'س', 'ش')
@@ -73,7 +68,7 @@ fun GameKeyboard(
     ) {
         // ── Row 1 ─────────────────────────────────────────────────────────────
         KeyRow {
-            (if (isArabic) AR_ROW_1 else ROW_1).forEach { letter ->
+            AR_ROW_1.forEach { letter ->
                 LetterKey(
                     letter = letter,
                     type = keyStates[letter] ?: Types.DEFAULT,
@@ -84,7 +79,7 @@ fun GameKeyboard(
 
         // ── Row 2 ─────────────────────────────────────────────────────────────
         KeyRow {
-            (if (isArabic) AR_ROW_2 else ROW_2).forEach { letter ->
+            AR_ROW_2.forEach { letter ->
                 LetterKey(
                     letter = letter,
                     type = keyStates[letter] ?: Types.DEFAULT,
@@ -95,37 +90,20 @@ fun GameKeyboard(
 
         // ── Row 3 ─────────────────────────────────────────────────────────────
         KeyRow {
-            if (isArabic) {
-                // Backspace first → renders on the right in RTL
-                IconKey(
-                    icon = Icons.AutoMirrored.Filled.Backspace,
-                    contentDescription = "Backspace",
-                    weight = 1.5f,
+            // Backspace first → renders on the right in RTL
+            IconKey(
+                icon = Icons.AutoMirrored.Filled.Backspace,
+                contentDescription = "Backspace",
+                weight = 1.5f,
+                keyHeight = keyHeight,
+                onClick = onBackspace
+            )
+            AR_ROW_3.forEach { letter ->
+                LetterKey(
+                    letter = letter,
+                    type = keyStates[letter] ?: Types.DEFAULT,
                     keyHeight = keyHeight,
-                    onClick = onBackspace
-                )
-                AR_ROW_3.forEach { letter ->
-                    LetterKey(
-                        letter = letter,
-                        type = keyStates[letter] ?: Types.DEFAULT,
-                        keyHeight = keyHeight,
-                        onClick = { onKey(letter) })
-                }
-            } else {
-                ROW_3.forEach { letter ->
-                    LetterKey(
-                        letter = letter,
-                        type = keyStates[letter] ?: Types.DEFAULT,
-                        keyHeight = keyHeight,
-                        onClick = { onKey(letter) })
-                }
-                IconKey(
-                    icon = Icons.AutoMirrored.Filled.Backspace,
-                    contentDescription = "Backspace",
-                    weight = 1.5f,
-                    keyHeight = keyHeight,
-                    onClick = onBackspace
-                )
+                    onClick = { onKey(letter) })
             }
         }
     }

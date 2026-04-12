@@ -15,12 +15,13 @@ data class GameUiState(
     val keyboardStates: Map<Char, TileState> = emptyMap(),
     val wordList: List<String> = emptyList(),
     val targetWord: String = "",
+    val language: String = "",
     val isLoading: Boolean = false,
+    val isValidating: Boolean = false,
     val error: String? = null,
     val isGameOver: Boolean = false,
     val hintsUsed: Int = 0,
     val maxHints: Int = 0,
-    val hasUsedSecondChance: Boolean = false
 ) : UiState
 
 sealed interface GameEffect : UiEffect {
@@ -37,7 +38,6 @@ sealed class GameIntent : UiIntent {
     data object SubmitGuess : GameIntent()
     data object RestartGame : GameIntent()
     data object UseHint : GameIntent()
-    data object SecondChance : GameIntent()
 }
 
 sealed interface GameDialogState {

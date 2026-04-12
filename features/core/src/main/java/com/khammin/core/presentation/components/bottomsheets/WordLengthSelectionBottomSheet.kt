@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -157,6 +158,18 @@ fun WordLengthSelectionBottomSheet(
                             width = 1.5.dp,
                             color = accentColor.copy(alpha = 0.30f),
                             shape = RoundedCornerShape(20.dp)
+                        )
+                        .then(
+                            if (!isUnlocked) {
+                                Modifier.drawBehind {
+                                    drawLine(
+                                        color       = accentColor.copy(alpha = 0.4f),
+                                        start       = androidx.compose.ui.geometry.Offset(0f, size.height),
+                                        end         = androidx.compose.ui.geometry.Offset(size.width, 0f),
+                                        strokeWidth = 2.dp.toPx()
+                                    )
+                                }
+                            } else Modifier
                         )
                         .then(
                             if (isUnlocked) Modifier.clickable { onLengthSelected(length) }
