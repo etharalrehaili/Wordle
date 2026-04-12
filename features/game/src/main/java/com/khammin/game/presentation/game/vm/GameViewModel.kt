@@ -64,7 +64,6 @@ class GameViewModel @Inject constructor(
 
     private fun enterLetter(letter: Char) {
         val state = uiState.value
-        android.util.Log.d("GameVM", "enterLetter: $letter, isGameOver=${state.isGameOver}, isValidating=${state.isValidating}, targetWord=${state.targetWord}, currentCol=${state.currentCol}, wordLength=${state.wordLength}")
         if (state.isGameOver || state.isValidating) return
         if (state.targetWord.isEmpty()) return
         if (state.currentCol >= state.wordLength) return

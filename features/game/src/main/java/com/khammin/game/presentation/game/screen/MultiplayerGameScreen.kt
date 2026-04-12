@@ -45,19 +45,26 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
-import com.khammin.core.R
+import com.khammin.core.presentation.components.CustomSnackbarHost
+import com.khammin.core.R as CoreRes
+import com.khammin.game.R
+import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.bottomsheets.GameMultiplayerResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
+import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
 import com.khammin.game.presentation.game.contract.MultiplayerGameUiState
@@ -77,10 +84,12 @@ fun MultiplayerGameScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showLeaveSheet by remember { mutableStateOf(false) }
     var showResultSheet by remember { mutableStateOf(false) }
-    var resultIsWin     by remember { mutableStateOf(false) }
-    var resultWord      by remember { mutableStateOf("") }
-    val defaultMyName    = stringResource(R.string.multiplayer_default_my_name)
-    val defaultGuestName = stringResource(R.string.multiplayer_default_guest_name)
+    var resultIsWin by remember { mutableStateOf(false) }
+    var resultWord by remember { mutableStateOf("") }
+    val defaultMyName = stringResource(CoreRes.string.multiplayer_default_my_name)
+    val defaultGuestName = stringResource(CoreRes.string.multiplayer_default_guest_name)
+    var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
+    val context = LocalContext.current
 
     val opponentGuesses = state.opponentState?.toGuessRows(state.wordLength)
         ?: List(MAX_GUESSES) { GuessRow() }
@@ -98,14 +107,21 @@ fun MultiplayerGameScreen(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is MultiplayerGameEffect.ShowGameDialog -> {
-                    resultIsWin    = effect.isWin
-                    resultWord     = effect.targetWord
+                    resultIsWin = effect.isWin
+                    resultWord = effect.targetWord
                     showResultSheet = true
                 }
+
                 is MultiplayerGameEffect.DismissResultDialog -> {
                     showResultSheet = false
-                    resultWord      = ""
+                    resultWord = ""
                 }
+
+                is MultiplayerGameEffect.NotInWordList -> snackbarState = SnackbarState(
+                    context.getString(R.string.not_in_word_list),
+                    SnackbarType.WARNING
+                )
+
                 is MultiplayerGameEffect.NavigateBack -> onClose()
                 else -> Unit
             }
@@ -116,13 +132,13 @@ fun MultiplayerGameScreen(
         if (roomId.isNotEmpty()) {
             viewModel.onEvent(
                 MultiplayerGameIntent.LoadGame(
-                    roomId           = roomId,
-                    language         = currentLanguage.code,
-                    isHost           = isHost,
-                    myUserId         = userId.takeIf { it.isNotEmpty() }
+                    roomId = roomId,
+                    language         = "ar",
+                    isHost = isHost,
+                    myUserId = userId.takeIf { it.isNotEmpty() }
                         ?: FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                    isCustomWord     = isCustomWord,
-                    defaultMyName    = defaultMyName,
+                    isCustomWord = isCustomWord,
+                    defaultMyName = defaultMyName,
                     defaultGuestName = defaultGuestName,
                 )
             )
@@ -141,23 +157,23 @@ fun MultiplayerGameScreen(
 
     if (showResultSheet) {
         GameMultiplayerResultBottomSheet(
-            isWin             = resultIsWin,
-            targetWord        = resultWord,
-            myName       = state.myName.takeIf { it.isNotBlank() }
+            isWin = resultIsWin,
+            targetWord = resultWord,
+            myName = state.myName.takeIf { it.isNotBlank() }
                 ?: guestNameFromId(state.myUserId),
-            opponentName      = state.opponentName,
+            opponentName = state.opponentName,
             opponentAvatarUrl = state.opponentAvatarUrl,
-            opponentLeft      = state.opponentLeft,
-            opponentFailed    = state.opponentFailed,
-            onPlayAgain       = if (state.opponentLeft) null else {
+            opponentLeft = state.opponentLeft,
+            opponentFailed = state.opponentFailed,
+            onPlayAgain = if (state.opponentLeft) null else {
                 {
                     showResultSheet = false
-                    resultWord      = ""
+                    resultWord = ""
                     viewModel.onEvent(MultiplayerGameIntent.RestartGame)
                 }
             },
             // Swipe-down / tap-outside: just hide the sheet, stay in the game
-            onDismiss  = { showResultSheet = false },
+            onDismiss = { showResultSheet = false },
             // "Back Home" button: hide the sheet AND leave the match
             onBackHome = {
                 showResultSheet = false
@@ -167,20 +183,27 @@ fun MultiplayerGameScreen(
     }
 
     MultiplayerGameContent(
-        currentLanguage  = currentLanguage,
-        onClose          = {
+        currentLanguage = currentLanguage,
+        onClose = {
             if (state.opponentId.isNotEmpty() && !state.opponentLeft) showLeaveSheet = true
             else onClose()
         },
-        roomId           = roomId,
-        isHost           = isHost,
-        state            = state,
-        opponentGuesses  = opponentGuesses,
-        onIntent         = viewModel::onEvent,
+        roomId = roomId,
+        isHost = isHost,
+        state = state,
+        opponentGuesses = opponentGuesses,
+        onIntent = viewModel::onEvent,
         showResultButton = !showResultSheet && resultWord.isNotEmpty(),
-        resultIsWin      = resultIsWin,
-        onShowResult     = { showResultSheet = true },
+        resultIsWin = resultIsWin,
+        onShowResult = { showResultSheet = true },
     )
+
+    snackbarState?.let {
+        CustomSnackbarHost(
+            state = it,
+            onDismiss = { snackbarState = null },
+        )
+    }
 }
 
 @Composable
@@ -197,109 +220,122 @@ fun MultiplayerGameContent(
     onShowResult: () -> Unit = {},
 ) {
 
-    Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    val layoutDirection = LayoutDirection.Rtl
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
+            Column(modifier = Modifier.fillMaxSize()) {
 
-            GameTopBar(
-                endIcon          = Icons.Filled.Close,
-                startIcon        = Icons.Filled.Info,
-                onEndIconClicked = onClose,
-                showBackground = false,
-                modifier         = Modifier.fillMaxWidth().statusBarsPadding()
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Row(
-                modifier              = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                if (state.opponentId.isNotEmpty()) {
-                    GuestCard(
-                        name       = state.opponentName,
-                        avatarUrl  = state.opponentAvatarUrl,
-                        isLoading  = state.isOpponentProfileLoading,
-                        guesses    = opponentGuesses,
-                        wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                    )
-                    if (showResultButton) {
-                        ResultButton(isWin = resultIsWin, onClick = onShowResult)
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(colors.surface)
-                            .border(1.dp, colors.border, RoundedCornerShape(16.dp))
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(text = "⏳", fontSize = 28.sp)
-                            Text(
-                                text       = stringResource(R.string.multiplayer_waiting_opponent),
-                                color      = colors.title,
-                                fontSize   = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign  = TextAlign.Center,
-                            )
-                            Text(
-                                text      = stringResource(R.string.multiplayer_waiting_share),
-                                color     = colors.body.copy(alpha = 0.45f),
-                                fontSize  = 11.sp,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                }
-
-                if (roomId.isNotEmpty() && isHost && state.opponentId.isEmpty()) {
-                    RoomCodeCard(roomId = roomId)
-                }
-            }
-
-            if (state.isHost && state.isCustomWord) {
-                SpectatorView(
-                    word           = state.targetWord,
-                    opponentName   = state.opponentName,
-                    opponentJoined = state.opponentId.isNotEmpty(),
-                    modifier       = Modifier.fillMaxWidth().weight(1f)
+                GameTopBar(
+                    endIcon = Icons.Filled.Close,
+                    startIcon = Icons.Filled.Info,
+                    onEndIconClicked = onClose,
+                    showBackground = false,
+                    modifier = Modifier.fillMaxWidth().statusBarsPadding()
                 )
-            } else {
-                GameBoard(
-                    guesses    = state.board.map { row ->
-                        GuessRow(
-                            letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
-                            types   = row.map { tile -> tile.state.toTypes() }
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    if (state.opponentId.isNotEmpty()) {
+                        GuestCard(
+                            name = state.opponentName,
+                            avatarUrl = state.opponentAvatarUrl,
+                            isLoading = state.isOpponentProfileLoading,
+                            guesses = opponentGuesses,
+                            wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
                         )
-                    },
-                    currentRow = state.currentRow,
-                    currentCol = state.currentCol,
-                    wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                    modifier   = Modifier.fillMaxWidth().weight(1f)
-                )
-
-                GameKeyboard(
-                    enabled   = state.opponentId.isNotEmpty(),
-                    keyStates = state.keyboardStates.mapValues { (_, tileState) ->
-                        when (tileState) {
-                            TileState.CORRECT   -> Types.CORRECT
-                            TileState.MISPLACED -> Types.PRESENT
-                            TileState.WRONG     -> Types.ABSENT
-                            else                -> Types.DEFAULT
+                        if (showResultButton) {
+                            ResultButton(isWin = resultIsWin, onClick = onShowResult)
                         }
-                    },
-                    onKey       = { if (state.opponentId.isNotEmpty()) onIntent(MultiplayerGameIntent.EnterLetter(it)) },
-                    onBackspace = { if (state.opponentId.isNotEmpty()) onIntent(MultiplayerGameIntent.DeleteLetter) },
-                    language    = currentLanguage,
-                    modifier    = Modifier.fillMaxWidth().padding(bottom = 32.dp)
-                )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(colors.surface)
+                                .border(1.dp, colors.border, RoundedCornerShape(16.dp))
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(text = "⏳", fontSize = 28.sp)
+                                Text(
+                                    text = stringResource(CoreRes.string.multiplayer_waiting_opponent),
+                                    color = colors.title,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Text(
+                                    text = stringResource(CoreRes.string.multiplayer_waiting_share),
+                                    color = colors.body.copy(alpha = 0.45f),
+                                    fontSize = 11.sp,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
+
+                    if (roomId.isNotEmpty() && isHost && state.opponentId.isEmpty()) {
+                        RoomCodeCard(roomId = roomId)
+                    }
+                }
+
+                if (state.isHost && state.isCustomWord) {
+                    SpectatorView(
+                        word = state.targetWord,
+                        opponentName = state.opponentName,
+                        opponentJoined = state.opponentId.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth().weight(1f)
+                    )
+                } else {
+                    GameBoard(
+                        guesses = state.board.map { row ->
+                            GuessRow(
+                                letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
+                                types = row.map { tile -> tile.state.toTypes() }
+                            )
+                        },
+                        currentRow = state.currentRow,
+                        currentCol = state.currentCol,
+                        wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
+                        modifier = Modifier.fillMaxWidth().weight(1f)
+                    )
+
+                    GameKeyboard(
+                        enabled = state.opponentId.isNotEmpty(),
+                        keyStates = state.keyboardStates.mapValues { (_, tileState) ->
+                            when (tileState) {
+                                TileState.CORRECT -> Types.CORRECT
+                                TileState.MISPLACED -> Types.PRESENT
+                                TileState.WRONG -> Types.ABSENT
+                                else -> Types.DEFAULT
+                            }
+                        },
+                        onKey = {
+                            if (state.opponentId.isNotEmpty()) onIntent(
+                                MultiplayerGameIntent.EnterLetter(
+                                    it
+                                )
+                            )
+                        },
+                        onBackspace = {
+                            if (state.opponentId.isNotEmpty()) onIntent(
+                                MultiplayerGameIntent.DeleteLetter
+                            )
+                        },
+                        language = currentLanguage,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
+                    )
+                }
             }
         }
     }
@@ -327,7 +363,7 @@ private fun ResultButton(isWin: Boolean, onClick: () -> Unit) {
         ) {
             Text(text = "🏆", fontSize = 22.sp)
             Text(
-                text       = stringResource(R.string.multiplayer_result_title),
+                text       = stringResource(CoreRes.string.multiplayer_result_title),
                 color      = accent,
                 fontSize   = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -341,14 +377,14 @@ private fun ResultButton(isWin: Boolean, onClick: () -> Unit) {
 private fun RoomCodeCard(roomId: String) {
     val context = LocalContext.current
     val shortCode = roomId.take(6).uppercase()
-    val clipLabel = stringResource(R.string.room_code_copied_label)
+    val clipLabel = stringResource(CoreRes.string.room_code_copied_label)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            stringResource(R.string.multiplayer_room_code),
+            stringResource(CoreRes.string.multiplayer_room_code),
             color      = colors.body.copy(alpha = 0.5f),
             fontSize   = 10.sp,
             fontWeight = FontWeight.Medium,
@@ -380,7 +416,7 @@ private fun RoomCodeCard(roomId: String) {
         }
 
         Text(
-            text     = stringResource(R.string.multiplayer_room_tap_copy),
+            text     = stringResource(CoreRes.string.multiplayer_room_tap_copy),
             color    = colors.body.copy(alpha = 0.35f),
             fontSize = 9.sp,
         )
@@ -405,7 +441,7 @@ private fun SpectatorView(
         ) {
             Text(text = "👀", fontSize = 48.sp)
             Text(
-                text       = stringResource(R.string.spectator_title),
+                text       = stringResource(CoreRes.string.spectator_title),
                 color      = colors.title,
                 fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -437,9 +473,9 @@ private fun SpectatorView(
             }
             Text(
                 text      = if (opponentJoined)
-                    stringResource(R.string.spectator_watching, opponentName)
+                    stringResource(CoreRes.string.spectator_watching, opponentName)
                 else
-                    stringResource(R.string.spectator_waiting),
+                    stringResource(CoreRes.string.spectator_waiting),
                 color     = colors.body.copy(alpha = 0.65f),
                 fontSize  = 14.sp,
                 textAlign = TextAlign.Center,

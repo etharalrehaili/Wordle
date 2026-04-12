@@ -16,6 +16,7 @@ import com.khammin.game.domain.usecases.game.ObserveRoomUseCase
 import com.khammin.game.domain.usecases.game.RegisterPresenceUseCase
 import com.khammin.game.domain.usecases.game.RestartRoomUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
+import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
 import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
@@ -39,6 +40,7 @@ class MultiplayerGameViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
     private val registerPresenceUseCase: RegisterPresenceUseCase,
     private val observeOpponentPresenceUseCase: ObserveOpponentPresenceUseCase,
+    private val validateWordUseCase: ValidateWordUseCase,
     private val auth: FirebaseAuth
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
@@ -294,8 +296,11 @@ class MultiplayerGameViewModel @Inject constructor(
         val newCol = s.currentCol + 1
         setState { copy(board = newBoard, currentCol = newCol) }
 
+//        if (newCol == s.wordLength && !s.isGameOver) {
+//            submitGuess()
+//        }
         if (newCol == s.wordLength && !s.isGameOver) {
-            submitGuess()
+            submitGuess(forceCol = newCol) // pass newCol so guard doesn't fail
         }
     }
 
@@ -312,68 +317,85 @@ class MultiplayerGameViewModel @Inject constructor(
         setState { copy(board = newBoard, currentCol = newCol) }
     }
 
-    private fun submitGuess() {
+    private fun submitGuess(forceCol: Int? = null) {
         val s = uiState.value
-        if (s.currentCol < s.wordLength || s.isGameOver) return
+        val col = forceCol ?: s.currentCol
+        if (col < s.wordLength || s.isGameOver) return
 
-        val guess  = s.board[s.currentRow].filter { it.letter != ' ' }.map { it.letter }
-        val target = s.targetWord.uppercase().toList()
-
-        if (guess.size != s.wordLength || target.size != s.wordLength) return
-
-        val types = guess.mapIndexed { i, ch ->
-            when {
-                ch == target[i] -> Types.CORRECT
-                ch in target    -> Types.PRESENT
-                else            -> Types.ABSENT
-            }
-        }
-
-        val newBoard = s.board.mapIndexed { r, row ->
-            if (r == s.currentRow) row.mapIndexed { c, tile ->
-                tile.copy(state = when (types.getOrElse(c) { Types.DEFAULT }) {
-                    Types.CORRECT -> TileState.CORRECT
-                    Types.PRESENT -> TileState.MISPLACED
-                    Types.ABSENT  -> TileState.WRONG
-                    else          -> TileState.EMPTY
-                })
-            } else row
-        }
-
-        val newKeyboardStates = s.keyboardStates.toMutableMap()
-        guess.forEachIndexed { i, ch ->
-            val current  = newKeyboardStates[ch]
-            val incoming = types[i]
-            val shouldUpgrade = when (incoming) {
-                Types.CORRECT -> current != TileState.CORRECT
-                Types.PRESENT -> current != TileState.CORRECT && current != TileState.MISPLACED
-                Types.ABSENT  -> current == null
-                else          -> false
-            }
-            if (shouldUpgrade) {
-                newKeyboardStates[ch] = when (incoming) {
-                    Types.CORRECT -> TileState.CORRECT
-                    Types.PRESENT -> TileState.MISPLACED
-                    Types.ABSENT  -> TileState.WRONG
-                    else          -> TileState.EMPTY
-                }
-            }
-        }
-
-        val solved   = types.all { it == Types.CORRECT }
-        val newRow   = s.currentRow + 1
-        val gameOver = solved || newRow >= newBoard.size
-
-        setState {
-            copy(
-                board          = newBoard,
-                currentRow     = newRow,
-                currentCol     = 0,
-                keyboardStates = newKeyboardStates,
-            )
-        }
+        val rawGuess = s.board[s.currentRow]
+            .filter { it.letter != ' ' }
+            .joinToString("") { it.letter.toString() }
 
         viewModelScope.launch {
+            // Skip word list validation for custom word rooms
+            if (!s.isCustomWord) {
+                val wordList = wordCache[s.wordLength] ?: emptyList()
+                val isValid = validateWordUseCase(rawGuess, s.language, wordList)
+                if (!isValid) {
+                    sendEffect { MultiplayerGameEffect.NotInWordList }
+                    return@launch
+                }
+            }
+
+            // Re-read state after async validation
+            val s = uiState.value
+            val guess  = s.board[s.currentRow].filter { it.letter != ' ' }.map { it.letter }
+            val target = s.targetWord.uppercase().toList()
+
+            if (guess.size != s.wordLength || target.size != s.wordLength) return@launch
+
+            val types = guess.mapIndexed { i, ch ->
+                when {
+                    ch == target[i] -> Types.CORRECT
+                    ch in target    -> Types.PRESENT
+                    else            -> Types.ABSENT
+                }
+            }
+
+            val newBoard = s.board.mapIndexed { r, row ->
+                if (r == s.currentRow) row.mapIndexed { c, tile ->
+                    tile.copy(state = when (types.getOrElse(c) { Types.DEFAULT }) {
+                        Types.CORRECT -> TileState.CORRECT
+                        Types.PRESENT -> TileState.MISPLACED
+                        Types.ABSENT  -> TileState.WRONG
+                        else          -> TileState.EMPTY
+                    })
+                } else row
+            }
+
+            val newKeyboardStates = s.keyboardStates.toMutableMap()
+            guess.forEachIndexed { i, ch ->
+                val current  = newKeyboardStates[ch]
+                val incoming = types[i]
+                val shouldUpgrade = when (incoming) {
+                    Types.CORRECT -> current != TileState.CORRECT
+                    Types.PRESENT -> current != TileState.CORRECT && current != TileState.MISPLACED
+                    Types.ABSENT  -> current == null
+                    else          -> false
+                }
+                if (shouldUpgrade) {
+                    newKeyboardStates[ch] = when (incoming) {
+                        Types.CORRECT -> TileState.CORRECT
+                        Types.PRESENT -> TileState.MISPLACED
+                        Types.ABSENT  -> TileState.WRONG
+                        else          -> TileState.EMPTY
+                    }
+                }
+            }
+
+            val solved   = types.all { it == Types.CORRECT }
+            val newRow   = s.currentRow + 1
+            val gameOver = solved || newRow >= newBoard.size
+
+            setState {
+                copy(
+                    board          = newBoard,
+                    currentRow     = newRow,
+                    currentCol     = 0,
+                    keyboardStates = newKeyboardStates,
+                )
+            }
+
             val allGuesses = newBoard.take(newRow).map { row ->
                 row.filter { it.letter != ' ' }.joinToString(",") { it.letter.toString() }
             }

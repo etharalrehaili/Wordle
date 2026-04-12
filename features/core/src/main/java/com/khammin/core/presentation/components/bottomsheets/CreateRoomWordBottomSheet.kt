@@ -66,6 +66,7 @@ import com.khammin.core.presentation.theme.GameDesignTheme
 @Composable
 fun CreateRoomWordBottomSheet(
     isLoading: Boolean = false,
+    loadingType: String? = null,
     onRandomWord: () -> Unit = {},
     onCustomWord: (String) -> Unit = {},
     onDismiss: () -> Unit = {},
@@ -173,7 +174,7 @@ fun CreateRoomWordBottomSheet(
                                 .background(colors.buttonTeal.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center,
                         ) {
-                            if (isLoading) {
+                            if (isLoading && loadingType == "random") {
                                 CircularProgressIndicator(
                                     color     = colors.buttonTeal,
                                     modifier  = Modifier.size(20.dp),
@@ -251,12 +252,20 @@ fun CreateRoomWordBottomSheet(
                                     .background(colors.buttonPink.copy(alpha = 0.18f)),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Icon(
-                                    imageVector        = Icons.Outlined.Edit,
-                                    contentDescription = null,
-                                    tint               = colors.buttonPink,
-                                    modifier           = Modifier.size(22.dp),
-                                )
+                                if (isLoading && loadingType == "custom") {
+                                    CircularProgressIndicator(
+                                        color       = colors.buttonPink,
+                                        modifier    = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector        = Icons.Outlined.Edit,
+                                        contentDescription = null,
+                                        tint               = colors.buttonPink,
+                                        modifier           = Modifier.size(22.dp),
+                                    )
+                                }
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
@@ -332,8 +341,8 @@ fun CreateRoomWordBottomSheet(
                             exit    = shrinkVertically() + fadeOut(),
                         ) {
                             GameButton(
-                                label           = if (isLoading) stringResource(R.string.multiplayer_mode_creating)
-                                                  else stringResource(R.string.create_room_custom_action),
+                                label = if (isLoading && loadingType == "custom") stringResource(R.string.multiplayer_mode_creating)
+                                else stringResource(R.string.create_room_custom_action),
                                 backgroundColor = colors.buttonPink,
                                 contentColor    = colors.title,
                                 showBorder      = false,

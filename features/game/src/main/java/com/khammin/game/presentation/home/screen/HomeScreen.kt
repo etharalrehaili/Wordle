@@ -87,10 +87,8 @@ fun HomeScreen(
     val homeUiState        by homeViewModel.uiState.collectAsStateWithLifecycle()
     val preferencesUiState by preferencesViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(preferencesUiState.selectedLanguage) {
-        homeViewModel.prefetchWords(
-            if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en"
-        )
+    LaunchedEffect(Unit) {
+        homeViewModel.prefetchWords("ar")
     }
 
     HomeContent(
@@ -99,7 +97,7 @@ fun HomeScreen(
         onMultiplayerClick = onMultiplayerClick,
         onCreateRoom = { customWord, callback ->
             homeViewModel.createRoom(
-                language   = if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en",
+                language   = "ar",
                 customWord = customWord,
                 onRoomCreated = { roomId, myId ->
                     callback(roomId, myId)
@@ -175,6 +173,7 @@ fun HomeContent(
     var showWordPickerSheet     by remember { mutableStateOf(false) }
     var showJoinRoomSheet       by remember { mutableStateOf(false) }
     var lastFailedAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var createRoomType by remember { mutableStateOf<String?>(null) }
 
     if (noInternetError) {
         NoInternetBottomSheet(
@@ -331,25 +330,32 @@ fun HomeContent(
                 if (showWordPickerSheet) {
                     CreateRoomWordBottomSheet(
                         isLoading    = createRoomLoading,
+                        loadingType  = createRoomType,
                         onRandomWord = {
-                            showWordPickerSheet = false
+                            createRoomType = "random"
                             lastFailedAction = {
                                 onCreateRoom(null) { roomId, myId ->
+                                    showWordPickerSheet = false
+                                    createRoomType = null
                                     onMultiplayerClick(roomId, true, myId, false)
                                 }
                             }
                             onCreateRoom(null) { roomId, myId ->
+                                showWordPickerSheet = false
                                 onMultiplayerClick(roomId, true, myId, false)
                             }
                         },
                         onCustomWord = { word ->
-                            showWordPickerSheet = false
+                            createRoomType = "custom"
                             lastFailedAction = {
                                 onCreateRoom(word) { roomId, myId ->
+                                    showWordPickerSheet = false
+                                    createRoomType = null
                                     onMultiplayerClick(roomId, true, myId, true)
                                 }
                             }
                             onCreateRoom(word) { roomId, myId ->
+                                showWordPickerSheet = false
                                 onMultiplayerClick(roomId, true, myId, true)
                             }
                         },
