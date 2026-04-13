@@ -64,6 +64,7 @@ import com.khammin.game.R
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.bottomsheets.GameMultiplayerResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.SpectatorResultBottomSheet
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
@@ -86,6 +87,8 @@ fun MultiplayerGameScreen(
     var showResultSheet by remember { mutableStateOf(false) }
     var resultIsWin by remember { mutableStateOf(false) }
     var resultWord by remember { mutableStateOf("") }
+    var resultOpponentFailed by remember { mutableStateOf(false) }
+    var resultOpponentLeft by remember { mutableStateOf(false) }
     val defaultMyName = stringResource(CoreRes.string.multiplayer_default_my_name)
     val defaultGuestName = stringResource(CoreRes.string.multiplayer_default_guest_name)
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
@@ -109,12 +112,16 @@ fun MultiplayerGameScreen(
                 is MultiplayerGameEffect.ShowGameDialog -> {
                     resultIsWin = effect.isWin
                     resultWord = effect.targetWord
+                    resultOpponentFailed = effect.opponentFailed
+                    resultOpponentLeft = effect.opponentLeft
                     showResultSheet = true
                 }
 
                 is MultiplayerGameEffect.DismissResultDialog -> {
                     showResultSheet = false
                     resultWord = ""
+                    resultOpponentFailed = false
+                    resultOpponentLeft = false
                 }
 
                 is MultiplayerGameEffect.NotInWordList -> snackbarState = SnackbarState(
@@ -156,30 +163,49 @@ fun MultiplayerGameScreen(
     }
 
     if (showResultSheet) {
-        GameMultiplayerResultBottomSheet(
-            isWin = resultIsWin,
-            targetWord = resultWord,
-            myName = state.myName.takeIf { it.isNotBlank() }
-                ?: guestNameFromId(state.myUserId),
-            opponentName = state.opponentName,
-            opponentAvatarUrl = state.opponentAvatarUrl,
-            opponentLeft = state.opponentLeft,
-            opponentFailed = state.opponentFailed,
-            onPlayAgain = if (state.opponentLeft) null else {
-                {
+        if (state.isCustomWord) {
+            SpectatorResultBottomSheet(
+                opponentName = state.opponentName,
+                targetWord = resultWord,
+                opponentGuessedCorrectly = if (state.isHost) {
+                    !resultOpponentFailed && !resultOpponentLeft
+                } else {
+                    false
+                },
+                opponentLeft = resultOpponentLeft,
+                isOwnWin = if (state.isHost) false else resultIsWin,
+                onDismiss = { showResultSheet = false },
+                onBackHome = {
                     showResultSheet = false
-                    resultWord = ""
-                    viewModel.onEvent(MultiplayerGameIntent.RestartGame)
+                    viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
                 }
-            },
-            // Swipe-down / tap-outside: just hide the sheet, stay in the game
-            onDismiss = { showResultSheet = false },
-            // "Back Home" button: hide the sheet AND leave the match
-            onBackHome = {
-                showResultSheet = false
-                viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
-            }
-        )
+            )
+        } else {
+            GameMultiplayerResultBottomSheet(
+                isWin = resultIsWin,
+                targetWord = resultWord,
+                myName = state.myName.takeIf { it.isNotBlank() }
+                    ?: guestNameFromId(state.myUserId),
+                opponentName = state.opponentName,
+                opponentAvatarUrl = state.opponentAvatarUrl,
+                opponentLeft = state.opponentLeft,
+                opponentFailed = state.opponentFailed,
+                onPlayAgain = if (state.opponentLeft) null else {
+                    {
+                        showResultSheet = false
+                        resultWord = ""
+                        viewModel.onEvent(MultiplayerGameIntent.RestartGame)
+                    }
+                },
+                // Swipe-down / tap-outside: just hide the sheet, stay in the game
+                onDismiss = { showResultSheet = false },
+                // "Back Home" button: hide the sheet AND leave the match
+                onBackHome = {
+                    showResultSheet = false
+                    viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
+                }
+            )
+        }
     }
 
     MultiplayerGameContent(

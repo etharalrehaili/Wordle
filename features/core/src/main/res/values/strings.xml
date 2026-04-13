@@ -156,4 +156,11 @@
     <string name="error_unexpected">Something went wrong. Please try again</string>
     <string name="error_email_already_in_use">Email is already linked with another account</string>
 
+    <!-- Spectator Result Bottom Sheet -->
+    <string name="spectator_result_you_guessed">You guessed it! 🎉</string>
+    <string name="spectator_result_guessed">%1$s guessed it! 🎉</string>
+    <string name="spectator_result_left">%1$s left the game 🚪</string>
+    <string name="spectator_result_failed">%1$s didn\'t guess it 🤔</string>
+    <string name="spectator_result_back_home">Back Home</string>
+
 </resources>
