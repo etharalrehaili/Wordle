@@ -107,14 +107,15 @@ class MultiplayerGameViewModel @Inject constructor(
                 setState {
                     val boardResized = wordLength != room.wordLength
                     copy(
-                        targetWord = room.word.uppercase(),
-                        wordLength = room.wordLength,
-                        language   = if (room.word.isNotEmpty()) detectLanguage(room.word) else language,
-                        opponentId = opponentId,
-                        isHost     = room.hostId == myId,
-                        board      = if (boardResized) List(board.size) { List(room.wordLength) { Tile() } } else board,
-                        currentRow = if (boardResized) 0 else currentRow,
-                        currentCol = if (boardResized) 0 else currentCol,
+                        targetWord   = room.word.uppercase(),
+                        wordLength   = room.wordLength,
+                        language     = if (room.word.isNotEmpty()) detectLanguage(room.word) else language,
+                        opponentId   = opponentId,
+                        isHost       = room.hostId == myId,
+                        isCustomWord = isCustomWord || room.isCustomWord,
+                        board        = if (boardResized) List(board.size) { List(room.wordLength) { Tile() } } else board,
+                        currentRow   = if (boardResized) 0 else currentRow,
+                        currentCol   = if (boardResized) 0 else currentCol,
                     )
                 }
 

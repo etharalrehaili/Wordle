@@ -11,7 +11,8 @@ data class GameRoom(
     val winnerId: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val leftBy: String = "",
-    val failedBy: String = ""
+    val failedBy: String = "",
+    @JvmField var isCustomWord: Boolean = false
 
 )
 

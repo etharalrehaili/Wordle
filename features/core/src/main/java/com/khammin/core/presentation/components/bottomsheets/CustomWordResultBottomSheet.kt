@@ -44,7 +44,7 @@ import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpectatorResultBottomSheet(
+fun CustomWordResultBottomSheet(
     opponentName: String,
     targetWord: String,
     opponentGuessedCorrectly: Boolean,

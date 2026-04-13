@@ -64,7 +64,7 @@ import com.khammin.game.R
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.bottomsheets.GameMultiplayerResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
-import com.khammin.core.presentation.components.bottomsheets.SpectatorResultBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.CustomWordResultBottomSheet
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
@@ -115,6 +115,8 @@ fun MultiplayerGameScreen(
                     resultOpponentFailed = effect.opponentFailed
                     resultOpponentLeft = effect.opponentLeft
                     showResultSheet = true
+                    android.util.Log.d("ResultSheet", "ShowGameDialog received: isWin=${effect.isWin}, targetWord=${effect.targetWord}, opponentFailed=${effect.opponentFailed}, opponentLeft=${effect.opponentLeft}")
+                    android.util.Log.d("ResultSheet", "State at effect time: isHost=${state.isHost}, isCustomWord=${state.isCustomWord}")
                 }
 
                 is MultiplayerGameEffect.DismissResultDialog -> {
@@ -163,8 +165,10 @@ fun MultiplayerGameScreen(
     }
 
     if (showResultSheet) {
+        android.util.Log.d("ResultSheet", "Showing sheet: isCustomWord=${state.isCustomWord}, isHost=${state.isHost}, resultIsWin=$resultIsWin, resultOpponentFailed=$resultOpponentFailed, resultOpponentLeft=$resultOpponentLeft")
         if (state.isCustomWord) {
-            SpectatorResultBottomSheet(
+            android.util.Log.d("ResultSheet", "→ CustomWordResultBottomSheet | isOwnWin=${!state.isHost && resultIsWin}, opponentGuessedCorrectly=${state.isHost && !resultOpponentFailed && !resultOpponentLeft}")
+            CustomWordResultBottomSheet(
                 opponentName = state.opponentName,
                 targetWord = resultWord,
                 opponentGuessedCorrectly = if (state.isHost) {
@@ -181,6 +185,7 @@ fun MultiplayerGameScreen(
                 }
             )
         } else {
+            android.util.Log.d("ResultSheet", "→ GameMultiplayerResultBottomSheet | isWin=$resultIsWin")
             GameMultiplayerResultBottomSheet(
                 isWin = resultIsWin,
                 targetWord = resultWord,

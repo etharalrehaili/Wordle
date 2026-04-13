@@ -160,10 +160,11 @@ class HomeViewModel @Inject constructor(
             }
 
             val room = GameRoom(
-                hostId     = myId,
-                word       = word,
-                language   = language,
-                wordLength = wordLength
+                hostId       = myId,
+                word         = word,
+                language     = language,
+                wordLength   = wordLength,
+                isCustomWord = customWord != null
             )
 
             val roomId = createRoomUseCase(room)
@@ -172,7 +173,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun joinRoom(code: String, onJoined: (String, String) -> Unit) {
+    fun joinRoom(code: String, onJoined: (String, String, Boolean) -> Unit) {
         viewModelScope.launch {
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
@@ -212,7 +213,7 @@ class HomeViewModel @Inject constructor(
 
             joinRoomUseCase(fullRoomId, myId)
             setState { copy(joinRoomLoading = false, joinRoomError = null) }
-            onJoined(fullRoomId, myId)
+            onJoined(fullRoomId, myId, room.isCustomWord)
         }
     }
 

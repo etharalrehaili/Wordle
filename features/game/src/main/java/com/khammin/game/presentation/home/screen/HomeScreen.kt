@@ -105,8 +105,8 @@ fun HomeScreen(
             )
         },
         onJoinRoom = { code, callback ->
-            homeViewModel.joinRoom(code) { roomId, myId ->
-                callback(roomId, myId)
+            homeViewModel.joinRoom(code) { roomId, myId, isCustomWord ->
+                callback(roomId, myId, isCustomWord)
             }
         },
         joinRoomLoading  = homeUiState.joinRoomLoading,
@@ -143,7 +143,7 @@ fun HomeContent(
     onPlayClick: (Int) -> Unit,
     onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean) -> Unit = { _, _, _, _ -> },
     onCreateRoom: (customWord: String?, onRoomCreated: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
-    onJoinRoom: (code: String, onJoined: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
+    onJoinRoom: (code: String, onJoined: (roomId: String, myId: String, isCustomWord: Boolean) -> Unit) -> Unit = { _, _ -> },
     joinRoomLoading: Boolean = false,
     createRoomLoading: Boolean = false,
     joinRoomError: String? = null,
@@ -367,14 +367,14 @@ fun HomeContent(
                     JoinRoomBottomSheet(
                         onJoin = { code ->
                             lastFailedAction = {
-                                onJoinRoom(code) { roomId, myId ->
+                                onJoinRoom(code) { roomId, myId, isCustomWord ->
                                     showJoinRoomSheet = false
-                                    onMultiplayerClick(roomId, false, myId, false)
+                                    onMultiplayerClick(roomId, false, myId, isCustomWord)
                                 }
                             }
-                            onJoinRoom(code) { roomId, myId ->
+                            onJoinRoom(code) { roomId, myId, isCustomWord ->
                                 showJoinRoomSheet = false
-                                onMultiplayerClick(roomId, false, myId, false)
+                                onMultiplayerClick(roomId, false, myId, isCustomWord)
                             }
                         },
                         onDismiss    = {
