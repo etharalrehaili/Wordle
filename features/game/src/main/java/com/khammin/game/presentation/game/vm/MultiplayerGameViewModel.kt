@@ -7,6 +7,7 @@ import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.util.Resource
+import com.khammin.core.util.normalizeForWordle
 import com.khammin.game.domain.usecases.game.FinishRoomUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.LeaveRoomUseCase
@@ -108,6 +109,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     copy(
                         targetWord = room.word.uppercase(),
                         wordLength = room.wordLength,
+                        language   = if (room.word.isNotEmpty()) detectLanguage(room.word) else language,
                         opponentId = opponentId,
                         isHost     = room.hostId == myId,
                         board      = if (boardResized) List(board.size) { List(room.wordLength) { Tile() } } else board,
@@ -218,6 +220,10 @@ class MultiplayerGameViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    /** Returns "ar" if the word contains Arabic characters, "en" otherwise. */
+    private fun detectLanguage(word: String): String =
+        if (word.any { it in '\u0600'..'\u06FF' }) "ar" else "en"
+
     private fun guestNameFromId(id: String): String {
         val suffix = if (id.startsWith("guest_"))
             id.removePrefix("guest_").take(5)
@@ -327,8 +333,8 @@ class MultiplayerGameViewModel @Inject constructor(
             .joinToString("") { it.letter.toString() }
 
         viewModelScope.launch {
-            // Skip word list validation for custom word rooms
-            if (!s.isCustomWord) {
+            val isTargetWord = rawGuess.normalizeForWordle() == s.targetWord.normalizeForWordle()
+            if (!isTargetWord && !s.isCustomWord) {
                 val wordList = wordCache[s.wordLength] ?: emptyList()
                 val isValid = validateWordUseCase(rawGuess, s.language, wordList)
                 if (!isValid) {

@@ -183,7 +183,6 @@ fun MultiplayerGameScreen(
     }
 
     MultiplayerGameContent(
-        currentLanguage = currentLanguage,
         onClose = {
             if (state.opponentId.isNotEmpty() && !state.opponentLeft) showLeaveSheet = true
             else onClose()
@@ -208,7 +207,6 @@ fun MultiplayerGameScreen(
 
 @Composable
 fun MultiplayerGameContent(
-    currentLanguage: AppLanguage,
     onClose: Action,
     roomId: String = "",
     isHost: Boolean = false,
@@ -220,7 +218,8 @@ fun MultiplayerGameContent(
     onShowResult: () -> Unit = {},
 ) {
 
-    val layoutDirection = LayoutDirection.Rtl
+    val layoutDirection = if (state.language == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr
+    val keyboardLanguage = if (state.language == "ar") AppLanguage.ARABIC else AppLanguage.ENGLISH
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -332,7 +331,7 @@ fun MultiplayerGameContent(
                                 MultiplayerGameIntent.DeleteLetter
                             )
                         },
-                        language = currentLanguage,
+                        language = keyboardLanguage,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
                     )
                 }

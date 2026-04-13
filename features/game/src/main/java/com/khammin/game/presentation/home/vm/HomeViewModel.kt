@@ -1,5 +1,6 @@
 package com.khammin.game.presentation.home.vm
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.authentication.domain.usecase.GetAuthStateUseCase
@@ -136,6 +137,7 @@ class HomeViewModel @Inject constructor(
                 ?: "guest_${System.currentTimeMillis()}"
 
             val (word, wordLength) = if (customWord != null) {
+                Log.d("WordleRoom", "customWord (raw)='$customWord'  stored='${customWord.uppercase()}'  length=${customWord.length}")
                 customWord.uppercase() to customWord.length
             } else {
                 val length = listOf(4, 5, 6).random()
