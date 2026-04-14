@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val DarkBackground      = Color(0xFF2c313d)
-val DarkSurface         = Color(0xFF1A1A1B)
+val DarkSurface         = Color(0xFF3A3A3F)
 val DarkTopBar          = Color(0xFF121620)
 val DarkDivider         = Color(0xFF3A3D47)
 val DarkCorrect         = Color(0xFF7BC47F)

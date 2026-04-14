@@ -255,6 +255,13 @@ class ChallengeViewModel @Inject constructor(
         }
     }
 
+    private val similarPairs: List<Set<Char>> = listOf(
+        setOf('\u0647', '\u0629') // ه ↔ ة
+    )
+
+    private fun areSimilarArabicLetters(a: Char, b: Char): Boolean =
+        a != b && similarPairs.any { it.contains(a) && it.contains(b) }
+
     private fun evaluateGuess(guess: String, target: String): List<Tile> {
         val g               = guess.normalizeForWordle()
         val t               = target.normalizeForWordle()
@@ -263,14 +270,22 @@ class ChallengeViewModel @Inject constructor(
         val guessArr        = g.toCharArray()
         val remainingTarget = targetArr.toMutableList()
 
+        // First pass: exact matches and similar-letter matches (right position)
         for (i in guessArr.indices) {
-            if (guessArr[i] == targetArr[i]) {
-                result[i]          = TileState.CORRECT
-                remainingTarget[i] = '\u0000'
+            when {
+                guessArr[i] == targetArr[i] -> {
+                    result[i]          = TileState.CORRECT
+                    remainingTarget[i] = '\u0000'
+                }
+                areSimilarArabicLetters(guessArr[i], targetArr[i]) -> {
+                    result[i]          = TileState.SIMILAR
+                    remainingTarget[i] = '\u0000'
+                }
             }
         }
+        // Second pass: misplaced letters (skip CORRECT and SIMILAR positions)
         for (i in guessArr.indices) {
-            if (result[i] == TileState.CORRECT) continue
+            if (result[i] == TileState.CORRECT || result[i] == TileState.SIMILAR) continue
             val idx = remainingTarget.indexOf(guessArr[i])
             if (idx != -1) {
                 result[i]            = TileState.MISPLACED
@@ -288,7 +303,8 @@ class ChallengeViewModel @Inject constructor(
 
     private fun Map<Char, TileState>.mergeWith(row: List<Tile>): Map<Char, TileState> {
         val priority = mapOf(
-            TileState.CORRECT   to 4,
+            TileState.CORRECT   to 5,
+            TileState.SIMILAR   to 4,
             TileState.MISPLACED to 3,
             TileState.WRONG     to 2,
             TileState.FILLED    to 1,
