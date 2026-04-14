@@ -167,7 +167,7 @@ fun GameContent(
                 keyStates = keyStates,
                 onKey = { char -> onIntent(GameIntent.EnterLetter(char)) },
                 onBackspace = { onIntent(GameIntent.DeleteLetter) },
-                language = currentLanguage,
+                language = AppLanguage.ARABIC,
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()

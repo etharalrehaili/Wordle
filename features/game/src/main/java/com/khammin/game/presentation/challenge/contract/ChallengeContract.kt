@@ -33,6 +33,7 @@ data class ChallengeUiState(
     val currentRow: Int           = 0,
     val currentCol: Int           = 0,
     val isGameOver: Boolean       = false,
+    val isValidating: Boolean     = false,
     val language: String = "",
 ) : UiState
 

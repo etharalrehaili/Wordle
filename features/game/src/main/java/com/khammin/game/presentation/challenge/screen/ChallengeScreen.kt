@@ -81,7 +81,7 @@ fun ChallengeScreen(
     val context = LocalContext.current
 
     LaunchedEffect(currentLanguage, currentUid) {
-        viewModel.onEvent(ChallengeIntent.LoadWords(currentLanguage.code))
+        viewModel.onEvent(ChallengeIntent.LoadWords("ar"))
     }
 
     LaunchedEffect(Unit) {
@@ -161,7 +161,7 @@ fun ChallengeContent(
                 keyStates = keyStates,
                 onKey = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
                 onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
-                language = currentLanguage,
+                language = AppLanguage.ARABIC,
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()

@@ -53,7 +53,6 @@ class ChallengeViewModel @Inject constructor(
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
             val today = LocalDate.now().toString()
-
             val saved = loadTodayChallengeUseCase(language)
 
             // Only restore saved state if it matches the requested language
@@ -124,7 +123,7 @@ class ChallengeViewModel @Inject constructor(
 
     private fun enterLetter(letter: Char) {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.targetWord.isEmpty()) return
         if (state.currentCol >= state.wordLength) return
 
@@ -140,7 +139,7 @@ class ChallengeViewModel @Inject constructor(
 
     private fun deleteLetter() {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.currentCol <= 0) return
 
         val colToDelete = state.currentCol - 1
@@ -154,57 +153,65 @@ class ChallengeViewModel @Inject constructor(
 
     private fun submitGuess() {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.currentCol < state.wordLength) {
             sendEffect { ChallengeEffect.InvalidWord }
             sendEffect { ChallengeEffect.RowShake }
             return
         }
 
-        val rawGuess     = state.board[state.currentRow].map { it.letter }.joinToString("")
-        val guessNorm    = rawGuess.normalizeForWordle()
-        val isInWordList = state.wordList.any { it.normalizeForWordle() == guessNorm }
-        if (!isInWordList) {
-            sendEffect { ChallengeEffect.NotInWordList }
-            sendEffect { ChallengeEffect.RowShake }
-            return
-        }
-
-        val evaluatedRow = evaluateGuess(rawGuess, state.targetWord)
-        val newBoard = state.board.toMutableList().also { it[state.currentRow] = evaluatedRow }.toList()
-        val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
-
-        val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
-        val isLast = state.currentRow == MAX_GUESSES - 1
-
-        setState {
-            copy(
-                board          = newBoard,
-                keyboardStates = newKeyboardStates,
-                currentRow     = if (isWin || isLast) currentRow else currentRow + 1,
-                currentCol     = 0,
-                isGameOver     = isWin || isLast
-            )
-        }
+        val rawGuess = state.board[state.currentRow].map { it.letter }.joinToString("")
 
         viewModelScope.launch {
+            setState { copy(isValidating = true) }
+
+            val normalizedGuess  = rawGuess.normalizeForWordle()
+            val normalizedTarget = state.targetWord.normalizeForWordle()
+            val isValid = normalizedGuess == normalizedTarget ||
+                validateWordUseCase(rawGuess, state.language, state.wordList)
+
+            setState { copy(isValidating = false) }
+
+            if (!isValid) {
+                sendEffect { ChallengeEffect.NotInWordList }
+                sendEffect { ChallengeEffect.RowShake }
+                return@launch
+            }
+
+            // Re-read state in case it changed while validating
             val s = uiState.value
+            val evaluatedRow      = evaluateGuess(rawGuess, s.targetWord)
+            val newBoard          = s.board.toMutableList().also { it[s.currentRow] = evaluatedRow }.toList()
+            val newKeyboardStates = s.keyboardStates.mergeWith(evaluatedRow)
+
+            val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
+            val isLast = s.currentRow == MAX_GUESSES - 1
+
+            setState {
+                copy(
+                    board          = newBoard,
+                    keyboardStates = newKeyboardStates,
+                    currentRow     = if (isWin || isLast) currentRow else currentRow + 1,
+                    currentCol     = 0,
+                    isGameOver     = isWin || isLast
+                )
+            }
+
             saveChallengeStateUseCase(
                 language       = s.language,
                 targetWord     = s.targetWord,
-                board          = s.board,
-                keyboardStates = s.keyboardStates,
-                currentRow     = s.currentRow,
-                currentCol     = s.currentCol,
-                isGameOver     = s.isGameOver,
+                board          = newBoard,
+                keyboardStates = newKeyboardStates,
+                currentRow     = if (isWin || isLast) s.currentRow else s.currentRow + 1,
+                currentCol     = 0,
+                isGameOver     = isWin || isLast,
                 isWin          = isWin,
             )
-        }
 
-        val currentLanguage = state.language
-        if (isWin || isLast) {
-            sendEffect { ChallengeEffect.ShowGameDialog(isWin = isWin, targetWord = state.targetWord) }
-            updateProfileStats(isWin = isWin, guessCount = state.currentRow + 1, language = currentLanguage)
+            if (isWin || isLast) {
+                sendEffect { ChallengeEffect.ShowGameDialog(isWin = isWin, targetWord = s.targetWord) }
+                updateProfileStats(isWin = isWin, guessCount = s.currentRow + 1, language = s.language)
+            }
         }
     }
 
