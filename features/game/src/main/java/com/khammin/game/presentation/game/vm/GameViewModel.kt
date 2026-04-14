@@ -13,7 +13,6 @@ import com.khammin.game.presentation.game.contract.GameEffect
 import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
 import com.khammin.game.presentation.game.contract.Tile
-import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -109,12 +108,8 @@ class GameViewModel @Inject constructor(
             setState { copy(isValidating = true) }
             val normalizedGuess  = rawGuess.normalizeForWordle()
             val normalizedTarget = state.targetWord.normalizeForWordle()
-            Log.d("WordleGuess", "rawGuess='$rawGuess'  normalizedGuess='$normalizedGuess'")
-            Log.d("WordleGuess", "targetWord='${state.targetWord}'  normalizedTarget='$normalizedTarget'")
-            Log.d("WordleGuess", "exactMatch=${normalizedGuess == normalizedTarget}")
             val isValid = normalizedGuess == normalizedTarget ||
                 validateWordUseCase(rawGuess, state.language, state.wordList)
-            Log.d("WordleGuess", "isValid=$isValid")
             setState { copy(isValidating = false) }
 
             if (!isValid) {

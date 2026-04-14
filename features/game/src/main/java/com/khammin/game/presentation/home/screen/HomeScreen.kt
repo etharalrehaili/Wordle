@@ -204,7 +204,6 @@ fun HomeContent(
         drawerContent = {
             GameMenuDrawerSheet(
                 selectedLanguage   = uiState.selectedLanguage,
-                selectedTheme      = uiState.selectedTheme,
                 onClose            = { scope.launch { drawerState.close() } },
                 onProfile          = {
                     scope.launch { drawerState.close() }

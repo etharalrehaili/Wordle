@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
@@ -60,7 +61,6 @@ import com.khammin.core.presentation.theme.LocalWordleColors
 @Composable
 fun GameMenuDrawerSheet(
     selectedLanguage: AppLanguage = AppLanguage.ENGLISH,
-    selectedTheme: AppColorTheme = AppColorTheme.DARK,
     isLoggedIn: Boolean = true,
     onLoginClick: Action,
     onClose: Action,
@@ -140,7 +140,7 @@ private fun MenuScreen(
                 icon        = Icons.Filled.Person,
                 label       = stringResource(R.string.drawer_profile),
                 description = stringResource(R.string.drawer_profile_desc),
-                accent      = colors.buttonTaupe,
+                accent      = colors.buttonTeal,
                 action      = onProfile
             ))
         } else {
@@ -153,7 +153,7 @@ private fun MenuScreen(
             ))
         }
         add(Entry(Icons.Filled.Language, stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc), colors.buttonTaupe, onLanguage))
-        add(Entry(Icons.Outlined.HelpOutline, stringResource(R.string.drawer_support), stringResource(R.string.drawer_support_desc), colors.buttonTeal, onSupport))
+        add(Entry(Icons.AutoMirrored.Outlined.HelpOutline, stringResource(R.string.drawer_support), stringResource(R.string.drawer_support_desc), colors.buttonTaupe, onSupport))
     }
 
     DrawerColumn {

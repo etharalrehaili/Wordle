@@ -14,6 +14,7 @@ import com.khammin.game.domain.usecases.challenge.LoadTodayChallengeUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.challenge.SaveChallengeStateUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
+import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import com.khammin.game.domain.usecases.profile.UpdateProfileUseCase
 import com.khammin.game.presentation.challenge.contract.ChallengeEffect
 import com.khammin.game.presentation.challenge.contract.ChallengeIntent
@@ -32,7 +33,8 @@ class ChallengeViewModel @Inject constructor(
     private val saveChallengeStateUseCase: SaveChallengeStateUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
-) : BaseMviViewModel<ChallengeIntent, ChallengeUiState, ChallengeEffect>(
+    private val validateWordUseCase: ValidateWordUseCase,
+    ) : BaseMviViewModel<ChallengeIntent, ChallengeUiState, ChallengeEffect>(
     initialState = ChallengeUiState()
 ) {
 
