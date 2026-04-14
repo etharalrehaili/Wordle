@@ -51,6 +51,7 @@ data class MultiplayerGameUiState(
     val guestIds: List<String> = emptyList(),
     val waitingPlayers: List<WaitingPlayer> = emptyList(),
     val opponentsProgress: Map<String, OpponentProgress> = emptyMap(),
+    val isHostLeft: Boolean = false,
 ) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {

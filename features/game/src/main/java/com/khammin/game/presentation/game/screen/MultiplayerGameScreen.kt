@@ -146,6 +146,10 @@ fun MultiplayerGameScreen(
         }
     }
 
+    LaunchedEffect(state.isHostLeft) {
+        if (state.isHostLeft) showHostLeftSheet = true
+    }
+
     LaunchedEffect(roomId) {
         if (roomId.isNotEmpty()) {
             viewModel.onEvent(
@@ -281,7 +285,7 @@ fun MultiplayerGameContent(
                 )
 
                 // ── Lobby views (custom word, waiting state) ──────────────────────
-                if (state.isCustomWord && state.roomStatus == "waiting") {
+                if (state.isCustomWord && (state.roomStatus == "waiting" || (!state.isHost && state.isHostLeft))) {
                     if (state.isHost) {
                         CustomWordLobbyHost(
                             word = state.targetWord,

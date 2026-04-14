@@ -231,6 +231,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 } else {
                     // Custom-word room ended (host left) → notify guests
                     if (!isHostOfRoom) {
+                        setState { copy(isHostLeft = true) }
                         sendEffect { MultiplayerGameEffect.HostLeftRoom }
                     }
                 }
