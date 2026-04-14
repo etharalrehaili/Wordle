@@ -174,7 +174,6 @@ fun NavGraphBuilder.navGraph(
                 }
             },
             onChangePasswordClick = { navController.navigate(Route.ResetPasswordScreen) },
-            onSupportClick = { navController.navigate(Route.SupportScreen) },
             onSignOutClick        = { viewModel.onEvent(SettingsIntent.OnSignOutClick) },
             uiEffect              = viewModel.uiEffect,
             onSignOutSuccess      = {

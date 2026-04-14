@@ -60,7 +60,6 @@ fun SettingsScreen(
     onBack: Action,
     onChangePasswordClick: Action,
     onSignOutClick: Action,
-    onSupportClick: Action,
     uiEffect: SharedFlow<SettingsEffect>,
     onSignOutSuccess: Action,
 ) {
@@ -79,7 +78,6 @@ fun SettingsScreen(
         onBack                = onBack,
         onChangePasswordClick = onChangePasswordClick,
         onSignOutClick        = onSignOutClick,
-        onSupportClick = onSupportClick
     )
 }
 
@@ -88,7 +86,6 @@ fun SettingsScreen(
 fun SettingsContent(
     onBack: Action,
     onChangePasswordClick: Action,
-    onSupportClick: Action,
     onSignOutClick: Action,
 ) {
     var showSignOutSheet by remember { mutableStateOf(false) }
@@ -125,16 +122,6 @@ fun SettingsContent(
                 icon    = Icons.Filled.Lock,
                 accent  = colors.buttonTaupe,
                 onClick = onChangePasswordClick,
-            )
-
-            // Support Section
-            SectionLabel(stringResource(R.string.settings_support_section))
-
-            SettingsItem(
-                label   = stringResource(R.string.settings_support),
-                icon    = Icons.Filled.QuestionMark,
-                accent  = colors.buttonTaupe,
-                onClick = onSupportClick
             )
 
             Spacer(modifier = Modifier.height(spacing.lg))
@@ -253,7 +240,6 @@ private fun PreviewSettingsScreenDark() {
             onBack                = {},
             onChangePasswordClick = {},
             onSignOutClick        = {},
-            onSupportClick = {}
         )
     }
 }
@@ -266,7 +252,6 @@ private fun PreviewSettingsScreenLight() {
             onBack                = {},
             onChangePasswordClick = {},
             onSignOutClick        = {},
-            onSupportClick = {}
         )
     }
 }

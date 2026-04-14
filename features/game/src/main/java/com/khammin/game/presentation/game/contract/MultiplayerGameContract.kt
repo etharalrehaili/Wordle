@@ -4,6 +4,7 @@ import com.khammin.core.domain.model.PlayerState
 import com.khammin.core.mvi.UiEffect
 import com.khammin.core.mvi.UiIntent
 import com.khammin.core.mvi.UiState
+import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
 
@@ -19,6 +20,7 @@ data class OpponentProgress(
     val solved: Boolean = false,
     val failed: Boolean = false,
     val guessCount: Int = 0,
+    val guessRows: List<GuessRow> = List(MAX_GUESSES) { GuessRow() },
 )
 
 data class MultiplayerGameUiState(

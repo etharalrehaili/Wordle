@@ -373,6 +373,7 @@ fun MultiplayerGameContent(
                     if (state.isHost && state.isCustomWord) {
                         SpectatorView(
                             word = state.targetWord,
+                            wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
                             opponentsProgress = state.opponentsProgress,
                             modifier = Modifier.fillMaxWidth().weight(1f)
                         )
@@ -753,31 +754,25 @@ private fun RoomCodeCard(roomId: String) {
 @Composable
 private fun SpectatorView(
     word: String,
+    wordLength: Int,
     opponentsProgress: Map<String, OpponentProgress>,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = "👀", fontSize = 36.sp)
-        Text(
-            text       = stringResource(CoreRes.string.spectator_title),
-            color      = colors.title,
-            fontSize   = 18.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign  = TextAlign.Center,
-        )
+        // Word tiles so the host always sees what word they set
         if (word.isNotEmpty()) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment     = Alignment.CenterVertically,
             ) {
                 word.forEach { letter ->
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(36.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(colors.surface)
                             .border(1.5.dp, colors.buttonTeal, RoundedCornerShape(8.dp)),
@@ -786,7 +781,7 @@ private fun SpectatorView(
                         Text(
                             text       = letter.toString(),
                             color      = colors.title,
-                            fontSize   = 18.sp,
+                            fontSize   = 16.sp,
                             fontWeight = FontWeight.ExtraBold,
                         )
                     }
@@ -803,43 +798,48 @@ private fun SpectatorView(
             )
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.surface)
-                    .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
+                modifier            = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(opponentsProgress.values.toList()) { progress ->
                     val statusText = when {
-                        progress.solved -> "Solved in ${progress.guessCount} guesses ✓"
-                        progress.failed -> "Failed to guess ✗"
-                        progress.guessCount == 0 -> "Yet to guess…"
-                        else -> "${progress.guessCount} guess${if (progress.guessCount != 1) "es" else ""} so far"
+                        progress.solved -> "Solved in ${progress.guessCount} ✓"
+                        progress.failed -> "Failed ✗"
+                        progress.guessCount == 0 -> "Waiting…"
+                        else -> "${progress.guessCount}/${MAX_GUESSES}"
                     }
                     val statusColor = when {
                         progress.solved -> colors.buttonTeal
                         progress.failed -> colors.buttonPink
-                        else -> colors.body.copy(alpha = 0.6f)
+                        else            -> colors.body.copy(alpha = 0.55f)
                     }
+
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier              = Modifier.fillMaxWidth(),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Text(
-                            text = progress.name,
-                            color = colors.title,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
+                        GuestCard(
+                            name      = progress.name,
+                            avatarUrl = progress.avatarUrl,
+                            guesses   = progress.guessRows,
+                            wordLength = wordLength,
                         )
-                        Text(
-                            text = statusText,
-                            color = statusColor,
-                            fontSize = 12.sp,
-                        )
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(statusColor.copy(alpha = 0.12f))
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text       = statusText,
+                                color      = statusColor,
+                                fontSize   = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
                     }
                 }
             }

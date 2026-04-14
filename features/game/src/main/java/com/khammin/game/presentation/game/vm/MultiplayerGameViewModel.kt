@@ -4,8 +4,11 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.domain.model.PlayerState
 import com.khammin.core.mvi.BaseMviViewModel
+import com.khammin.core.presentation.components.GuessRow
+import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.presentation.components.enums.Types
+import com.khammin.core.presentation.components.toGuessRows
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
 import com.khammin.game.domain.usecases.game.FinishRoomUseCase
@@ -270,10 +273,12 @@ class MultiplayerGameViewModel @Inject constructor(
     private fun observeGuestState(roomId: String, guestId: String) {
         observeOpponentUseCase(roomId, guestId).onEach { playerState ->
             val current = uiState.value.opponentsProgress[guestId] ?: OpponentProgress()
+            val wordLen = uiState.value.wordLength.takeIf { it > 0 } ?: 4
             val updated = current.copy(
                 solved     = playerState?.solved == true,
                 failed     = playerState?.finishedAt != null && playerState.solved != true,
                 guessCount = playerState?.currentRow ?: current.guessCount,
+                guessRows  = playerState?.toGuessRows(wordLen) ?: List(MAX_GUESSES) { GuessRow() },
             )
             setState { copy(opponentsProgress = opponentsProgress + (guestId to updated)) }
         }.launchIn(viewModelScope)
