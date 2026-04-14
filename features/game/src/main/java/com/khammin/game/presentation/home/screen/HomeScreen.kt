@@ -417,41 +417,6 @@ fun HomeContent(
                     )
                 }
 
-                if (showVerifyEmailDialog) {
-                    androidx.compose.material3.AlertDialog(
-                        onDismissRequest = { showVerifyEmailDialog = false },
-                        title = {
-                            WordleText(
-                                text       = stringResource(R.string.verify_email_title),
-                                color      = colors.title,
-                                fontSize   = GameDesignTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        },
-                        text = {
-                            WordleText(
-                                text  = stringResource(R.string.verify_email_message),
-                                color = colors.body,
-                                fontSize = GameDesignTheme.typography.labelMedium,
-                            )
-                        },
-                        confirmButton = {
-                            androidx.compose.material3.TextButton(
-                                onClick = { showVerifyEmailDialog = false }
-                            ) {
-                                WordleText(
-                                    text      = stringResource(R.string.ok),
-                                    color     = colors.buttonTeal,
-                                    fontSize  = GameDesignTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
-                        },
-                        containerColor = colors.background,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                    )
-                }
-
                 Spacer(modifier = Modifier.height(GameDesignTheme.spacing.sm))
 
                 GameButton(

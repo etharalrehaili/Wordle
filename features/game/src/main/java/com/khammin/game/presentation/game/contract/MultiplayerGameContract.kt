@@ -7,6 +7,20 @@ import com.khammin.core.mvi.UiState
 import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
 
+data class WaitingPlayer(
+    val userId: String,
+    val name: String,
+    val avatarUrl: String? = null,
+)
+
+data class OpponentProgress(
+    val name: String = "",
+    val avatarUrl: String? = null,
+    val solved: Boolean = false,
+    val failed: Boolean = false,
+    val guessCount: Int = 0,
+)
+
 data class MultiplayerGameUiState(
     val wordLength: Int = 4,
     val currentRow: Int = 0,
@@ -32,7 +46,12 @@ data class MultiplayerGameUiState(
     val language: String = "",
     val defaultMyName: String = "You",
     val defaultGuestName: String = "Guest",
-    ) : UiState
+    // Multi-player custom word fields
+    val roomStatus: String = "waiting",
+    val guestIds: List<String> = emptyList(),
+    val waitingPlayers: List<WaitingPlayer> = emptyList(),
+    val opponentsProgress: Map<String, OpponentProgress> = emptyMap(),
+) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {
     data class ShowGameDialog(val isWin: Boolean, val targetWord: String, val opponentLeft: Boolean = false, val opponentFailed: Boolean = false) : MultiplayerGameEffect
@@ -42,6 +61,7 @@ sealed interface MultiplayerGameEffect : UiEffect {
     data object NavigateBack : MultiplayerGameEffect
     data object DismissResultDialog : MultiplayerGameEffect
     data object OpponentDisconnected : MultiplayerGameEffect
+    data object HostLeftRoom : MultiplayerGameEffect
 }
 
 sealed class MultiplayerGameIntent : UiIntent {
@@ -59,4 +79,5 @@ sealed class MultiplayerGameIntent : UiIntent {
     data object SubmitGuess : MultiplayerGameIntent()
     data object RestartGame : MultiplayerGameIntent()
     data object LeaveMatch : MultiplayerGameIntent()
+    data object StartMatch : MultiplayerGameIntent()
 }

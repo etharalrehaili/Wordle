@@ -5,6 +5,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.khammin.core.domain.model.GameRoom
 import com.khammin.core.domain.model.PlayerState
@@ -127,6 +128,24 @@ class MultiplayerDataSourceImpl @Inject constructor(
         val presenceRef = rtdb.getReference("presence/$roomId/$userId")
         presenceRef.setValue(true).await()
         presenceRef.onDisconnect().removeValue().await()
+    }
+
+    override suspend fun addGuestToRoom(roomId: String, guestId: String) {
+        rooms.document(roomId)
+            .update("guestIds", FieldValue.arrayUnion(guestId))
+            .await()
+    }
+
+    override suspend fun removeGuestFromRoom(roomId: String, guestId: String) {
+        rooms.document(roomId)
+            .update("guestIds", FieldValue.arrayRemove(guestId))
+            .await()
+    }
+
+    override suspend fun startRoom(roomId: String) {
+        rooms.document(roomId)
+            .update("status", "playing")
+            .await()
     }
 
     override fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean> = callbackFlow {

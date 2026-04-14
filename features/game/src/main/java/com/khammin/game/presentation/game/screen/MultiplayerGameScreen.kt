@@ -35,6 +35,8 @@ import com.khammin.core.presentation.components.navigation.GameTopBar
 import com.khammin.core.presentation.components.toGuessRows
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
+import com.khammin.game.presentation.game.contract.OpponentProgress
+import com.khammin.game.presentation.game.contract.WaitingPlayer
 import com.khammin.game.presentation.game.contract.toTypes
 import com.khammin.game.presentation.game.vm.MultiplayerGameViewModel
 import android.content.Context
@@ -44,7 +46,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -92,20 +100,20 @@ fun MultiplayerGameScreen(
     val defaultMyName = stringResource(CoreRes.string.multiplayer_default_my_name)
     val defaultGuestName = stringResource(CoreRes.string.multiplayer_default_guest_name)
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
+    var showHostLeftSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val opponentGuesses = state.opponentState?.toGuessRows(state.wordLength)
         ?: List(MAX_GUESSES) { GuessRow() }
 
     BackHandler {
-        if (state.opponentId.isNotEmpty() && !state.opponentLeft) {
-            showLeaveSheet = true
-        } else {
-            onClose()
+        when {
+            state.isCustomWord -> showLeaveSheet = true
+            state.opponentId.isNotEmpty() && !state.opponentLeft -> showLeaveSheet = true
+            else -> onClose()
         }
     }
 
-    // Collect NavigateBack effect
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
@@ -132,6 +140,7 @@ fun MultiplayerGameScreen(
                 )
 
                 is MultiplayerGameEffect.NavigateBack -> onClose()
+                is MultiplayerGameEffect.HostLeftRoom -> showHostLeftSheet = true
                 else -> Unit
             }
         }
@@ -162,6 +171,13 @@ fun MultiplayerGameScreen(
             },
             onDismiss = { showLeaveSheet = false }
         )
+    }
+
+    if (showHostLeftSheet) {
+        HostLeftBottomSheet(onGoHome = {
+            showHostLeftSheet = false
+            onClose()
+        })
     }
 
     if (showResultSheet) {
@@ -202,9 +218,7 @@ fun MultiplayerGameScreen(
                         viewModel.onEvent(MultiplayerGameIntent.RestartGame)
                     }
                 },
-                // Swipe-down / tap-outside: just hide the sheet, stay in the game
                 onDismiss = { showResultSheet = false },
-                // "Back Home" button: hide the sheet AND leave the match
                 onBackHome = {
                     showResultSheet = false
                     viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
@@ -215,8 +229,11 @@ fun MultiplayerGameScreen(
 
     MultiplayerGameContent(
         onClose = {
-            if (state.opponentId.isNotEmpty() && !state.opponentLeft) showLeaveSheet = true
-            else onClose()
+            when {
+                state.isCustomWord -> showLeaveSheet = true
+                state.opponentId.isNotEmpty() && !state.opponentLeft -> showLeaveSheet = true
+                else -> onClose()
+            }
         },
         roomId = roomId,
         isHost = isHost,
@@ -263,109 +280,385 @@ fun MultiplayerGameContent(
                     modifier = Modifier.fillMaxWidth().statusBarsPadding()
                 )
 
-                Spacer(Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    if (state.opponentId.isNotEmpty()) {
-                        GuestCard(
-                            name = state.opponentName,
-                            avatarUrl = state.opponentAvatarUrl,
-                            isLoading = state.isOpponentProfileLoading,
-                            guesses = opponentGuesses,
-                            wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
+                // ── Lobby views (custom word, waiting state) ──────────────────────
+                if (state.isCustomWord && state.roomStatus == "waiting") {
+                    if (state.isHost) {
+                        CustomWordLobbyHost(
+                            word = state.targetWord,
+                            myName = state.myName,
+                            waitingPlayers = state.waitingPlayers,
+                            roomId = roomId,
+                            onStart = { onIntent(MultiplayerGameIntent.StartMatch) },
+                            modifier = Modifier.fillMaxWidth().weight(1f)
                         )
-                        if (showResultButton) {
-                            ResultButton(isWin = resultIsWin, onClick = onShowResult)
-                        }
                     } else {
+                        CustomWordLobbyGuest(
+                            hostName = state.opponentName,
+                            myName = state.myName,
+                            otherPlayers = state.waitingPlayers.filter { it.userId != state.myUserId },
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        )
+                    }
+                } else {
+                    // ── In-game views ─────────────────────────────────────────────
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        if (state.isCustomWord) {
+                            // Custom word mode: no single GuestCard; show result button if ready
+                            if (showResultButton) {
+                                ResultButton(isWin = resultIsWin, onClick = onShowResult)
+                            } else {
+                                Spacer(Modifier.size(0.dp))
+                            }
+                        } else {
+                            if (state.opponentId.isNotEmpty()) {
+                                GuestCard(
+                                    name = state.opponentName,
+                                    avatarUrl = state.opponentAvatarUrl,
+                                    isLoading = state.isOpponentProfileLoading,
+                                    guesses = opponentGuesses,
+                                    wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
+                                )
+                                if (showResultButton) {
+                                    ResultButton(isWin = resultIsWin, onClick = onShowResult)
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(colors.surface)
+                                        .border(1.dp, colors.border, RoundedCornerShape(16.dp))
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(text = "⏳", fontSize = 28.sp)
+                                        Text(
+                                            text = stringResource(CoreRes.string.multiplayer_waiting_opponent),
+                                            color = colors.title,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                        Text(
+                                            text = stringResource(CoreRes.string.multiplayer_waiting_share),
+                                            color = colors.body.copy(alpha = 0.45f),
+                                            fontSize = 11.sp,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (roomId.isNotEmpty() && isHost && state.opponentId.isEmpty()) {
+                                RoomCodeCard(roomId = roomId)
+                            }
+                        }
+                    }
+
+                    if (state.isHost && state.isCustomWord) {
+                        SpectatorView(
+                            word = state.targetWord,
+                            opponentsProgress = state.opponentsProgress,
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        )
+                    } else {
+                        val keyboardEnabled = if (state.isCustomWord) {
+                            state.roomStatus == "playing"
+                        } else {
+                            state.opponentId.isNotEmpty()
+                        }
+
+                        GameBoard(
+                            guesses = state.board.map { row ->
+                                GuessRow(
+                                    letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
+                                    types = row.map { tile -> tile.state.toTypes() }
+                                )
+                            },
+                            currentRow = state.currentRow,
+                            currentCol = state.currentCol,
+                            wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        )
+
+                        GameKeyboard(
+                            enabled = keyboardEnabled,
+                            keyStates = state.keyboardStates.mapValues { (_, tileState) ->
+                                when (tileState) {
+                                    TileState.CORRECT -> Types.CORRECT
+                                    TileState.MISPLACED -> Types.PRESENT
+                                    TileState.WRONG -> Types.ABSENT
+                                    else -> Types.DEFAULT
+                                }
+                            },
+                            onKey = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.EnterLetter(it)) },
+                            onBackspace = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.DeleteLetter) },
+                            language = keyboardLanguage,
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ── Lobby: host ───────────────────────────────────────────────────────────────
+
+@Composable
+private fun CustomWordLobbyHost(
+    word: String,
+    myName: String,
+    waitingPlayers: List<WaitingPlayer>,
+    roomId: String,
+    onStart: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 24.dp)
+            .padding(top = 12.dp, bottom = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        // Word tiles
+        if (word.isNotEmpty()) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(CoreRes.string.spectator_title),
+                    color = colors.title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    word.forEach { letter ->
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(colors.surface)
-                                .border(1.dp, colors.border, RoundedCornerShape(16.dp))
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            contentAlignment = Alignment.Center
+                                .border(1.5.dp, colors.buttonTeal, RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(text = "⏳", fontSize = 28.sp)
-                                Text(
-                                    text = stringResource(CoreRes.string.multiplayer_waiting_opponent),
-                                    color = colors.title,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    textAlign = TextAlign.Center,
-                                )
-                                Text(
-                                    text = stringResource(CoreRes.string.multiplayer_waiting_share),
-                                    color = colors.body.copy(alpha = 0.45f),
-                                    fontSize = 11.sp,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
+                            Text(
+                                text = letter.toString(),
+                                color = colors.title,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
                         }
                     }
+                }
+            }
+        }
 
-                    if (roomId.isNotEmpty() && isHost && state.opponentId.isEmpty()) {
-                        RoomCodeCard(roomId = roomId)
+        // Room code
+        RoomCodeCard(roomId = roomId)
+
+        // Player list
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Players joined (${waitingPlayers.size}/6)",
+                color = colors.body.copy(alpha = 0.6f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.5.sp,
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.surface)
+                    .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
+            ) {
+                // Host row always shown
+                LobbyPlayerRow(
+                    name = myName.ifBlank { "You" },
+                    badge = "You",
+                    badgeColor = colors.buttonPink,
+                )
+                if (waitingPlayers.isEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Waiting for players to join…",
+                            color = colors.body.copy(alpha = 0.45f),
+                            fontSize = 13.sp,
+                        )
+                    }
+                } else {
+                    waitingPlayers.forEach { player ->
+                        LobbyPlayerRow(
+                            name = player.name,
+                            badge = "Opponent",
+                            badgeColor = colors.body.copy(alpha = 0.6f),
+                        )
                     }
                 }
+            }
+        }
 
-                if (state.isHost && state.isCustomWord) {
-                    SpectatorView(
-                        word = state.targetWord,
-                        opponentName = state.opponentName,
-                        opponentJoined = state.opponentId.isNotEmpty(),
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
-                } else {
-                    GameBoard(
-                        guesses = state.board.map { row ->
-                            GuessRow(
-                                letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
-                                types = row.map { tile -> tile.state.toTypes() }
-                            )
-                        },
-                        currentRow = state.currentRow,
-                        currentCol = state.currentCol,
-                        wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
+        Spacer(Modifier.weight(1f))
 
-                    GameKeyboard(
-                        enabled = state.opponentId.isNotEmpty(),
-                        keyStates = state.keyboardStates.mapValues { (_, tileState) ->
-                            when (tileState) {
-                                TileState.CORRECT -> Types.CORRECT
-                                TileState.MISPLACED -> Types.PRESENT
-                                TileState.WRONG -> Types.ABSENT
-                                else -> Types.DEFAULT
-                            }
-                        },
-                        onKey = {
-                            if (state.opponentId.isNotEmpty()) onIntent(
-                                MultiplayerGameIntent.EnterLetter(
-                                    it
-                                )
-                            )
-                        },
-                        onBackspace = {
-                            if (state.opponentId.isNotEmpty()) onIntent(
-                                MultiplayerGameIntent.DeleteLetter
-                            )
-                        },
-                        language = keyboardLanguage,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
-                    )
-                }
+        // Start button
+        Button(
+            onClick = onStart,
+            enabled = waitingPlayers.isNotEmpty(),
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.buttonTeal,
+                disabledContainerColor = colors.buttonTeal.copy(alpha = 0.3f),
+            )
+        ) {
+            Text(
+                text = "Start Game",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = colors.background,
+            )
+        }
+    }
+}
+
+// ── Lobby: guest ──────────────────────────────────────────────────────────────
+
+@Composable
+private fun CustomWordLobbyGuest(
+    hostName: String,
+    myName: String,
+    otherPlayers: List<WaitingPlayer>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Text(text = "⏳", fontSize = 48.sp)
+        Text(
+            text = "Waiting for host to start…",
+            color = colors.title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+
+        // Player list
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.surface)
+                .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
+        ) {
+            // Host row
+            LobbyPlayerRow(
+                name = hostName.ifBlank { "Host" },
+                badge = "Host",
+                badgeColor = colors.buttonTeal,
+            )
+
+            // My row
+            LobbyPlayerRow(
+                name = myName.ifBlank { "You" },
+                badge = "You",
+                badgeColor = colors.buttonPink,
+            )
+
+            // Other guests
+            otherPlayers.forEach { player ->
+                LobbyPlayerRow(
+                    name = player.name,
+                    badge = "Opponent",
+                    badgeColor = colors.body.copy(alpha = 0.6f),
+                )
+            }
+        }
+    }
+}
+
+// ── Shared composables ────────────────────────────────────────────────────────
+
+@Composable
+private fun LobbyPlayerRow(
+    name: String,
+    badge: String? = null,
+    badgeColor: androidx.compose.ui.graphics.Color = colors.buttonTeal,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(badgeColor.copy(alpha = 0.15f))
+                    .border(1.dp, badgeColor.copy(alpha = 0.3f), RoundedCornerShape(50)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = name.take(1).uppercase(),
+                    color = badgeColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Text(
+                text = name,
+                color = colors.title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        if (badge != null) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(badgeColor.copy(alpha = 0.12f))
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = badge,
+                    color = badgeColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }
@@ -456,60 +749,145 @@ private fun RoomCodeCard(roomId: String) {
 @Composable
 private fun SpectatorView(
     word: String,
-    opponentName: String,
-    opponentJoined: Boolean,
+    opponentsProgress: Map<String, OpponentProgress>,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier         = modifier,
-        contentAlignment = Alignment.Center,
+    Column(
+        modifier = modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier            = Modifier.padding(horizontal = 32.dp),
-        ) {
-            Text(text = "👀", fontSize = 48.sp)
-            Text(
-                text       = stringResource(CoreRes.string.spectator_title),
-                color      = colors.title,
-                fontSize   = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign  = TextAlign.Center,
-            )
-            if (word.isNotEmpty()) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment     = Alignment.CenterVertically,
-                ) {
-                    word.forEach { letter ->
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(colors.surface)
-                                .border(1.5.dp, colors.buttonTeal, RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text       = letter.toString(),
-                                color      = colors.title,
-                                fontSize   = 18.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
-                        }
+        Text(text = "👀", fontSize = 36.sp)
+        Text(
+            text       = stringResource(CoreRes.string.spectator_title),
+            color      = colors.title,
+            fontSize   = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign  = TextAlign.Center,
+        )
+        if (word.isNotEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                word.forEach { letter ->
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.surface)
+                            .border(1.5.dp, colors.buttonTeal, RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text       = letter.toString(),
+                            color      = colors.title,
+                            fontSize   = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
                     }
                 }
             }
+        }
+
+        if (opponentsProgress.isEmpty()) {
             Text(
-                text      = if (opponentJoined)
-                    stringResource(CoreRes.string.spectator_watching, opponentName)
-                else
-                    stringResource(CoreRes.string.spectator_waiting),
+                text      = stringResource(CoreRes.string.spectator_waiting),
                 color     = colors.body.copy(alpha = 0.65f),
                 fontSize  = 14.sp,
                 textAlign = TextAlign.Center,
             )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.surface)
+                    .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                items(opponentsProgress.values.toList()) { progress ->
+                    val statusText = when {
+                        progress.solved -> "Solved in ${progress.guessCount} guesses ✓"
+                        progress.failed -> "Failed to guess ✗"
+                        progress.guessCount == 0 -> "Yet to guess…"
+                        else -> "${progress.guessCount} guess${if (progress.guessCount != 1) "es" else ""} so far"
+                    }
+                    val statusColor = when {
+                        progress.solved -> colors.buttonTeal
+                        progress.failed -> colors.buttonPink
+                        else -> colors.body.copy(alpha = 0.6f)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = progress.name,
+                            color = colors.title,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = statusText,
+                            color = statusColor,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HostLeftBottomSheet(onGoHome: () -> Unit) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onGoHome,
+        sheetState = sheetState,
+        containerColor = colors.surface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(text = "🚪", fontSize = 48.sp)
+            Text(
+                text = "Host left the room",
+                color = colors.title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = "The host has left. The room is now closed.",
+                color = colors.body.copy(alpha = 0.6f),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(4.dp))
+            Button(
+                onClick = onGoHome,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.buttonTeal),
+            ) {
+                Text(
+                    text = "Back to Home",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.background,
+                )
+            }
         }
     }
 }

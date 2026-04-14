@@ -4,6 +4,7 @@ data class GameRoom(
     val roomId: String = "",
     val hostId: String = "",
     val guestId: String = "",
+    val guestIds: List<String> = emptyList(), // multi-player custom word guests
     val word: String = "",
     val language: String = "",
     val wordLength: Int = 0,

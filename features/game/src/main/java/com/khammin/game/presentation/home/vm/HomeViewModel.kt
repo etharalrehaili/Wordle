@@ -35,6 +35,7 @@ class HomeViewModel @Inject constructor(
     private val createProfileUseCase: CreateProfileUseCase,
     private val createRoomUseCase: CreateRoomUseCase,
     private val joinRoomUseCase: JoinRoomUseCase,
+    private val addGuestToRoomUseCase: com.khammin.game.domain.usecases.game.AddGuestToRoomUseCase,
     private val findRoomByCodeUseCase: FindRoomByCodeUseCase,
     private val getRoomUseCase       : GetRoomUseCase,
     private val getWordsUseCase: GetWordsUseCase,
@@ -195,7 +196,7 @@ class HomeViewModel @Inject constructor(
             }
 
             // ← Check if room is still joinable
-            val room = getRoomUseCase(fullRoomId)   // see step 3 below
+            val room = getRoomUseCase(fullRoomId)
             when {
                 room == null -> {
                     setState { copy(joinRoomLoading = false, joinRoomError = "Room not found.") }
@@ -205,13 +206,25 @@ class HomeViewModel @Inject constructor(
                     setState { copy(joinRoomLoading = false, joinRoomError = "This game has already ended.") }
                     return@launch
                 }
-                room.status == "playing" || room.guestId.isNotEmpty() -> {
+                room.status == "playing" -> {
+                    setState { copy(joinRoomLoading = false, joinRoomError = "This game has already started.") }
+                    return@launch
+                }
+                room.isCustomWord && room.guestIds.size >= 6 -> {
+                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 6 players).") }
+                    return@launch
+                }
+                !room.isCustomWord && room.guestId.isNotEmpty() -> {
                     setState { copy(joinRoomLoading = false, joinRoomError = "This room is already full.") }
                     return@launch
                 }
             }
 
-            joinRoomUseCase(fullRoomId, myId)
+            if (room.isCustomWord) {
+                addGuestToRoomUseCase(fullRoomId, myId)
+            } else {
+                joinRoomUseCase(fullRoomId, myId)
+            }
             setState { copy(joinRoomLoading = false, joinRoomError = null) }
             onJoined(fullRoomId, myId, room.isCustomWord)
         }
