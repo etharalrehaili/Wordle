@@ -152,6 +152,9 @@ class MultiplayerGameViewModel @Inject constructor(
                 )
             }
 
+            // Remove departed guests from the tracking set so they are re-observed when they rejoin
+            observingGuestIds.retainAll(room.guestIds.toSet())
+
             if (room.wordLength > 0 && !wordCache.containsKey(room.wordLength)) {
                 viewModelScope.launch {
                     val result = getWordsUseCase(language, room.wordLength)
