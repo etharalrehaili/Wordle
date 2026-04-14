@@ -77,6 +77,7 @@ fun HomeScreen(
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
+    onSupportClick: Action,
     onThemeChanged: ThemeAction,
     onLanguageChanged: LanguageAction,
     onLoginWithEmail: Action,
@@ -116,6 +117,7 @@ fun HomeScreen(
         onChallengeClick   = onChallengeClick,
         onLeaderboardClick = onLeaderboardClick,
         onProfileClick     = onProfileClick,
+        onSupportClick     = onSupportClick,
         onIntent = { intent ->
             preferencesViewModel.onEvent(intent)
             when (intent) {
@@ -151,6 +153,7 @@ fun HomeContent(
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
+    onSupportClick: Action,
     onIntent: (PreferencesIntent) -> Unit,
     isLoggedIn: Boolean = false,
     isEmailVerified: Boolean = false,
@@ -215,6 +218,10 @@ fun HomeContent(
                 onLoginClick       = {
                     scope.launch { drawerState.close() }
                     onLoginWithEmail()
+                },
+                onSupportClick     = {
+                    scope.launch { drawerState.close() }
+                    onSupportClick()
                 },
                 onLanguageSelected = { onIntent(PreferencesIntent.ChangeLanguage(it)) },
             )

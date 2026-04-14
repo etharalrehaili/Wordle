@@ -79,6 +79,11 @@ fun NavGraphBuilder.navGraph(
                     launchSingleTop = true
                 }
             },
+            onSupportClick = {
+                navController.navigate(Route.SupportScreen) {
+                    launchSingleTop = true
+                }
+            },
             onLoginWithEmail = {
                 navController.navigate(Route.LoginScreen) {
                     launchSingleTop = true

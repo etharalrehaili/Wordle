@@ -9,6 +9,8 @@
     <string name="drawer_language_desc">تغيير اللغة</string>
     <string name="drawer_login">تسجيل الدخول</string>
     <string name="drawer_login_desc">سجّل دخولك إلى حسابك</string>
+    <string name="drawer_support">الدعم</string>
+    <string name="drawer_support_desc">المساعدة والملاحظات</string>
 
     <!-- Word Length Bottom Sheet -->
     <string name="word_length_title">كم طول الكلمة؟</string>

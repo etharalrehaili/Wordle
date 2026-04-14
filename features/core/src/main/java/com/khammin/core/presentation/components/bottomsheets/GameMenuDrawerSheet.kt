@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,6 +65,7 @@ fun GameMenuDrawerSheet(
     onLoginClick: Action,
     onClose: Action,
     onProfile: Action,
+    onSupportClick: Action,
     onLanguageSelected: (AppLanguage) -> Unit
 ) {
 
@@ -94,11 +96,12 @@ fun GameMenuDrawerSheet(
         ) { screen ->
             when (screen) {
                 DrawerScreen.MENU -> MenuScreen(
-                    onClose    = onClose,
-                    onLanguage = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
-                    onProfile  = onProfile,
-                    isLoggedIn = isLoggedIn,
-                    onLoginClick = onLoginClick
+                    onClose      = onClose,
+                    onLanguage   = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
+                    onProfile    = onProfile,
+                    isLoggedIn   = isLoggedIn,
+                    onLoginClick = onLoginClick,
+                    onSupport    = onSupportClick,
                 )
                 DrawerScreen.LANGUAGE -> LanguageScreen(
                     selectedLanguage = selectedLanguage,
@@ -120,7 +123,8 @@ private fun MenuScreen(
     isLoggedIn: Boolean,
     onLoginClick: Action,
     onLanguage: Action,
-    onProfile: Action
+    onProfile: Action,
+    onSupport: Action,
 ) {
     data class Entry(
         val icon: ImageVector,
@@ -149,6 +153,7 @@ private fun MenuScreen(
             ))
         }
         add(Entry(Icons.Filled.Language, stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc), colors.buttonTaupe, onLanguage))
+        add(Entry(Icons.Outlined.HelpOutline, stringResource(R.string.drawer_support), stringResource(R.string.drawer_support_desc), colors.buttonTeal, onSupport))
     }
 
     DrawerColumn {
