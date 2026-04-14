@@ -578,33 +578,46 @@ private fun CustomWordLobbyGuest(
 
         // Player list
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(colors.surface)
-                .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Host row
-            LobbyPlayerRow(
-                name = hostName.ifBlank { "Host" },
-                badge = "Host",
-                badgeColor = colors.buttonTeal,
+            val totalPlayers = 1 + 1 + otherPlayers.size // host + me + others
+            Text(
+                text = "Players joined ($totalPlayers/6)",
+                color = colors.body.copy(alpha = 0.6f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.5.sp,
             )
-
-            // My row
-            LobbyPlayerRow(
-                name = myName.ifBlank { "You" },
-                badge = "You",
-                badgeColor = colors.buttonPink,
-            )
-
-            // Other guests
-            otherPlayers.forEach { player ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.surface)
+                    .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
+            ) {
+                // Host row
                 LobbyPlayerRow(
-                    name = player.name,
-                    badge = "Opponent",
-                    badgeColor = colors.body.copy(alpha = 0.6f),
+                    name = hostName.ifBlank { "Host" },
+                    badge = "Host",
+                    badgeColor = colors.buttonTeal,
                 )
+
+                // My row
+                LobbyPlayerRow(
+                    name = myName.ifBlank { "You" },
+                    badge = "You",
+                    badgeColor = colors.buttonPink,
+                )
+
+                // Other guests
+                otherPlayers.forEach { player ->
+                    LobbyPlayerRow(
+                        name = player.name,
+                        badge = "Opponent",
+                        badgeColor = colors.body.copy(alpha = 0.6f),
+                    )
+                }
             }
         }
     }
