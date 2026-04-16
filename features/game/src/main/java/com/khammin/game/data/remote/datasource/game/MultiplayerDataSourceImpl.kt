@@ -101,15 +101,18 @@ class MultiplayerDataSourceImpl @Inject constructor(
             .await()
     }
 
-    override suspend fun restartRoom(roomId: String, newWord: String, wordLength: Int) {
+    override suspend fun restartRoom(roomId: String, newWord: String, wordLength: Int, roundNumber: Int, totalPoints: Map<String, Int>) {
         val start = System.currentTimeMillis()
-        Log.d(RESET_TAG, "[Firestore] restartRoom → writing status='playing' | roomId=$roomId | word=$newWord")
+        Log.d(RESET_TAG, "[Firestore] restartRoom → writing status='playing' | roomId=$roomId | word=$newWord | round=$roundNumber")
         rooms.document(roomId)
             .update(mapOf(
-                "word"       to newWord,
-                "wordLength" to wordLength,
-                "status"     to "playing",
-                "winnerId"   to null,
+                "word"           to newWord,
+                "wordLength"     to wordLength,
+                "status"         to "playing",
+                "winnerId"       to null,
+                "playAgainVotes" to emptyList<String>(),
+                "roundNumber"    to roundNumber,
+                "totalPoints"    to totalPoints,
             ))
             .await()
         Log.d(RESET_TAG, "[Firestore] restartRoom ack received — round-trip=${System.currentTimeMillis() - start}ms")
@@ -138,13 +141,52 @@ class MultiplayerDataSourceImpl @Inject constructor(
 
     override suspend fun removeGuestFromRoom(roomId: String, guestId: String) {
         rooms.document(roomId)
-            .update("guestIds", FieldValue.arrayRemove(guestId))
+            .update(mapOf(
+                "guestIds"       to FieldValue.arrayRemove(guestId),
+                "playAgainVotes" to FieldValue.arrayRemove(guestId),
+            ))
             .await()
     }
 
     override suspend fun startRoom(roomId: String) {
         rooms.document(roomId)
             .update("status", "playing")
+            .await()
+    }
+
+    override suspend fun resetCustomRoom(roomId: String) {
+        rooms.document(roomId)
+            .update(mapOf(
+                "status"          to "waiting",
+                "word"            to "",
+                "wordLength"      to 0,
+                "winnerId"        to null,
+                "failedBy"        to "",
+                "leftBy"          to "",
+                "playAgainVotes"  to emptyList<String>(),
+            ))
+            .await()
+    }
+
+    override suspend fun votePlayAgain(roomId: String, userId: String) {
+        rooms.document(roomId)
+            .update("playAgainVotes", FieldValue.arrayUnion(userId))
+            .await()
+    }
+
+    override suspend fun unvotePlayAgain(roomId: String, userId: String) {
+        rooms.document(roomId)
+            .update("playAgainVotes", FieldValue.arrayRemove(userId))
+            .await()
+    }
+
+    override suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?) {
+        rooms.document(roomId)
+            .update("guestProfiles.$userId", mapOf(
+                "name"        to name,
+                "avatarColor" to (avatarColor?.toString() ?: ""),
+                "avatarEmoji" to (avatarEmoji ?: ""),
+            ))
             .await()
     }
 

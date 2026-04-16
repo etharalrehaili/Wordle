@@ -8,6 +8,6 @@ class RestartRoomUseCase @Inject constructor(
 ) {
     suspend fun claimRestart(roomId: String) = repo.claimRestart(roomId)
 
-    suspend operator fun invoke(roomId: String, newWord: String, wordLength: Int) =
-        repo.restartRoom(roomId, newWord, wordLength)
+    suspend operator fun invoke(roomId: String, newWord: String, wordLength: Int, roundNumber: Int = 1, totalPoints: Map<String, Int> = emptyMap()) =
+        repo.restartRoom(roomId, newWord, wordLength, roundNumber, totalPoints)
 }

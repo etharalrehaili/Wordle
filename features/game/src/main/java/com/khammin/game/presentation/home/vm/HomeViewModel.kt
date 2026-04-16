@@ -138,27 +138,37 @@ class HomeViewModel @Inject constructor(
             val myId = auth.currentUser?.uid
                 ?: "guest_${System.currentTimeMillis()}"
 
-            val (word, wordLength) = if (customWord != null) {
-                Log.d("WordleRoom", "customWord (raw)='$customWord'  stored='${customWord.uppercase()}'  length=${customWord.length}")
-                customWord.uppercase() to customWord.length
-            } else {
-                val length = listOf(4, 5, 6).random()
-                val cacheKey = "$language-$length"
-                val words = cachedWords[cacheKey] ?: run {
-                    val result = getWordsUseCase(language, length)
-                    if (result is Resource.Success) {
-                        cachedWords[cacheKey] = result.data
-                        result.data
-                    } else {
+            val isCustomWordRoom = customWord != null
+            val isWordProvided   = !customWord.isNullOrEmpty()
+
+            val (word, wordLength) = when {
+                isWordProvided -> {
+                    Log.d("WordleRoom", "customWord (raw)='$customWord'  stored='${customWord!!.uppercase()}'  length=${customWord.length}")
+                    customWord.uppercase() to customWord.length
+                }
+                isCustomWordRoom -> {
+                    // Host will set the word in the lobby — create room with empty word in waiting status
+                    "" to 0
+                }
+                else -> {
+                    val length = listOf(4, 5, 6).random()
+                    val cacheKey = "$language-$length"
+                    val words = cachedWords[cacheKey] ?: run {
+                        val result = getWordsUseCase(language, length)
+                        if (result is Resource.Success) {
+                            cachedWords[cacheKey] = result.data
+                            result.data
+                        } else {
+                            setState { copy(createRoomLoading = false) }
+                            return@launch
+                        }
+                    }
+                    val randomWord = words.randomOrNull() ?: run {
                         setState { copy(createRoomLoading = false) }
                         return@launch
                     }
+                    randomWord.uppercase() to length
                 }
-                val randomWord = words.randomOrNull() ?: run {
-                    setState { copy(createRoomLoading = false) }
-                    return@launch
-                }
-                randomWord.uppercase() to length
             }
 
             val room = GameRoom(
@@ -166,7 +176,7 @@ class HomeViewModel @Inject constructor(
                 word         = word,
                 language     = language,
                 wordLength   = wordLength,
-                isCustomWord = customWord != null
+                isCustomWord = isCustomWordRoom,
             )
 
             val roomId = createRoomUseCase(room)

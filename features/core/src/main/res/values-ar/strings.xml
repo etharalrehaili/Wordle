@@ -97,8 +97,8 @@
     <string name="join_room_join">انضمام</string>
 
     <!-- Leave Game Bottom Sheet -->
-    <string name="leave_game_title">مغادرة المباراة؟</string>
-    <string name="leave_game_subtitle">إذا غادرت الآن، سيفوز منافسك.</string>
+    <string name="leave_game_title">مغادرة المباراة</string>
+    <string name="leave_game_subtitle">هل أنت متأكد أنك تريد المغادرة؟</string>
     <string name="leave_game_confirm">نعم، غادر</string>
     <string name="leave_game_stay">ابقَ</string>
 

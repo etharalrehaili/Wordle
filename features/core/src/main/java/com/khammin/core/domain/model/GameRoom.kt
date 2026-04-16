@@ -13,8 +13,11 @@ data class GameRoom(
     val createdAt: Long = System.currentTimeMillis(),
     val leftBy: String = "",
     val failedBy: String = "",
-    @JvmField var isCustomWord: Boolean = false
-
+    @JvmField var isCustomWord: Boolean = false,
+    val playAgainVotes: List<String> = emptyList(), // guestIds who voted to play again
+    val roundNumber: Int = 1,
+    val totalPoints: Map<String, Int> = emptyMap(), // guestId -> cumulative points
+    val guestProfiles: Map<String, Map<String, String>> = emptyMap(), // guestId -> {name, avatarColor, avatarEmoji}
 )
 
 data class PlayerState(

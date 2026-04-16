@@ -12,6 +12,8 @@ data class WaitingPlayer(
     val userId: String,
     val name: String,
     val avatarUrl: String? = null,
+    val avatarColor: Long? = null,
+    val avatarEmoji: String? = null,
 )
 
 data class OpponentProgress(
@@ -21,6 +23,7 @@ data class OpponentProgress(
     val failed: Boolean = false,
     val guessCount: Int = 0,
     val guessRows: List<GuessRow> = List(MAX_GUESSES) { GuessRow() },
+    val totalPoints: Int = 0,
 )
 
 data class MultiplayerGameUiState(
@@ -38,11 +41,14 @@ data class MultiplayerGameUiState(
     val opponentFailed: Boolean = false,
     val myName: String = "You",
     val opponentAvatarUrl: String? = null,
+    val opponentAvatarColor: Long? = null,
+    val opponentAvatarEmoji: String? = null,
     val opponentState: PlayerState? = null,
     val isLoading: Boolean = false,
     val isOpponentProfileLoading: Boolean = false,
     val error: String? = null,
     val isGameOver: Boolean = false,
+    val isMyWin: Boolean = false,
     val isHost: Boolean = false,
     val isCustomWord: Boolean = false,
     val language: String = "",
@@ -54,6 +60,13 @@ data class MultiplayerGameUiState(
     val waitingPlayers: List<WaitingPlayer> = emptyList(),
     val opponentsProgress: Map<String, OpponentProgress> = emptyMap(),
     val isHostLeft: Boolean = false,
+    val playAgainVotes: List<String> = emptyList(),
+    val roundNumber: Int = 1,
+    val totalPoints: Map<String, Int> = emptyMap(),
+    // Local avatar (anonymous users only); null = no custom avatar chosen yet
+    val avatarColor: Long? = null,
+    val avatarEmoji: String? = null,
+    val isAnonymous: Boolean = false,
 ) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {
@@ -65,6 +78,7 @@ sealed interface MultiplayerGameEffect : UiEffect {
     data object DismissResultDialog : MultiplayerGameEffect
     data object OpponentDisconnected : MultiplayerGameEffect
     data object HostLeftRoom : MultiplayerGameEffect
+    data object AllPlayersLeft : MultiplayerGameEffect
 }
 
 sealed class MultiplayerGameIntent : UiIntent {
@@ -83,4 +97,12 @@ sealed class MultiplayerGameIntent : UiIntent {
     data object RestartGame : MultiplayerGameIntent()
     data object LeaveMatch : MultiplayerGameIntent()
     data object StartMatch : MultiplayerGameIntent()
+    data class StartMatchWithWord(val word: String) : MultiplayerGameIntent()
+    data class PlayAgainCustomWord(val newWord: String) : MultiplayerGameIntent()
+    data object VotePlayAgain : MultiplayerGameIntent()
+    data class UpdateGuestProfile(
+        val name: String,
+        val avatarColor: Long?,
+        val avatarEmoji: String?,
+    ) : MultiplayerGameIntent()
 }

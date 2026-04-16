@@ -14,11 +14,15 @@ interface MultiplayerDataSource {
     suspend fun findRoomByCode(shortCode: String): String?
     suspend fun getRoom(roomId: String): GameRoom?
     suspend fun leaveRoom(roomId: String, loserId: String)
-    suspend fun restartRoom(roomId: String, newWord: String, wordLength: Int)
+    suspend fun restartRoom(roomId: String, newWord: String, wordLength: Int, roundNumber: Int = 1, totalPoints: Map<String, Int> = emptyMap())
     suspend fun claimRestart(roomId: String)
     suspend fun registerPresence(roomId: String, userId: String)
     fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean>
     suspend fun addGuestToRoom(roomId: String, guestId: String)
     suspend fun removeGuestFromRoom(roomId: String, guestId: String)
     suspend fun startRoom(roomId: String)
+    suspend fun resetCustomRoom(roomId: String)
+    suspend fun votePlayAgain(roomId: String, userId: String)
+    suspend fun unvotePlayAgain(roomId: String, userId: String)
+    suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?)
 }

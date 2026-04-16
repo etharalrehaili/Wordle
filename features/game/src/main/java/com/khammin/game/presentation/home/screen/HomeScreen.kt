@@ -351,16 +351,16 @@ fun HomeContent(
                                 onMultiplayerClick(roomId, true, myId, false)
                             }
                         },
-                        onCustomWord = { word ->
+                        onCustomWord = {
                             createRoomType = "custom"
                             lastFailedAction = {
-                                onCreateRoom(word) { roomId, myId ->
+                                onCreateRoom("") { roomId, myId ->
                                     showWordPickerSheet = false
                                     createRoomType = null
                                     onMultiplayerClick(roomId, true, myId, true)
                                 }
                             }
-                            onCreateRoom(word) { roomId, myId ->
+                            onCreateRoom("") { roomId, myId ->
                                 showWordPickerSheet = false
                                 onMultiplayerClick(roomId, true, myId, true)
                             }

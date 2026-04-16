@@ -50,6 +50,9 @@ fun CustomWordResultBottomSheet(
     opponentGuessedCorrectly: Boolean,
     opponentLeft: Boolean = false,
     isOwnWin: Boolean = false,
+    onPlayAgain: (() -> Unit)? = null,
+    playAgainVoteCount: Int = 0,
+    totalGuests: Int = 0,
     onBackHome: () -> Unit,
     onDismiss: () -> Unit = onBackHome,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -170,12 +173,42 @@ fun CustomWordResultBottomSheet(
 
                 Spacer(Modifier.height(28.dp))
 
-                // ── Button ────────────────────────────────────────────────────
+                // ── Vote count (host only) ────────────────────────────────────
+                if (onPlayAgain != null && playAgainVoteCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                            .background(accentColor.copy(alpha = 0.1f))
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        contentAlignment = androidx.compose.ui.Alignment.Center,
+                    ) {
+                        Text(
+                            text       = "👋  Votes for play again: $playAgainVoteCount / $totalGuests",
+                            color      = accentColor,
+                            fontSize   = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign  = TextAlign.Center,
+                        )
+                    }
+                }
+
+                // ── Buttons ───────────────────────────────────────────────────
+                if (onPlayAgain != null) {
+                    GameButton(
+                        label           = stringResource(R.string.result_play_again),
+                        backgroundColor = accentColor,
+                        contentColor    = Color.White,
+                        showBorder      = false,
+                        onClick         = onPlayAgain,
+                        modifier        = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
                 GameButton(
                     label           = stringResource(R.string.spectator_result_back_home),
-                    backgroundColor = accentColor,
-                    contentColor    = Color.White,
-                    showBorder      = false,
+                    backgroundColor = if (onPlayAgain != null) colors.surface else accentColor,
+                    contentColor    = if (onPlayAgain != null) colors.body else Color.White,
+                    showBorder      = onPlayAgain != null,
                     onClick         = onBackHome,
                     modifier        = Modifier.fillMaxWidth()
                 )

@@ -20,7 +20,10 @@ import com.khammin.game.domain.usecases.game.ObserveRoomUseCase
 import com.khammin.game.domain.usecases.game.RegisterPresenceUseCase
 import com.khammin.game.domain.usecases.game.RestartRoomUseCase
 import com.khammin.game.domain.usecases.game.RemoveGuestFromRoomUseCase
+import com.khammin.game.domain.usecases.game.ResetCustomRoomUseCase
 import com.khammin.game.domain.usecases.game.StartRoomUseCase
+import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
+import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
@@ -51,6 +54,9 @@ class MultiplayerGameViewModel @Inject constructor(
     private val validateWordUseCase: ValidateWordUseCase,
     private val startRoomUseCase: StartRoomUseCase,
     private val removeGuestFromRoomUseCase: RemoveGuestFromRoomUseCase,
+    private val resetCustomRoomUseCase: ResetCustomRoomUseCase,
+    private val votePlayAgainUseCase: VotePlayAgainUseCase,
+    private val updateGuestProfileUseCase: UpdateGuestProfileUseCase,
     private val auth: FirebaseAuth
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
@@ -65,9 +71,13 @@ class MultiplayerGameViewModel @Inject constructor(
             is MultiplayerGameIntent.EnterLetter -> enterLetter(intent.letter)
             MultiplayerGameIntent.DeleteLetter   -> deleteLetter()
             MultiplayerGameIntent.SubmitGuess    -> submitGuess()
-            MultiplayerGameIntent.LeaveMatch     -> leaveMatch()
-            MultiplayerGameIntent.RestartGame    -> restartGame()
-            MultiplayerGameIntent.StartMatch     -> startMatch()
+            MultiplayerGameIntent.LeaveMatch          -> leaveMatch()
+            MultiplayerGameIntent.RestartGame         -> restartGame()
+            MultiplayerGameIntent.StartMatch                -> startMatch()
+            is MultiplayerGameIntent.StartMatchWithWord     -> startMatchWithWord(intent.word)
+            is MultiplayerGameIntent.PlayAgainCustomWord    -> playAgainCustomWord(intent.newWord)
+            MultiplayerGameIntent.VotePlayAgain          -> votePlayAgain()
+            is MultiplayerGameIntent.UpdateGuestProfile  -> updateGuestProfile(intent.name, intent.avatarColor, intent.avatarEmoji)
         }
     }
 
@@ -98,7 +108,8 @@ class MultiplayerGameViewModel @Inject constructor(
                 roomId = roomId, myUserId = myId, isHost = isHost,
                 isCustomWord = isCustomWord, language = language,
                 defaultMyName = defaultMyName, defaultGuestName = defaultGuestName,
-                myName = initialMyName
+                myName = initialMyName,
+                isAnonymous = isAnonymous,
             )
         }
 
@@ -128,6 +139,8 @@ class MultiplayerGameViewModel @Inject constructor(
 
             val isCustomWordRoom = isCustomWord || room.isCustomWord
             val isHostOfRoom = room.hostId == myId
+            val previousWord     = uiState.value.targetWord
+            val previousGuestIds = uiState.value.guestIds
 
             // Compute opponent ID for 1v1 (non-custom) or custom-word guest
             val opponentId = when {
@@ -138,25 +151,68 @@ class MultiplayerGameViewModel @Inject constructor(
 
             setState {
                 val boardResized = wordLength != room.wordLength
+                // Rebuild waitingPlayers from room.guestIds so late-joining players immediately
+                // get their saved profile (name/avatar) from guestProfiles.
+                val updatedWaiting = room.guestIds.map { guestId ->
+                    val existing = waitingPlayers.firstOrNull { it.userId == guestId }
+                    val profile  = room.guestProfiles[guestId]
+                    when {
+                        profile != null -> (existing ?: WaitingPlayer(guestId, guestNameFromId(guestId))).copy(
+                            name        = profile["name"]?.takeIf { it.isNotBlank() } ?: existing?.name ?: guestNameFromId(guestId),
+                            avatarColor = profile["avatarColor"]?.toLongOrNull() ?: existing?.avatarColor,
+                            avatarEmoji = profile["avatarEmoji"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarEmoji,
+                        )
+                        existing != null -> existing
+                        else -> WaitingPlayer(guestId, guestNameFromId(guestId)) // placeholder until fetchGuestInfo fills it in
+                    }
+                }
+                val updatedProgress = opponentsProgress
+                    .filter { it.key in room.guestIds }
+                    .mapValues { (guestId, progress) ->
+                        val profile = room.guestProfiles[guestId]
+                        if (profile != null) progress.copy(
+                            name = profile["name"]?.takeIf { it.isNotBlank() } ?: progress.name,
+                        ) else progress
+                    }
+                // For guests: apply host's saved profile if present
+                val hostProfile = room.guestProfiles[room.hostId]
+                val resolvedOpponentName = if (!isHostOfRoom && hostProfile != null)
+                    hostProfile["name"] ?: opponentName else opponentName
+                val resolvedOpponentAvatarColor = if (!isHostOfRoom && hostProfile != null)
+                    hostProfile["avatarColor"]?.toLongOrNull() else opponentAvatarColor
+                val resolvedOpponentAvatarEmoji = if (!isHostOfRoom && hostProfile != null)
+                    hostProfile["avatarEmoji"]?.takeIf { it.isNotEmpty() } else opponentAvatarEmoji
                 copy(
-                    targetWord        = room.word.uppercase(),
-                    wordLength        = room.wordLength,
-                    language          = if (room.word.isNotEmpty()) detectLanguage(room.word) else language,
-                    opponentId        = opponentId,
-                    isHost            = isHostOfRoom,
-                    isCustomWord      = isCustomWordRoom,
-                    guestIds          = room.guestIds,
-                    roomStatus        = room.status,
-                    board             = if (boardResized) List(board.size) { List(room.wordLength) { Tile() } } else board,
-                    currentRow        = if (boardResized) 0 else currentRow,
-                    currentCol        = if (boardResized) 0 else currentCol,
-                    waitingPlayers    = waitingPlayers.filter { it.userId in room.guestIds },
-                    opponentsProgress = opponentsProgress.filter { it.key in room.guestIds },
+                    targetWord            = room.word.uppercase(),
+                    wordLength            = room.wordLength,
+                    language              = if (room.word.isNotEmpty()) detectLanguage(room.word) else language,
+                    opponentId            = opponentId,
+                    isHost                = isHostOfRoom,
+                    isCustomWord          = isCustomWordRoom,
+                    guestIds              = room.guestIds,
+                    roomStatus            = room.status,
+                    playAgainVotes        = room.playAgainVotes,
+                    roundNumber           = room.roundNumber,
+                    totalPoints           = room.totalPoints,
+                    board                 = if (boardResized) List(board.size) { List(room.wordLength) { Tile() } } else board,
+                    currentRow            = if (boardResized) 0 else currentRow,
+                    currentCol            = if (boardResized) 0 else currentCol,
+                    waitingPlayers        = updatedWaiting,
+                    opponentsProgress     = updatedProgress,
+                    opponentName          = resolvedOpponentName,
+                    opponentAvatarColor   = resolvedOpponentAvatarColor,
+                    opponentAvatarEmoji   = resolvedOpponentAvatarEmoji,
                 )
             }
 
             // Remove departed guests from the tracking set so they are re-observed when they rejoin
             observingGuestIds.retainAll(room.guestIds.toSet())
+
+            // Host: all guests left during a live game
+            if (isHostOfRoom && isCustomWordRoom && room.status == "playing"
+                && room.guestIds.isEmpty() && previousGuestIds.isNotEmpty()) {
+                sendEffect { MultiplayerGameEffect.AllPlayersLeft }
+            }
 
             if (room.wordLength > 0 && !wordCache.containsKey(room.wordLength)) {
                 viewModelScope.launch {
@@ -191,12 +247,13 @@ class MultiplayerGameViewModel @Inject constructor(
                 fetchOpponentName(opponentId)
             }
 
-            // ── Custom-word guest: fetch names of other guests for lobby view ──
+            // ── Custom-word guest: observe other guests' progress for game-over lobby ──
             if (isCustomWordRoom && !isHostOfRoom) {
                 val newOtherGuests = room.guestIds.filter { it != myId && it !in observingGuestIds }
                 for (guestId in newOtherGuests) {
                     observingGuestIds.add(guestId)
                     fetchGuestInfo(guestId)
+                    observeGuestState(roomId, guestId)
                 }
             }
 
@@ -266,21 +323,66 @@ class MultiplayerGameViewModel @Inject constructor(
             if (room.status == "restarting" && uiState.value.isGameOver) {
                 sendEffect { MultiplayerGameEffect.DismissResultDialog }
             }
+
+            // Custom-word guest: host started a NEW round (word changed) → reset board
+            if (room.status == "playing" && isCustomWordRoom && !isHostOfRoom && uiState.value.isGameOver
+                && room.word.isNotEmpty() && room.word.uppercase() != previousWord) {
+                setState {
+                    copy(
+                        isGameOver     = false,
+                        isMyWin        = false,
+                        currentRow     = 0,
+                        currentCol     = 0,
+                        board          = List(board.size) { List(room.wordLength) { Tile() } },
+                        keyboardStates = emptyMap(),
+                        targetWord     = room.word.uppercase(),
+                        roundNumber    = room.roundNumber,
+                        totalPoints    = room.totalPoints,
+                    )
+                }
+                sendEffect { MultiplayerGameEffect.DismissResultDialog }
+            }
         }.launchIn(viewModelScope)
     }
 
     // ── Observe a single guest's player state (host-only, custom word) ────────
     private fun observeGuestState(roomId: String, guestId: String) {
         observeOpponentUseCase(roomId, guestId).onEach { playerState ->
-            val current = uiState.value.opponentsProgress[guestId] ?: OpponentProgress()
-            val wordLen = uiState.value.wordLength.takeIf { it > 0 } ?: 4
+            val s = uiState.value
+            val current = s.opponentsProgress[guestId] ?: OpponentProgress()
+            val wordLen = s.wordLength.takeIf { it > 0 } ?: 4
             val updated = current.copy(
-                solved     = playerState?.solved == true,
-                failed     = playerState?.finishedAt != null && playerState.solved != true,
-                guessCount = playerState?.currentRow ?: current.guessCount,
-                guessRows  = playerState?.toGuessRows(wordLen) ?: List(MAX_GUESSES) { GuessRow() },
+                solved      = playerState?.solved == true,
+                failed      = playerState?.finishedAt != null && playerState.solved != true,
+                guessCount  = playerState?.currentRow ?: current.guessCount,
+                guessRows   = playerState?.toGuessRows(wordLen) ?: List(MAX_GUESSES) { GuessRow() },
+                totalPoints = s.totalPoints[guestId] ?: current.totalPoints,
             )
-            setState { copy(opponentsProgress = opponentsProgress + (guestId to updated)) }
+            val updatedProgress = s.opponentsProgress + (guestId to updated)
+            setState { copy(opponentsProgress = updatedProgress) }
+
+            // Guest: another player just won → force this player to the lobby as a loss
+            if (!s.isHost && !s.isGameOver && updated.solved) {
+                setState { copy(isGameOver = true, isMyWin = false) }
+            }
+
+            // Host: show result sheet when every guest has either solved or failed
+            if (s.isHost && !s.isGameOver && s.guestIds.isNotEmpty()) {
+                val allDone = s.guestIds.all { id ->
+                    val p = updatedProgress[id]
+                    p != null && (p.solved || p.failed)
+                }
+                if (allDone) {
+                    val anyoneSolved = updatedProgress.values.any { it.solved }
+                    setState { copy(isGameOver = true) }
+                    sendEffect {
+                        MultiplayerGameEffect.ShowGameDialog(
+                            isWin = anyoneSolved,
+                            targetWord = s.targetWord,
+                        )
+                    }
+                }
+            }
         }.launchIn(viewModelScope)
     }
 
@@ -302,11 +404,16 @@ class MultiplayerGameViewModel @Inject constructor(
 
     private fun updateGuestInfo(guestId: String, name: String, avatarUrl: String?) {
         setState {
+            // Prefer any profile override the player has already saved (picked up via room observer)
+            val existing = waitingPlayers.firstOrNull { it.userId == guestId }
+            val resolvedName = existing?.name?.takeIf { it.isNotBlank() } ?: name
+            val resolvedColor = existing?.avatarColor
+            val resolvedEmoji = existing?.avatarEmoji
             val progress = opponentsProgress[guestId] ?: OpponentProgress()
             copy(
-                opponentsProgress = opponentsProgress + (guestId to progress.copy(name = name, avatarUrl = avatarUrl)),
+                opponentsProgress = opponentsProgress + (guestId to progress.copy(name = resolvedName, avatarUrl = avatarUrl)),
                 waitingPlayers    = waitingPlayers.filter { it.userId != guestId } +
-                    WaitingPlayer(guestId, name, avatarUrl),
+                    WaitingPlayer(guestId, resolvedName, avatarUrl, resolvedColor, resolvedEmoji),
             )
         }
     }
@@ -383,6 +490,15 @@ class MultiplayerGameViewModel @Inject constructor(
         viewModelScope.launch { startRoomUseCase(uiState.value.roomId) }
     }
 
+    private fun startMatchWithWord(word: String) {
+        val s = uiState.value
+        val w = word.uppercase().trim()
+        if (w.isEmpty()) return
+        viewModelScope.launch {
+            restartRoomUseCase(s.roomId, w, w.length, roundNumber = 1, totalPoints = emptyMap())
+        }
+    }
+
     // ── Leave match ───────────────────────────────────────────────────────────
     private fun leaveMatch() {
         val s = uiState.value
@@ -395,11 +511,10 @@ class MultiplayerGameViewModel @Inject constructor(
                 if (s.isHost) {
                     // Host ends the session for everyone
                     leaveRoomUseCase(s.roomId, s.myUserId)
-                } else if (s.roomStatus == "waiting") {
-                    // Guest leaving the lobby: remove their name from the room
+                } else {
+                    // Guest leaving at any point: remove from guestIds and clear their vote
                     removeGuestFromRoomUseCase(s.roomId, s.myUserId)
                 }
-                // Guest leaving mid-game: just navigate back, room continues for others
             } else {
                 leaveRoomUseCase(s.roomId, s.myUserId)
             }
@@ -532,9 +647,9 @@ class MultiplayerGameViewModel @Inject constructor(
 
             if (gameOver) {
                 if (s2.isCustomWord) {
-                    // ── Custom word: show result locally, keep room alive ──────
-                    setState { copy(isGameOver = true) }
-                    sendEffect { MultiplayerGameEffect.ShowGameDialog(isWin = solved, targetWord = s2.targetWord) }
+                    // ── Custom word guest: go to in-screen result lobby ────────
+                    setState { copy(isGameOver = true, isMyWin = solved) }
+                    // host will see ShowGameDialog when all guests finish (observeGuestState)
                 } else {
                     // ── 1v1 non-custom: finish room as before ─────────────────
                     if (solved) {
@@ -545,6 +660,75 @@ class MultiplayerGameViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    private fun votePlayAgain() {
+        val s = uiState.value
+        viewModelScope.launch {
+            if (s.myUserId in s.playAgainVotes) {
+                votePlayAgainUseCase.unvote(s.roomId, s.myUserId)
+            } else {
+                votePlayAgainUseCase.vote(s.roomId, s.myUserId)
+            }
+        }
+    }
+
+    private fun updateGuestProfile(name: String, avatarColor: Long?, avatarEmoji: String?) {
+        val trimmed = name.trim().ifBlank { uiState.value.myName }
+        setState { copy(myName = trimmed, avatarColor = avatarColor, avatarEmoji = avatarEmoji) }
+        val s = uiState.value
+        if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
+            viewModelScope.launch {
+                runCatching { updateGuestProfileUseCase(s.roomId, s.myUserId, trimmed, avatarColor, avatarEmoji) }
+            }
+        }
+    }
+
+    private fun playAgainCustomWord(newWord: String) {
+        val s = uiState.value
+        val word = newWord.uppercase().trim()
+        if (word.isEmpty()) return
+
+        // Accumulate points earned this round into the total
+        val newTotalPoints = s.totalPoints.toMutableMap()
+        s.opponentsProgress.forEach { (guestId, progress) ->
+            val pointsThisRound = if (progress.solved) when (progress.guessCount) {
+                1    -> 100
+                2    -> 80
+                3    -> 60
+                4    -> 40
+                5    -> 20
+                else -> 10
+            } else 0
+            if (pointsThisRound > 0) {
+                newTotalPoints[guestId] = (newTotalPoints[guestId] ?: 0) + pointsThisRound
+            }
+        }
+        val newRound = s.roundNumber + 1
+
+        setState {
+            copy(
+                isGameOver    = false,
+                targetWord    = word,
+                roundNumber   = newRound,
+                totalPoints   = newTotalPoints,
+                opponentsProgress = opponentsProgress.mapValues { (guestId, p) ->
+                    p.copy(
+                        solved      = false,
+                        failed      = false,
+                        guessCount  = 0,
+                        guessRows   = List(MAX_GUESSES) { GuessRow() },
+                        totalPoints = newTotalPoints[guestId] ?: p.totalPoints,
+                    )
+                },
+            )
+        }
+        viewModelScope.launch {
+            s.guestIds.forEach { guestId ->
+                updatePlayerStateUseCase(s.roomId, guestId, PlayerState())
+            }
+            restartRoomUseCase(s.roomId, word, word.length, newRound, newTotalPoints)
         }
     }
 
