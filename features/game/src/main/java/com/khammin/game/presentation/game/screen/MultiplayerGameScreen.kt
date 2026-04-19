@@ -267,6 +267,7 @@ fun MultiplayerGameScreen(
                 Button(
                     onClick  = {
                         showNewWordSheet = false
+                        showResultButton = false
                         viewModel.onEvent(MultiplayerGameIntent.PlayAgainCustomWord(newWord))
                     },
                     enabled  = newWord.length >= 3,
@@ -541,8 +542,11 @@ fun MultiplayerGameContent(
                     }
 
                     if (state.isHost && state.isCustomWord) {
-                        if (resultWord.isNotEmpty()) {
-                            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.End) {
+                        if (showResultButton) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.End
+                            ) {
                                 ResultButton(isWin = true, onClick = onShowResult)
                             }
                         }
