@@ -732,7 +732,6 @@ private fun CustomWordLobbyGuest(
                 myName = myName,
                 avatarColor = avatarColor,
                 avatarEmoji = avatarEmoji,
-
                 onSave = onUpdateProfile,
             )
         }
@@ -1488,13 +1487,13 @@ private fun ProfileEditCard(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
-                            .background(colors.buttonTeal.copy(alpha = 0.15f))
-                            .border(1.dp, colors.buttonTeal.copy(alpha = 0.3f), CircleShape),
+                            .background(colors.buttonPink.copy(alpha = 0.15f))
+                            .border(1.dp, colors.buttonPink.copy(alpha = 0.3f), CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = myName.take(1).uppercase().ifBlank { "?" },
-                            color = colors.buttonTeal,
+                            color = colors.buttonPink,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -1610,7 +1609,10 @@ private fun ProfileEditCard(
                             .clickable(
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() },
-                            ) { draftColor = colorLong },
+                            ) {
+                                draftColor = colorLong
+                                if (draftEmoji == null) draftEmoji = avatarEmojiOptions.first()
+                            },
                     )
                 }
             }

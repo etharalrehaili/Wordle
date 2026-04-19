@@ -197,7 +197,7 @@ fun CustomWordResultBottomSheet(
                     GameButton(
                         label           = stringResource(R.string.result_play_again),
                         backgroundColor = accentColor,
-                        contentColor    = Color.White,
+                        contentColor    = colors.title,
                         showBorder      = false,
                         onClick         = onPlayAgain,
                         modifier        = Modifier.fillMaxWidth()
@@ -206,9 +206,10 @@ fun CustomWordResultBottomSheet(
                 }
                 GameButton(
                     label           = stringResource(R.string.spectator_result_back_home),
-                    backgroundColor = if (onPlayAgain != null) colors.surface else accentColor,
-                    contentColor    = if (onPlayAgain != null) colors.body else Color.White,
-                    showBorder      = onPlayAgain != null,
+                    backgroundColor = Color.Transparent,
+                    contentColor    = colors.title.copy(alpha = 1f),
+                    borderColor     = colors.buttonPink,
+                    showBorder      = true,
                     onClick         = onBackHome,
                     modifier        = Modifier.fillMaxWidth()
                 )

@@ -439,6 +439,13 @@ class MultiplayerGameViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
+    private val similarPairs: List<Set<Char>> = listOf(
+        setOf('\u0647', '\u0629') // ه ↔ ة
+    )
+
+    private fun areSimilarArabicLetters(a: Char, b: Char): Boolean =
+        a != b && similarPairs.any { it.contains(a) && it.contains(b) }
+
     private fun detectLanguage(word: String): String =
         if (word.any { it in '\u0600'..'\u06FF' }) "ar" else "en"
 
@@ -559,7 +566,7 @@ class MultiplayerGameViewModel @Inject constructor(
 
         viewModelScope.launch {
             val isTargetWord = rawGuess.normalizeForWordle() == s.targetWord.normalizeForWordle()
-            if (!isTargetWord && !s.isCustomWord) {
+            if (!isTargetWord) {
                 val wordList = wordCache[s.wordLength] ?: emptyList()
                 val isValid = validateWordUseCase(rawGuess, s.language, wordList)
                 if (!isValid) {
@@ -573,44 +580,57 @@ class MultiplayerGameViewModel @Inject constructor(
             val target = s2.targetWord.uppercase().toList()
             if (guess.size != s2.wordLength || target.size != s2.wordLength) return@launch
 
-            val types = guess.mapIndexed { i, ch ->
+            // Two-pass evaluation matching single-player logic (supports SIMILAR)
+            val tileStates   = Array(s2.wordLength) { TileState.WRONG }
+            val remainingTarget = target.toMutableList()
+
+            // First pass: exact matches and similar-letter matches
+            for (i in guess.indices) {
                 when {
-                    ch == target[i] -> Types.CORRECT
-                    ch in target    -> Types.PRESENT
-                    else            -> Types.ABSENT
+                    guess[i] == target[i] -> {
+                        tileStates[i]      = TileState.CORRECT
+                        remainingTarget[i] = '\u0000'
+                    }
+                    areSimilarArabicLetters(guess[i], target[i]) -> {
+                        tileStates[i]      = TileState.SIMILAR
+                        remainingTarget[i] = '\u0000'
+                    }
+                }
+            }
+            // Second pass: misplaced letters
+            for (i in guess.indices) {
+                if (tileStates[i] == TileState.CORRECT || tileStates[i] == TileState.SIMILAR) continue
+                val idx = remainingTarget.indexOf(guess[i])
+                if (idx != -1) {
+                    tileStates[i]      = TileState.MISPLACED
+                    remainingTarget[idx] = '\u0000'
                 }
             }
 
             val newBoard = s2.board.mapIndexed { r, row ->
                 if (r == s2.currentRow) row.mapIndexed { c, tile ->
-                    tile.copy(state = when (types.getOrElse(c) { Types.DEFAULT }) {
-                        Types.CORRECT -> TileState.CORRECT
-                        Types.PRESENT -> TileState.MISPLACED
-                        Types.ABSENT  -> TileState.WRONG
-                        else          -> TileState.EMPTY
-                    })
+                    tile.copy(state = tileStates.getOrElse(c) { TileState.EMPTY })
                 } else row
             }
 
+            val priority = mapOf(
+                TileState.CORRECT   to 5,
+                TileState.SIMILAR   to 4,
+                TileState.MISPLACED to 3,
+                TileState.WRONG     to 2,
+                TileState.FILLED    to 1,
+                TileState.EMPTY     to 0,
+            )
             val newKeyboardStates = s2.keyboardStates.toMutableMap()
             guess.forEachIndexed { i, ch ->
+                val incoming = tileStates[i]
                 val current  = newKeyboardStates[ch]
-                val incoming = types[i]
-                val upgrade  = when (incoming) {
-                    Types.CORRECT -> current != TileState.CORRECT
-                    Types.PRESENT -> current != TileState.CORRECT && current != TileState.MISPLACED
-                    Types.ABSENT  -> current == null
-                    else          -> false
-                }
-                if (upgrade) newKeyboardStates[ch] = when (incoming) {
-                    Types.CORRECT -> TileState.CORRECT
-                    Types.PRESENT -> TileState.MISPLACED
-                    Types.ABSENT  -> TileState.WRONG
-                    else          -> TileState.EMPTY
+                if ((priority[incoming] ?: 0) > (priority[current] ?: 0)) {
+                    newKeyboardStates[ch] = incoming
                 }
             }
 
-            val solved   = types.all { it == Types.CORRECT }
+            val solved   = tileStates.all { it == TileState.CORRECT || it == TileState.SIMILAR }
             val newRow   = s2.currentRow + 1
             val gameOver = solved || newRow >= newBoard.size
 
@@ -625,6 +645,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 row.joinToString(",") { tile ->
                     when (tile.state) {
                         TileState.CORRECT   -> "CORRECT"
+                        TileState.SIMILAR   -> "SIMILAR"
                         TileState.MISPLACED -> "PRESENT"
                         TileState.WRONG     -> "ABSENT"
                         else                -> "DEFAULT"
