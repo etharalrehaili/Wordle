@@ -104,6 +104,7 @@ fun MultiplayerGameScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showLeaveSheet by remember { mutableStateOf(false) }
     var showResultSheet by remember { mutableStateOf(false) }
+    var showResultButton by remember { mutableStateOf(false) }
     var resultIsWin by remember { mutableStateOf(false) }
     var resultWord by remember { mutableStateOf("") }
     var resultOpponentFailed by remember { mutableStateOf(false) }
@@ -140,6 +141,7 @@ fun MultiplayerGameScreen(
                     resultWinnerName = effect.winnerName
                     resultTotalPoints = effect.totalPoints
                     showResultSheet = true
+                    showResultButton = true
                 }
 
                 is MultiplayerGameEffect.DismissResultDialog -> {
@@ -257,6 +259,7 @@ fun MultiplayerGameScreen(
                     keyboardActions = KeyboardActions(onDone = {
                         if (newWord.length >= 3) {
                             showNewWordSheet = false
+                            showResultButton = false
                             viewModel.onEvent(MultiplayerGameIntent.PlayAgainCustomWord(newWord))
                         }
                     }),
@@ -362,7 +365,7 @@ fun MultiplayerGameScreen(
         state = state,
         opponentGuesses = opponentGuesses,
         onIntent = viewModel::onEvent,
-        showResultButton = !showResultSheet && resultWord.isNotEmpty(),
+        showResultButton = showResultButton && !showResultSheet,
         resultIsWin = resultIsWin,
         onShowResult = { showResultSheet = true },
         onPlayAgain = { showNewWordSheet = true },
