@@ -113,10 +113,11 @@ fun PlayerState.toGuessRows(wordLength: Int): List<GuessRow> {
             ?.split(",")
             ?.map { t ->
                 when (t) {
-                    "CORRECT" -> Types.CORRECT
-                    "PRESENT" -> Types.PRESENT
-                    "ABSENT"  -> Types.ABSENT
-                    else      -> Types.DEFAULT
+                    "CORRECT"  -> Types.CORRECT
+                    "SIMILAR"  -> Types.SIMILAR
+                    "PRESENT"  -> Types.PRESENT
+                    "ABSENT"   -> Types.ABSENT
+                    else       -> Types.DEFAULT
                 }
             } ?: emptyList()
         GuessRow(letters, typeList)

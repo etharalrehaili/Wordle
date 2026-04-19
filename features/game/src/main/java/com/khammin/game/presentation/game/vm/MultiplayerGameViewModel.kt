@@ -258,43 +258,41 @@ class MultiplayerGameViewModel @Inject constructor(
             }
 
             // ── Game-end detection (1v1 non-custom only) ──────────────────────
-            if (room.status == "finished" && !uiState.value.isGameOver) {
-                if (!isCustomWordRoom) {
-                    val iWon         = room.winnerId == myId
-                    val iLeft        = room.leftBy == myId
-                    val opponentLeft = room.leftBy.isNotEmpty() && room.leftBy != myId
-                    val opponentFail = room.failedBy.isNotEmpty() && room.failedBy != myId
+            if (room.status == "finished" && !uiState.value.isGameOver && !isCustomWordRoom) {
+                val iWon         = room.winnerId == myId
+                val iLeft        = room.leftBy == myId
+                val opponentLeft = room.leftBy.isNotEmpty() && room.leftBy != myId
+                val opponentFail = room.failedBy.isNotEmpty() && room.failedBy != myId
 
-                    setState { copy(isGameOver = true) }
-                    when {
-                        iLeft        -> Unit
-                        opponentLeft -> {
-                            setState { copy(opponentLeft = true) }
-                            sendEffect {
-                                MultiplayerGameEffect.ShowGameDialog(
-                                    isWin = true, targetWord = room.word, opponentLeft = true
-                                )
-                            }
-                        }
-                        opponentFail -> {
-                            setState { copy(opponentFailed = true) }
-                            sendEffect {
-                                MultiplayerGameEffect.ShowGameDialog(
-                                    isWin = true, targetWord = room.word, opponentFailed = true
-                                )
-                            }
-                        }
-                        else -> sendEffect {
-                            MultiplayerGameEffect.ShowGameDialog(isWin = iWon, targetWord = room.word)
+                setState { copy(isGameOver = true) }
+                when {
+                    iLeft        -> Unit
+                    opponentLeft -> {
+                        setState { copy(opponentLeft = true) }
+                        sendEffect {
+                            MultiplayerGameEffect.ShowGameDialog(
+                                isWin = true, targetWord = room.word, opponentLeft = true
+                            )
                         }
                     }
-                } else {
-                    // Custom-word room ended (host left) → notify guests
-                    if (!isHostOfRoom) {
-                        setState { copy(isHostLeft = true) }
-                        sendEffect { MultiplayerGameEffect.HostLeftRoom }
+                    opponentFail -> {
+                        setState { copy(opponentFailed = true) }
+                        sendEffect {
+                            MultiplayerGameEffect.ShowGameDialog(
+                                isWin = true, targetWord = room.word, opponentFailed = true
+                            )
+                        }
+                    }
+                    else -> sendEffect {
+                        MultiplayerGameEffect.ShowGameDialog(isWin = iWon, targetWord = room.word)
                     }
                 }
+            }
+
+            // ── Custom-word host left → notify guests regardless of their game-over state ──
+            if (room.status == "finished" && isCustomWordRoom && !isHostOfRoom && !uiState.value.isHostLeft) {
+                setState { copy(isHostLeft = true) }
+                sendEffect { MultiplayerGameEffect.HostLeftRoom }
             }
 
             if (room.status == "finished" && uiState.value.isGameOver && !isCustomWordRoom) {
@@ -374,11 +372,16 @@ class MultiplayerGameViewModel @Inject constructor(
                 }
                 if (allDone) {
                     val anyoneSolved = updatedProgress.values.any { it.solved }
+                    val winnerName = updatedProgress.entries
+                        .firstOrNull { it.value.solved }
+                        ?.let { (id, p) -> p.name.takeIf { it.isNotBlank() } ?: guestNameFromId(id) }
+                        ?: ""
                     setState { copy(isGameOver = true) }
                     sendEffect {
                         MultiplayerGameEffect.ShowGameDialog(
                             isWin = anyoneSolved,
                             targetWord = s.targetWord,
+                            winnerName = winnerName,
                         )
                     }
                 }

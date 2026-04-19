@@ -70,7 +70,7 @@ data class MultiplayerGameUiState(
 ) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {
-    data class ShowGameDialog(val isWin: Boolean, val targetWord: String, val opponentLeft: Boolean = false, val opponentFailed: Boolean = false) : MultiplayerGameEffect
+    data class ShowGameDialog(val isWin: Boolean, val targetWord: String, val opponentLeft: Boolean = false, val opponentFailed: Boolean = false, val winnerName: String = "") : MultiplayerGameEffect
     data object InvalidWord : MultiplayerGameEffect
     data object NotInWordList : MultiplayerGameEffect
     data object RowShake : MultiplayerGameEffect

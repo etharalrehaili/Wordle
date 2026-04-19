@@ -109,6 +109,7 @@ fun MultiplayerGameScreen(
     var resultWord by remember { mutableStateOf("") }
     var resultOpponentFailed by remember { mutableStateOf(false) }
     var resultOpponentLeft by remember { mutableStateOf(false) }
+    var resultWinnerName by remember { mutableStateOf("") }
     val defaultMyName = stringResource(CoreRes.string.multiplayer_default_my_name)
     val defaultGuestName = stringResource(CoreRes.string.multiplayer_default_guest_name)
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
@@ -136,6 +137,7 @@ fun MultiplayerGameScreen(
                     resultWord = effect.targetWord
                     resultOpponentFailed = effect.opponentFailed
                     resultOpponentLeft = effect.opponentLeft
+                    resultWinnerName = effect.winnerName
                     showResultSheet = true
                     android.util.Log.d("ResultSheet", "ShowGameDialog received: isWin=${effect.isWin}, targetWord=${effect.targetWord}, opponentFailed=${effect.opponentFailed}, opponentLeft=${effect.opponentLeft}")
                     android.util.Log.d("ResultSheet", "State at effect time: isHost=${state.isHost}, isCustomWord=${state.isCustomWord}")
@@ -146,6 +148,7 @@ fun MultiplayerGameScreen(
                     resultWord = ""
                     resultOpponentFailed = false
                     resultOpponentLeft = false
+                    resultWinnerName = ""
                 }
 
                 is MultiplayerGameEffect.NotInWordList -> snackbarState = SnackbarState(
@@ -287,7 +290,7 @@ fun MultiplayerGameScreen(
         if (state.isCustomWord) {
             android.util.Log.d("ResultSheet", "→ CustomWordResultBottomSheet | isOwnWin=${!state.isHost && resultIsWin}, opponentGuessedCorrectly=${state.isHost && !resultOpponentFailed && !resultOpponentLeft}")
             CustomWordResultBottomSheet(
-                opponentName = state.opponentName,
+                opponentName = resultWinnerName.takeIf { it.isNotBlank() } ?: state.opponentName,
                 targetWord = resultWord,
                 opponentGuessedCorrectly = if (state.isHost) {
                     !resultOpponentFailed && !resultOpponentLeft
