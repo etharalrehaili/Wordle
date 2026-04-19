@@ -82,6 +82,7 @@ import com.khammin.game.presentation.game.components.AllPlayersLeftBottomSheet
 import com.khammin.game.presentation.game.components.CustomWordLobbyGuest
 import com.khammin.game.presentation.game.components.CustomWordLobbyHost
 import com.khammin.game.presentation.game.components.GuestGameOverLobby
+import com.khammin.game.presentation.game.components.GuestLeftBottomSheet
 import com.khammin.game.presentation.game.components.HostLeftBottomSheet
 import com.khammin.game.presentation.game.components.ResultButton
 import com.khammin.game.presentation.game.components.RoomCodeCard
@@ -116,6 +117,7 @@ fun MultiplayerGameScreen(
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
     var showHostLeftSheet by remember { mutableStateOf(false) }
     var showAllPlayersLeftSheet by remember { mutableStateOf(false) }
+    var guestLeftName by remember { mutableStateOf<String?>(null) }
     var showNewWordSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -161,6 +163,7 @@ fun MultiplayerGameScreen(
                 is MultiplayerGameEffect.NavigateBack -> onClose()
                 is MultiplayerGameEffect.HostLeftRoom -> showHostLeftSheet = true
                 is MultiplayerGameEffect.AllPlayersLeft -> showAllPlayersLeftSheet = true
+                is MultiplayerGameEffect.GuestLeftRoom -> guestLeftName = effect.guestName
                 else -> Unit
             }
         }
@@ -209,6 +212,13 @@ fun MultiplayerGameScreen(
             showAllPlayersLeftSheet = false
             viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
         })
+    }
+
+    guestLeftName?.let { name ->
+        GuestLeftBottomSheet(
+            guestName = name,
+            onDismiss = { guestLeftName = null },
+        )
     }
 
     if (showNewWordSheet) {
@@ -421,9 +431,11 @@ fun MultiplayerGameContent(
                         myName            = state.myName,
                         myAvatarColor     = state.avatarColor,
                         myAvatarEmoji     = state.avatarEmoji,
+                        myUserId          = state.myUserId,
                         myGuessCount      = state.currentRow,
                         myTotalPoints     = state.sessionPoints[state.myUserId] ?: 0,
                         sessionPoints     = state.sessionPoints,
+                        playAgainVotes    = state.playAgainVotes,
                         hasVotedPlayAgain = state.myUserId in state.playAgainVotes,
                         onVotePlayAgain   = { onIntent(MultiplayerGameIntent.VotePlayAgain) },
                         modifier          = Modifier.fillMaxWidth().weight(1f),
@@ -556,6 +568,7 @@ fun MultiplayerGameContent(
                             opponentsProgress  = state.opponentsProgress,
                             roundNumber        = state.roundNumber,
                             playAgainVoteCount = state.playAgainVotes.size,
+                            playAgainVotes     = state.playAgainVotes,
                             totalGuests        = state.guestIds.size,
                             onPlayAgain        = onPlayAgain,
                             modifier           = Modifier.fillMaxWidth().weight(1f)

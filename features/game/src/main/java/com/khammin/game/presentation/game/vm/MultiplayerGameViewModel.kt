@@ -85,6 +85,10 @@ class MultiplayerGameViewModel @Inject constructor(
 
     private var observingOpponentId: String = ""
     private val observingGuestIds = mutableSetOf<String>()
+    private val observingGuestPresenceIds = mutableSetOf<String>()
+    private val guestSeenOnline = mutableSetOf<String>()
+    private val guestPresenceJobs = mutableMapOf<String, kotlinx.coroutines.Job>()
+    private var hostPresenceJob: kotlinx.coroutines.Job? = null
     private val wordCache: MutableMap<Int, List<String>> = mutableMapOf()
     private var presenceStarted = false
 
@@ -141,8 +145,9 @@ class MultiplayerGameViewModel @Inject constructor(
 
             val isCustomWordRoom = isCustomWord || room.isCustomWord
             val isHostOfRoom = room.hostId == myId
-            val previousWord     = uiState.value.targetWord
-            val previousGuestIds = uiState.value.guestIds
+            val previousWord           = uiState.value.targetWord
+            val previousGuestIds       = uiState.value.guestIds
+            val previousWaitingPlayers = uiState.value.waitingPlayers
 
             // Compute opponent ID for 1v1 (non-custom) or custom-word guest
             val opponentId = when {
@@ -235,6 +240,17 @@ class MultiplayerGameViewModel @Inject constructor(
                     observingGuestIds.add(guestId)
                     observeGuestState(roomId, guestId)
                     fetchGuestInfo(guestId)
+                    observeGuestPresence(roomId, guestId)
+                }
+            }
+
+            // ── Custom-word guest: detect when a co-guest leaves via guestIds shrinking ──
+            if (isCustomWordRoom && !isHostOfRoom && room.status in listOf("waiting", "playing")) {
+                val leftIds = previousGuestIds.filter { it !in room.guestIds && it != myId }
+                for (leftId in leftIds) {
+                    val leftName = previousWaitingPlayers.firstOrNull { it.userId == leftId }?.name
+                        ?: guestNameFromId(leftId)
+                    sendEffect { MultiplayerGameEffect.GuestLeftRoom(leftName) }
                 }
             }
 
@@ -247,11 +263,11 @@ class MultiplayerGameViewModel @Inject constructor(
                     observeOpponentPresence(roomId, opponentId)
                 }
             } else if (!isHostOfRoom && opponentId.isNotEmpty() && opponentId != observingOpponentId) {
-                // Custom-word guest: fetch host name only if no custom name is saved yet
+                // Custom-word guest: fetch host name + observe host presence for app-kill detection
                 observingOpponentId = opponentId
                 val hostCustomName = room.guestProfiles[opponentId]?.get("name")?.takeIf { it.isNotBlank() }
                 if (hostCustomName == null) fetchOpponentName(opponentId)
-                // else: resolvedOpponentName above already applied the custom name
+                observeOpponentPresence(roomId, opponentId)
             }
 
             // ── Custom-word guest: observe other guests' progress for game-over lobby ──
@@ -460,19 +476,73 @@ class MultiplayerGameViewModel @Inject constructor(
                 presenceStarted = isOnline
                 return@onEach
             }
-            if (!isOnline && !uiState.value.isGameOver && !uiState.value.isCustomWord) {
-                setState { copy(opponentLeft = true, isGameOver = true) }
-                sendEffect {
-                    MultiplayerGameEffect.ShowGameDialog(
-                        isWin = true, targetWord = uiState.value.targetWord, opponentLeft = true
-                    )
+            if (isOnline) {
+                // Came back (backgrounded, not killed) — cancel any pending left event
+                hostPresenceJob?.cancel()
+                hostPresenceJob = null
+                return@onEach
+            }
+            val s = uiState.value
+            if (s.isCustomWord && !s.isHostLeft) {
+                // Grace period: fire only if still offline after delay (true kill, not background switch)
+                hostPresenceJob?.cancel()
+                hostPresenceJob = viewModelScope.launch {
+                    kotlinx.coroutines.delay(PRESENCE_GRACE_MS)
+                    val current = uiState.value
+                    if (!current.isHostLeft) {
+                        setState { copy(isHostLeft = true) }
+                        sendEffect { MultiplayerGameEffect.HostLeftRoom }
+                    }
                 }
-                viewModelScope.launch {
-                    val s = uiState.value
-                    finishRoomUseCase(s.roomId, s.myUserId)
+            } else if (!s.isCustomWord && !s.isGameOver) {
+                hostPresenceJob?.cancel()
+                hostPresenceJob = viewModelScope.launch {
+                    kotlinx.coroutines.delay(PRESENCE_GRACE_MS)
+                    val current = uiState.value
+                    if (!current.isGameOver) {
+                        setState { copy(opponentLeft = true, isGameOver = true) }
+                        sendEffect {
+                            MultiplayerGameEffect.ShowGameDialog(
+                                isWin = true, targetWord = current.targetWord, opponentLeft = true
+                            )
+                        }
+                        finishRoomUseCase(current.roomId, current.myUserId)
+                    }
                 }
             }
         }.launchIn(viewModelScope)
+    }
+
+    private fun observeGuestPresence(roomId: String, guestId: String) {
+        if (guestId in observingGuestPresenceIds) return
+        observingGuestPresenceIds.add(guestId)
+        observeOpponentPresenceUseCase(roomId, guestId).onEach { isOnline ->
+            if (isOnline) {
+                guestSeenOnline.add(guestId)
+                // Came back before grace period expired — cancel pending left event
+                guestPresenceJobs[guestId]?.cancel()
+                guestPresenceJobs.remove(guestId)
+                return@onEach
+            }
+            if (guestId !in guestSeenOnline) return@onEach
+            val s = uiState.value
+            if (!s.isHost || !s.isCustomWord) return@onEach
+            // Grace period before declaring the guest truly gone
+            guestPresenceJobs[guestId]?.cancel()
+            guestPresenceJobs[guestId] = viewModelScope.launch {
+                kotlinx.coroutines.delay(PRESENCE_GRACE_MS)
+                val current = uiState.value
+                if (!current.isHost || !current.isCustomWord) return@launch
+                val guestName = current.waitingPlayers.firstOrNull { it.userId == guestId }?.name
+                    ?: guestNameFromId(guestId)
+                runCatching { removeGuestFromRoomUseCase(current.roomId, guestId) }
+                sendEffect { MultiplayerGameEffect.GuestLeftRoom(guestName) }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    companion object {
+        private const val PRESENCE_GRACE_MS = 15_000L
     }
 
     private val similarPairs: List<Set<Char>> = listOf(
