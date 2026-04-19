@@ -44,6 +44,8 @@ fun GuestCard(
     modifier: Modifier = Modifier,
     name: String = "Guest",
     avatarUrl: String? = null,
+    avatarColor: Long? = null,
+    avatarEmoji: String? = null,
     isLoading: Boolean = false,
     guesses: List<GuessRow> = listOf(
         GuessRow(listOf('S','L','A','T'), listOf(Types.CORRECT, Types.ABSENT,  Types.ABSENT,  Types.PRESENT)),
@@ -83,21 +85,48 @@ fun GuestCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(colors.key)
+                    .background(colors.key),
+                contentAlignment = Alignment.Center,
             ) {
-                if (isLoading) {
-                    Box(
+                when {
+                    isLoading -> Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .alpha(shimmerAlpha)
                             .background(colors.surface)
                     )
-                } else {
-                    PlayerAvatar(
+                    avatarColor != null && avatarEmoji != null -> {
+                        val circleColor = Color(avatarColor)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(circleColor.copy(alpha = 0.20f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(text = avatarEmoji, fontSize = 28.sp)
+                        }
+                    }
+                    avatarColor != null -> {
+                        val circleColor = Color(avatarColor)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(circleColor.copy(alpha = 0.20f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text       = name.take(1).uppercase().ifBlank { "?" },
+                                color      = circleColor,
+                                fontSize   = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    else -> PlayerAvatar(
                         name      = name,
                         avatarUrl = avatarUrl,
                         modifier  = Modifier.fillMaxSize(),
-                        fontSize  = 24.sp
+                        fontSize  = 24.sp,
                     )
                 }
             }

@@ -23,6 +23,7 @@ import com.khammin.game.domain.usecases.game.RemoveGuestFromRoomUseCase
 import com.khammin.game.domain.usecases.game.ResetCustomRoomUseCase
 import com.khammin.game.domain.usecases.game.StartRoomUseCase
 import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
+import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
 import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
@@ -57,6 +58,7 @@ class MultiplayerGameViewModel @Inject constructor(
     private val resetCustomRoomUseCase: ResetCustomRoomUseCase,
     private val votePlayAgainUseCase: VotePlayAgainUseCase,
     private val updateGuestProfileUseCase: UpdateGuestProfileUseCase,
+    private val updateSessionPointsUseCase: UpdateSessionPointsUseCase,
     private val auth: FirebaseAuth
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
@@ -171,7 +173,9 @@ class MultiplayerGameViewModel @Inject constructor(
                     .mapValues { (guestId, progress) ->
                         val profile = room.guestProfiles[guestId]
                         if (profile != null) progress.copy(
-                            name = profile["name"]?.takeIf { it.isNotBlank() } ?: progress.name,
+                            name        = profile["name"]?.takeIf { it.isNotBlank() } ?: progress.name,
+                            avatarColor = profile["avatarColor"]?.toLongOrNull() ?: progress.avatarColor,
+                            avatarEmoji = profile["avatarEmoji"]?.takeIf { it.isNotEmpty() } ?: progress.avatarEmoji,
                         ) else progress
                     }
                 // For guests: apply host's saved profile if present
@@ -194,6 +198,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     playAgainVotes        = room.playAgainVotes,
                     roundNumber           = room.roundNumber,
                     totalPoints           = room.totalPoints,
+                    sessionPoints         = room.sessionPoints,
                     board                 = if (boardResized) List(board.size) { List(room.wordLength) { Tile() } } else board,
                     currentRow            = if (boardResized) 0 else currentRow,
                     currentCol            = if (boardResized) 0 else currentCol,
@@ -242,9 +247,11 @@ class MultiplayerGameViewModel @Inject constructor(
                     observeOpponentPresence(roomId, opponentId)
                 }
             } else if (!isHostOfRoom && opponentId.isNotEmpty() && opponentId != observingOpponentId) {
-                // Custom-word guest: just fetch host name (no presence needed)
+                // Custom-word guest: fetch host name only if no custom name is saved yet
                 observingOpponentId = opponentId
-                fetchOpponentName(opponentId)
+                val hostCustomName = room.guestProfiles[opponentId]?.get("name")?.takeIf { it.isNotBlank() }
+                if (hostCustomName == null) fetchOpponentName(opponentId)
+                // else: resolvedOpponentName above already applied the custom name
             }
 
             // ── Custom-word guest: observe other guests' progress for game-over lobby ──
@@ -354,7 +361,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 failed      = playerState?.finishedAt != null && playerState.solved != true,
                 guessCount  = playerState?.currentRow ?: current.guessCount,
                 guessRows   = playerState?.toGuessRows(wordLen) ?: List(MAX_GUESSES) { GuessRow() },
-                totalPoints = s.totalPoints[guestId] ?: current.totalPoints,
+                totalPoints = s.sessionPoints[guestId] ?: current.totalPoints,
             )
             val updatedProgress = s.opponentsProgress + (guestId to updated)
             setState { copy(opponentsProgress = updatedProgress) }
@@ -364,24 +371,45 @@ class MultiplayerGameViewModel @Inject constructor(
                 setState { copy(isGameOver = true, isMyWin = false) }
             }
 
-            // Host: show result sheet when every guest has either solved or failed
+            // Host: show result sheet as soon as someone wins, or when all have finished
             if (s.isHost && !s.isGameOver && s.guestIds.isNotEmpty()) {
+                val anyoneSolved = updatedProgress.values.any { it.solved }
                 val allDone = s.guestIds.all { id ->
                     val p = updatedProgress[id]
                     p != null && (p.solved || p.failed)
                 }
-                if (allDone) {
-                    val anyoneSolved = updatedProgress.values.any { it.solved }
+                if (anyoneSolved || allDone) {
                     val winnerName = updatedProgress.entries
                         .firstOrNull { it.value.solved }
                         ?.let { (id, p) -> p.name.takeIf { it.isNotBlank() } ?: guestNameFromId(id) }
                         ?: ""
-                    setState { copy(isGameOver = true) }
+                    // Mark any still-waiting player as failed
+                    val finalProgress = updatedProgress.mapValues { (_, p) ->
+                        if (!p.solved && !p.failed) p.copy(failed = true) else p
+                    }
+                    // Accumulate session points for this round
+                    val newSessionPts = s.sessionPoints.toMutableMap()
+                    finalProgress.forEach { (guestId, p) ->
+                        val pts = if (p.solved) when (p.guessCount) {
+                            1    -> 100
+                            2    -> 80
+                            3    -> 60
+                            4    -> 40
+                            5    -> 20
+                            else -> 10
+                        } else 0
+                        if (pts > 0) newSessionPts[guestId] = (newSessionPts[guestId] ?: 0) + pts
+                    }
+                    setState { copy(isGameOver = true, opponentsProgress = finalProgress, sessionPoints = newSessionPts) }
+                    viewModelScope.launch {
+                        runCatching { updateSessionPointsUseCase(s.roomId, newSessionPts) }
+                    }
                     sendEffect {
                         MultiplayerGameEffect.ShowGameDialog(
-                            isWin = anyoneSolved,
-                            targetWord = s.targetWord,
-                            winnerName = winnerName,
+                            isWin       = anyoneSolved,
+                            targetWord  = s.targetWord,
+                            winnerName  = winnerName,
+                            totalPoints = newSessionPts,
                         )
                     }
                 }
@@ -414,7 +442,12 @@ class MultiplayerGameViewModel @Inject constructor(
             val resolvedEmoji = existing?.avatarEmoji
             val progress = opponentsProgress[guestId] ?: OpponentProgress()
             copy(
-                opponentsProgress = opponentsProgress + (guestId to progress.copy(name = resolvedName, avatarUrl = avatarUrl)),
+                opponentsProgress = opponentsProgress + (guestId to progress.copy(
+                    name        = resolvedName,
+                    avatarUrl   = avatarUrl,
+                    avatarColor = resolvedColor,
+                    avatarEmoji = resolvedEmoji,
+                )),
                 waitingPlayers    = waitingPlayers.filter { it.userId != guestId } +
                     WaitingPlayer(guestId, resolvedName, avatarUrl, resolvedColor, resolvedEmoji),
             )
@@ -714,21 +747,6 @@ class MultiplayerGameViewModel @Inject constructor(
         val word = newWord.uppercase().trim()
         if (word.isEmpty()) return
 
-        // Accumulate points earned this round into the total
-        val newTotalPoints = s.totalPoints.toMutableMap()
-        s.opponentsProgress.forEach { (guestId, progress) ->
-            val pointsThisRound = if (progress.solved) when (progress.guessCount) {
-                1    -> 100
-                2    -> 80
-                3    -> 60
-                4    -> 40
-                5    -> 20
-                else -> 10
-            } else 0
-            if (pointsThisRound > 0) {
-                newTotalPoints[guestId] = (newTotalPoints[guestId] ?: 0) + pointsThisRound
-            }
-        }
         val newRound = s.roundNumber + 1
 
         setState {
@@ -736,14 +754,13 @@ class MultiplayerGameViewModel @Inject constructor(
                 isGameOver    = false,
                 targetWord    = word,
                 roundNumber   = newRound,
-                totalPoints   = newTotalPoints,
                 opponentsProgress = opponentsProgress.mapValues { (guestId, p) ->
                     p.copy(
                         solved      = false,
                         failed      = false,
                         guessCount  = 0,
                         guessRows   = List(MAX_GUESSES) { GuessRow() },
-                        totalPoints = newTotalPoints[guestId] ?: p.totalPoints,
+                        totalPoints = sessionPoints[guestId] ?: p.totalPoints,
                     )
                 },
             )
@@ -752,7 +769,7 @@ class MultiplayerGameViewModel @Inject constructor(
             s.guestIds.forEach { guestId ->
                 updatePlayerStateUseCase(s.roomId, guestId, PlayerState())
             }
-            restartRoomUseCase(s.roomId, word, word.length, newRound, newTotalPoints)
+            restartRoomUseCase(s.roomId, word, word.length, newRound, s.sessionPoints)
         }
     }
 

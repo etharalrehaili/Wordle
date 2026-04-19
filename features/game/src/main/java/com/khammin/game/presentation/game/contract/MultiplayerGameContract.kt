@@ -19,6 +19,8 @@ data class WaitingPlayer(
 data class OpponentProgress(
     val name: String = "",
     val avatarUrl: String? = null,
+    val avatarColor: Long? = null,
+    val avatarEmoji: String? = null,
     val solved: Boolean = false,
     val failed: Boolean = false,
     val guessCount: Int = 0,
@@ -67,10 +69,12 @@ data class MultiplayerGameUiState(
     val avatarColor: Long? = null,
     val avatarEmoji: String? = null,
     val isAnonymous: Boolean = false,
+    // Session-cumulative points per player (guestId -> pts), updated after each round
+    val sessionPoints: Map<String, Int> = emptyMap(),
 ) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {
-    data class ShowGameDialog(val isWin: Boolean, val targetWord: String, val opponentLeft: Boolean = false, val opponentFailed: Boolean = false, val winnerName: String = "") : MultiplayerGameEffect
+    data class ShowGameDialog(val isWin: Boolean, val targetWord: String, val opponentLeft: Boolean = false, val opponentFailed: Boolean = false, val winnerName: String = "", val totalPoints: Map<String, Int> = emptyMap()) : MultiplayerGameEffect
     data object InvalidWord : MultiplayerGameEffect
     data object NotInWordList : MultiplayerGameEffect
     data object RowShake : MultiplayerGameEffect

@@ -44,4 +44,6 @@ class MultiplayerRepositoryImpl @Inject constructor(
         dataSource.unvotePlayAgain(roomId, userId)
     override suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?) =
         dataSource.updateGuestProfile(roomId, userId, name, avatarColor, avatarEmoji)
+    override suspend fun updateSessionPoints(roomId: String, sessionPoints: Map<String, Int>) =
+        dataSource.updateSessionPoints(roomId, sessionPoints)
 }

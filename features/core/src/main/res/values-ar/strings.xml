@@ -158,10 +158,10 @@
     <string name="error_email_already_in_use">البريد الإلكتروني مرتبط بحساب آخر بالفعل</string>
 
     <!-- Spectator Result Bottom Sheet -->
-    <string name="spectator_result_you_guessed">لقد فزت! 🎉</string>
-    <string name="spectator_result_guessed">%1$s خمّن الكلمة! 🎉</string>
-    <string name="spectator_result_left">%1$s غادر اللعبة 🚪</string>
-    <string name="spectator_result_failed">%1$s لم يخمّن الكلمة 🤔</string>
+    <string name="spectator_result_you_guessed">لقد فزت!</string>
+    <string name="spectator_result_guessed">%1$s خمّن الكلمة!</string>
+    <string name="spectator_result_left">%1$s غادر اللعبة</string>
+    <string name="spectator_result_failed">%1$s لم يخمّن الكلمة</string>
     <string name="spectator_result_back_home">العودة للرئيسية</string>
 
 </resources>

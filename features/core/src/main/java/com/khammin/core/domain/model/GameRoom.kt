@@ -16,7 +16,8 @@ data class GameRoom(
     @JvmField var isCustomWord: Boolean = false,
     val playAgainVotes: List<String> = emptyList(), // guestIds who voted to play again
     val roundNumber: Int = 1,
-    val totalPoints: Map<String, Int> = emptyMap(), // guestId -> cumulative points
+    val totalPoints: Map<String, Int> = emptyMap(), // guestId -> cumulative points (legacy)
+    val sessionPoints: Map<String, Int> = emptyMap(), // guestId -> session-total points (updated after each round)
     val guestProfiles: Map<String, Map<String, String>> = emptyMap(), // guestId -> {name, avatarColor, avatarEmoji}
 )
 

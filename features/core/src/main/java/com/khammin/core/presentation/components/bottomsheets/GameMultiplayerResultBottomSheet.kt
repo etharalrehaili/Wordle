@@ -93,8 +93,6 @@ fun GameMultiplayerResultBottomSheet(
                         .padding(top = 36.dp, bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Animated trophy/emoji
-                    AnimatedEmoji(isWin = isWin)
 
                     Spacer(Modifier.height(16.dp))
 
@@ -204,25 +202,6 @@ private fun ConfettiLayer(modifier: Modifier = Modifier) {
             )
         }
     })
-}
-
-// ─── Animated emoji ───────────────────────────────────────────────────────────
-
-@Composable
-private fun AnimatedEmoji(isWin: Boolean) {
-    val scale by animateFloatAsState(
-        targetValue  = 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness    = Spring.StiffnessMedium
-        ),
-        label = "emojiScale"
-    )
-    Text(
-        text     = if (isWin) "🏆" else "😔",
-        fontSize = 56.sp,
-        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
-    )
 }
 
 // ─── Animated title ───────────────────────────────────────────────────────────

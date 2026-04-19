@@ -52,6 +52,20 @@
     <string name="profile_stat_english">en</string>
     <string name="error_name_too_long">Name must not exceed 25 characters</string>
 
+    <!-- Game Multiplayer Screen -->
+    <string name="spectator_waiting">Waiting for players to join…</string>
+    <string name="multiplayer_room_code">ROOM CODE</string>
+    <string name="multiplayer_room_tap_copy">Tap to copy</string>
+    <string name="room_code_copied_label">Room Code</string>
+    <string name="multiplayer_result_title">RESULTS</string>
+    <string name="spectator_round">Round %1$d</string>
+    <string name="spectator_votes">👋  Votes for play again: %1$d / %2$d</string>
+    <string name="spectator_solved">Solved in %1$d  ·  %2$d pts</string>
+    <string name="spectator_failed">Failed ✗</string>
+    <string name="spectator_waiting_guess">Waiting…</string>
+    <string name="spectator_guess_progress">%1$d/%2$d</string>
+    <string name="spectator_total_points">Total: %1$d pts</string>
+
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>
     <string name="result_play_again">Play Again</string>
@@ -62,4 +76,6 @@
     <string name="error_name_empty">Name cannot be empty</string>
     <string name="error_upload_failed">Upload failed</string>
     <string name="error_generic">Error</string>
+
+
 </resources>

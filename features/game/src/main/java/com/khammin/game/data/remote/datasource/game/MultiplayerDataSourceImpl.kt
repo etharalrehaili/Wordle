@@ -190,6 +190,12 @@ class MultiplayerDataSourceImpl @Inject constructor(
             .await()
     }
 
+    override suspend fun updateSessionPoints(roomId: String, sessionPoints: Map<String, Int>) {
+        rooms.document(roomId)
+            .update("sessionPoints", sessionPoints)
+            .await()
+    }
+
     override fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean> = callbackFlow {
         val ref = rtdb.getReference("presence/$roomId/$opponentId")
         val listener = ref.addValueEventListener(object : ValueEventListener {
