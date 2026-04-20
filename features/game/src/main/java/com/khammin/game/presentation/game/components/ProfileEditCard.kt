@@ -3,6 +3,7 @@ package com.khammin.game.presentation.game.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -51,6 +54,7 @@ fun ProfileEditCard(
     // null = user selected the default letter-based avatar
     var draftColor by remember(avatarColor) { mutableStateOf(avatarColor) }
     var draftEmoji by remember(avatarEmoji) { mutableStateOf(avatarEmoji) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Column(
         modifier = Modifier
@@ -58,7 +62,12 @@ fun ProfileEditCard(
             .clip(RoundedCornerShape(14.dp))
             .background(colors.surface)
             .border(1.dp, colors.border, RoundedCornerShape(14.dp))
-            .padding(14.dp),
+            .padding(14.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    keyboardController?.hide()
+                })
+            },
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // ── Header row ──────────────────────────────────────────────────────

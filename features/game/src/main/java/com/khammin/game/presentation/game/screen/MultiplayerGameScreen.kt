@@ -121,7 +121,6 @@ fun MultiplayerGameScreen(
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
     var showHostLeftSheet by remember { mutableStateOf(false) }
     var showAllPlayersLeftSheet by remember { mutableStateOf(false) }
-    var guestLeftName by remember { mutableStateOf<String?>(null) }
     var showRejoinSheet by remember { mutableStateOf(false) }
     var showNewWordSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -168,7 +167,6 @@ fun MultiplayerGameScreen(
                 is MultiplayerGameEffect.NavigateBack -> onClose()
                 is MultiplayerGameEffect.HostLeftRoom -> showHostLeftSheet = true
                 is MultiplayerGameEffect.AllPlayersLeft -> showAllPlayersLeftSheet = true
-                is MultiplayerGameEffect.GuestLeftRoom -> guestLeftName = effect.guestName
                 is MultiplayerGameEffect.ShowRejoinSheet -> showRejoinSheet = true
                 else -> Unit
             }
@@ -218,13 +216,6 @@ fun MultiplayerGameScreen(
             showAllPlayersLeftSheet = false
             viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
         })
-    }
-
-    guestLeftName?.let { name ->
-        GuestLeftBottomSheet(
-            guestName = name,
-            onDismiss = { guestLeftName = null },
-        )
     }
 
     if (showRejoinSheet) {
@@ -599,36 +590,50 @@ fun MultiplayerGameContent(
                             state.opponentId.isNotEmpty()
                         }
 
-                        GameBoard(
-                            guesses = state.board.map { row ->
-                                GuessRow(
-                                    letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
-                                    types = row.map { tile -> tile.state.toTypes() }
-                                )
-                            },
-                            currentRow = state.currentRow,
-                            currentCol = state.currentCol,
-                            wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                            modifier = Modifier.fillMaxWidth().weight(1f)
-                                .padding(top = 16.dp)
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            GameBoard(
+                                guesses = state.board.map { row ->
+                                    GuessRow(
+                                        letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
+                                        types = row.map { tile -> tile.state.toTypes() }
+                                    )
+                                },
+                                currentRow = state.currentRow,
+                                currentCol = state.currentCol,
+                                wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(top = 16.dp)
+                            )
 
-                        GameKeyboard(
-                            enabled = keyboardEnabled,
-                            keyStates = state.keyboardStates.mapValues { (_, tileState) ->
-                                when (tileState) {
-                                    TileState.CORRECT -> Types.CORRECT
-                                    TileState.MISPLACED -> Types.PRESENT
-                                    TileState.WRONG -> Types.ABSENT
-                                    else -> Types.DEFAULT
-                                }
-                            },
-                            onKey = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.EnterLetter(it)) },
-                            onBackspace = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.DeleteLetter) },
-                            language = keyboardLanguage,
-                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 32.dp)
+                            GameKeyboard(
+                                enabled = keyboardEnabled,
+                                keyStates = state.keyboardStates.mapValues { (_, tileState) ->
+                                    when (tileState) {
+                                        TileState.CORRECT -> Types.CORRECT
+                                        TileState.MISPLACED -> Types.PRESENT
+                                        TileState.WRONG -> Types.ABSENT
+                                        else -> Types.DEFAULT
+                                    }
+                                },
+                                onKey = {
+                                    if (keyboardEnabled) onIntent(
+                                        MultiplayerGameIntent.EnterLetter(
+                                            it
+                                        )
+                                    )
+                                },
+                                onBackspace = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.DeleteLetter) },
+                                language = keyboardLanguage,
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = 32.dp)
 
-                        )
+                            )
+                        }
                     }
                 }
             }
