@@ -202,12 +202,13 @@ class MultiplayerDataSourceImpl @Inject constructor(
             .await()
     }
 
-    override suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?) {
+    override suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?, avatarUrl: String?) {
         rooms.document(roomId)
             .update("guestProfiles.$userId", mapOf(
                 "name"        to name,
                 "avatarColor" to (avatarColor?.toString() ?: ""),
                 "avatarEmoji" to (avatarEmoji ?: ""),
+                "avatarUrl"   to (avatarUrl ?: ""),
             ))
             .await()
     }

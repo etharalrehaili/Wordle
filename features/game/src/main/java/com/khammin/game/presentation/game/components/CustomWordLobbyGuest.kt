@@ -27,9 +27,11 @@ fun CustomWordLobbyGuest(
     hostName: String,
     hostAvatarColor: Long? = null,
     hostAvatarEmoji: String? = null,
+    hostAvatarUrl: String? = null,
     myName: String,
     avatarColor: Long?,
     avatarEmoji: String?,
+    avatarUrl: String? = null,
     otherPlayers: List<WaitingPlayer>,
     onUpdateProfile: (name: String, color: Long?, emoji: String?) -> Unit,
 ) {
@@ -59,6 +61,7 @@ fun CustomWordLobbyGuest(
                 myName      = myName,
                 avatarColor = avatarColor,
                 avatarEmoji = avatarEmoji,
+                avatarUrl   = avatarUrl,
                 onSave      = onUpdateProfile,
             )
         }
@@ -66,7 +69,7 @@ fun CustomWordLobbyGuest(
         // Players header
         item {
             Text(
-                text          = "Players ($totalPlayers/6)",
+                text          = "Players ($totalPlayers/4)",
                 color         = colors.body.copy(alpha = 0.6f),
                 fontSize      = 12.sp,
                 fontWeight    = FontWeight.Medium,
@@ -91,6 +94,7 @@ fun CustomWordLobbyGuest(
                     badgeColor  = colors.buttonTeal,
                     avatarColor = hostAvatarColor,
                     avatarEmoji = hostAvatarEmoji,
+                    avatarUrl   = hostAvatarUrl,
                 )
                 // Me
                 LobbyPlayerRow(
@@ -99,6 +103,7 @@ fun CustomWordLobbyGuest(
                     badgeColor  = colors.buttonPink,
                     avatarColor = avatarColor,
                     avatarEmoji = avatarEmoji,
+                    avatarUrl   = avatarUrl,
                 )
                 // Other guests
                 otherPlayers.forEach { player ->
@@ -106,6 +111,7 @@ fun CustomWordLobbyGuest(
                         name        = player.name,
                         avatarColor = player.avatarColor,
                         avatarEmoji = player.avatarEmoji,
+                        avatarUrl   = player.avatarUrl,
                     )
                 }
             }

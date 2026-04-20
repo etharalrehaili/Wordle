@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -47,6 +49,7 @@ fun ProfileEditCard(
     myName: String,
     avatarColor: Long?,
     avatarEmoji: String?,
+    avatarUrl: String? = null,
     onSave: (name: String, color: Long?, emoji: String?) -> Unit,
 ) {
     var isEditing by remember { mutableStateOf(false) }
@@ -84,6 +87,14 @@ fun ProfileEditCard(
                 val previewEmoji = if (isEditing) draftEmoji else avatarEmoji
                 val previewName  = if (isEditing) draftName else myName
                 when {
+                    avatarUrl != null && !isEditing -> AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = myName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape),
+                    )
                     previewColor != null && previewEmoji != null ->
                         EmojiAvatar(color = previewColor, emoji = previewEmoji, size = 44)
                     previewColor != null -> {
@@ -138,7 +149,7 @@ fun ProfileEditCard(
                     )
                 }
             }
-            if (!isEditing) {
+            if (!isEditing && avatarUrl == null) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))

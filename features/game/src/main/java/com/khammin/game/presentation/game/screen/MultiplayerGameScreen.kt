@@ -2,7 +2,6 @@ package com.khammin.game.presentation.game.screen
 
 import android.os.Build
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,9 +40,12 @@ import com.khammin.game.presentation.game.vm.MultiplayerGameViewModel
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -456,6 +458,7 @@ fun MultiplayerGameContent(
                             myName          = state.myName,
                             avatarColor     = state.avatarColor,
                             avatarEmoji     = state.avatarEmoji,
+                            avatarUrl       = state.avatarUrl,
                             waitingPlayers  = state.waitingPlayers,
                             roomId          = roomId,
                             onStart         = { word -> onIntent(MultiplayerGameIntent.StartMatchWithWord(word)) },
@@ -469,9 +472,11 @@ fun MultiplayerGameContent(
                             hostName        = state.opponentName,
                             hostAvatarColor = state.opponentAvatarColor,
                             hostAvatarEmoji = state.opponentAvatarEmoji,
+                            hostAvatarUrl   = state.opponentAvatarUrl,
                             myName          = state.myName,
                             avatarColor     = state.avatarColor,
                             avatarEmoji     = state.avatarEmoji,
+                            avatarUrl       = state.avatarUrl,
                             otherPlayers    = state.waitingPlayers.filter { it.userId != state.myUserId },
                             onUpdateProfile = { name, color, emoji ->
                                 onIntent(MultiplayerGameIntent.UpdateGuestProfile(name, color, emoji))
@@ -481,11 +486,12 @@ fun MultiplayerGameContent(
                     }
                 } else {
                     // ── In-game views ─────────────────────────────────────────────
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .wrapContentHeight()
                             .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -593,7 +599,8 @@ fun MultiplayerGameContent(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f),
+                                .weight(1f)
+                                .padding(top = 8.dp),
                             verticalArrangement = Arrangement.SpaceBetween
                         ) {
                             GameBoard(
@@ -606,8 +613,9 @@ fun MultiplayerGameContent(
                                 currentRow = state.currentRow,
                                 currentCol = state.currentCol,
                                 wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                                modifier = Modifier.fillMaxWidth()
-                                    .padding(top = 16.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
                             )
 
                             GameKeyboard(
@@ -629,9 +637,9 @@ fun MultiplayerGameContent(
                                 },
                                 onBackspace = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.DeleteLetter) },
                                 language = keyboardLanguage,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
                                     .padding(top = 8.dp, bottom = 32.dp)
-
                             )
                         }
                     }

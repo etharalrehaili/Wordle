@@ -68,6 +68,8 @@ data class MultiplayerGameUiState(
     // Local avatar (anonymous users only); null = no custom avatar chosen yet
     val avatarColor: Long? = null,
     val avatarEmoji: String? = null,
+    // Firebase account photo for logged-in (non-anonymous) users
+    val avatarUrl: String? = null,
     val isAnonymous: Boolean = false,
     // Session-cumulative points per player (guestId -> pts), updated after each round
     val sessionPoints: Map<String, Int> = emptyMap(),
