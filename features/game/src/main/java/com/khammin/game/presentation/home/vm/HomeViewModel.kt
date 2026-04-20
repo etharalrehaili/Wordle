@@ -221,8 +221,8 @@ class HomeViewModel @Inject constructor(
                     setState { copy(joinRoomLoading = false, joinRoomError = "This game has already started.") }
                     return@launch
                 }
-                room.isCustomWord && room.guestIds.size >= 6 -> {
-                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 6 players).") }
+                room.isCustomWord && room.guestIds.size >= 3 -> {
+                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 4 players).") }
                     return@launch
                 }
                 !room.isCustomWord && room.guestId.isNotEmpty() -> {

@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
@@ -29,6 +31,7 @@ fun LobbyPlayerRow(
     badgeColor: Color = colors.buttonTeal,
     avatarColor: Long? = null,
     avatarEmoji: String? = null,
+    avatarUrl: String? = null,
 ) {
     Row(
         modifier = Modifier
@@ -42,6 +45,14 @@ fun LobbyPlayerRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             when {
+                avatarUrl != null -> AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(50)),
+                )
                 avatarColor != null && avatarEmoji != null ->
                     EmojiAvatar(color = avatarColor, emoji = avatarEmoji, size = 32)
                 avatarColor != null -> {

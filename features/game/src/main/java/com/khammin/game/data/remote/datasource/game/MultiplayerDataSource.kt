@@ -25,6 +25,6 @@ interface MultiplayerDataSource {
     suspend fun resetCustomRoom(roomId: String)
     suspend fun votePlayAgain(roomId: String, userId: String)
     suspend fun unvotePlayAgain(roomId: String, userId: String)
-    suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?)
+    suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?, avatarUrl: String? = null)
     suspend fun updateSessionPoints(roomId: String, sessionPoints: Map<String, Int>)
 }

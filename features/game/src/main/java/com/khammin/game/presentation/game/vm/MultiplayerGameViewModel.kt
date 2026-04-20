@@ -168,50 +168,71 @@ class MultiplayerGameViewModel @Inject constructor(
             ?: uiState.value.myUserId.takeIf { it.isNotEmpty() }
             ?: return
 
-        val isAnonymous = auth.currentUser?.isAnonymous == true || myId.startsWith("guest_")
-        // Use a placeholder name until the coroutine below resolves the real one
-        val fallbackName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
+        // Determine auth state synchronously
+        val firebaseUser = auth.currentUser
+        val isLoggedIn   = firebaseUser != null && !firebaseUser.isAnonymous
+        val isAnonymous  = !isLoggedIn && (firebaseUser?.isAnonymous == true || myId.startsWith("guest_"))
+
+        // For guests we can resolve the fallback name instantly; logged-in name comes from Strapi below
+        val guestFallbackName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
 
         setState {
             copy(
-                roomId = roomId, myUserId = myId, isHost = isHost,
-                isCustomWord = isCustomWord, language = language,
+                roomId        = roomId, myUserId = myId, isHost = isHost,
+                isCustomWord  = isCustomWord, language = language,
                 defaultMyName = defaultMyName, defaultGuestName = defaultGuestName,
-                myName = fallbackName,
-                isAnonymous = isAnonymous,
+                myName        = guestFallbackName,
+                isAnonymous   = isAnonymous,
             )
         }
 
         viewModelScope.launch { registerPresenceUseCase(roomId, myId) }
 
         viewModelScope.launch {
-            if (isAnonymous) {
-                // Load persisted guest profile; seed one on first launch so the name is stable
-                val saved = getGuestProfileUseCase()
-                val resolvedName        = saved?.name        ?: fallbackName
-                val resolvedAvatarColor = saved?.avatarColor
-                val resolvedAvatarEmoji = saved?.avatarEmoji
-                if (saved != null) {
-                    setState {
-                        copy(
-                            myName      = resolvedName,
-                            avatarColor = resolvedAvatarColor,
-                            avatarEmoji = resolvedAvatarEmoji,
-                        )
+            when {
+                isLoggedIn -> {
+                    // Logged-in user: name and avatar come from our Strapi profile, not Firebase Auth
+                    val result = getProfileUseCase(myId)
+                    if (result is Resource.Success) {
+                        val name     = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
+                        val photoUrl = result.data?.avatarUrl
+                        setState { copy(myName = name, avatarUrl = photoUrl) }
+                        // Push to Firestore so other players see the correct name and photo
+                        runCatching {
+                            updateGuestProfileUseCase(roomId, myId, name, null, null, photoUrl)
+                        }
                     }
-                } else {
-                    // First launch: persist the generated name so it stays consistent
-                    saveGuestProfileUseCase(fallbackName, null, null)
                 }
-                // Always push local profile to Firestore so other players see the correct name/avatar
-                runCatching {
-                    updateGuestProfileUseCase(roomId, myId, resolvedName, resolvedAvatarColor, resolvedAvatarEmoji)
+                isAnonymous -> {
+                    // Guest: load persisted profile from DataStore
+                    val saved               = getGuestProfileUseCase()
+                    val resolvedName        = saved?.name        ?: guestFallbackName
+                    val resolvedAvatarColor = saved?.avatarColor
+                    val resolvedAvatarEmoji = saved?.avatarEmoji
+                    if (saved != null) {
+                        setState {
+                            copy(
+                                myName      = resolvedName,
+                                avatarColor = resolvedAvatarColor,
+                                avatarEmoji = resolvedAvatarEmoji,
+                            )
+                        }
+                    } else {
+                        // First launch: persist the generated name so it stays consistent
+                        saveGuestProfileUseCase(guestFallbackName, null, null)
+                    }
+                    // Always push local profile to Firestore so other players see the correct name/avatar
+                    runCatching {
+                        updateGuestProfileUseCase(roomId, myId, resolvedName, resolvedAvatarColor, resolvedAvatarEmoji)
+                    }
                 }
-            } else {
-                val result = getProfileUseCase(myId)
-                if (result is Resource.Success) {
-                    val name = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
-                    setState { copy(myName = name) }
+                else -> {
+                    // Registered user whose Firebase session is somehow absent — fall back to Strapi
+                    val result = getProfileUseCase(myId)
+                    if (result is Resource.Success) {
+                        val name = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
+                        setState { copy(myName = name) }
+                    }
                 }
             }
         }
@@ -253,6 +274,7 @@ class MultiplayerGameViewModel @Inject constructor(
                             name        = profile["name"]?.takeIf { it.isNotBlank() } ?: existing?.name ?: guestNameFromId(guestId),
                             avatarColor = profile["avatarColor"]?.toLongOrNull() ?: existing?.avatarColor,
                             avatarEmoji = profile["avatarEmoji"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarEmoji,
+                            avatarUrl   = profile["avatarUrl"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarUrl,
                         )
                         existing != null -> existing
                         else -> WaitingPlayer(guestId, guestNameFromId(guestId)) // placeholder until fetchGuestInfo fills it in
@@ -266,6 +288,7 @@ class MultiplayerGameViewModel @Inject constructor(
                             name        = profile["name"]?.takeIf { it.isNotBlank() } ?: progress.name,
                             avatarColor = profile["avatarColor"]?.toLongOrNull() ?: progress.avatarColor,
                             avatarEmoji = profile["avatarEmoji"]?.takeIf { it.isNotEmpty() } ?: progress.avatarEmoji,
+                            avatarUrl   = profile["avatarUrl"]?.takeIf { it.isNotEmpty() } ?: progress.avatarUrl,
                         ) else progress
                     }
                 // For guests: apply host's saved profile if present
@@ -276,6 +299,8 @@ class MultiplayerGameViewModel @Inject constructor(
                     hostProfile["avatarColor"]?.toLongOrNull() else opponentAvatarColor
                 val resolvedOpponentAvatarEmoji = if (!isHostOfRoom && hostProfile != null)
                     hostProfile["avatarEmoji"]?.takeIf { it.isNotEmpty() } else opponentAvatarEmoji
+                val resolvedOpponentAvatarUrl = if (!isHostOfRoom && hostProfile != null)
+                    hostProfile["avatarUrl"]?.takeIf { it.isNotEmpty() } else opponentAvatarUrl
                 copy(
                     targetWord            = room.word.uppercase(),
                     wordLength            = room.wordLength,
@@ -297,6 +322,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     opponentName          = resolvedOpponentName,
                     opponentAvatarColor   = resolvedOpponentAvatarColor,
                     opponentAvatarEmoji   = resolvedOpponentAvatarEmoji,
+                    opponentAvatarUrl     = resolvedOpponentAvatarUrl,
                 )
             }
 

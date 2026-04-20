@@ -38,6 +38,7 @@ fun CustomWordLobbyHost(
     myName: String,
     avatarColor: Long?,
     avatarEmoji: String?,
+    avatarUrl: String? = null,
     waitingPlayers: List<WaitingPlayer>,
     roomId: String,
     onStart: (word: String) -> Unit,
@@ -61,6 +62,7 @@ fun CustomWordLobbyHost(
                 myName = myName,
                 avatarColor = avatarColor,
                 avatarEmoji = avatarEmoji,
+                avatarUrl = avatarUrl,
                 onSave = onUpdateProfile,
             )
         }
@@ -95,7 +97,7 @@ fun CustomWordLobbyHost(
         // Players header
         item {
             Text(
-                text          = "Players (${waitingPlayers.size + 1}/6)",
+                text          = "Players (${waitingPlayers.size + 1}/4)",
                 color         = colors.body.copy(alpha = 0.6f),
                 fontSize      = 12.sp,
                 fontWeight    = FontWeight.Medium,
@@ -130,12 +132,14 @@ fun CustomWordLobbyHost(
                         badgeColor  = colors.buttonTeal,
                         avatarColor = avatarColor,
                         avatarEmoji = avatarEmoji,
+                        avatarUrl   = avatarUrl,
                     )
                     waitingPlayers.forEach { player ->
                         LobbyPlayerRow(
                             name        = player.name,
                             avatarColor = player.avatarColor,
                             avatarEmoji = player.avatarEmoji,
+                            avatarUrl   = player.avatarUrl,
                         )
                     }
                 }
