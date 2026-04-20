@@ -47,7 +47,7 @@ fun GameResultsBottomSheet(
     answer: String,
     accentColor: Color,
     onRestart: () -> Unit,
-    onSecondChance: (() -> Unit)? = null,
+    onClose: () -> Unit = {},
     onDismiss: () -> Unit = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
@@ -162,28 +162,24 @@ fun GameResultsBottomSheet(
 
                 Spacer(Modifier.height(20.dp))
 
-                // ── Buttons ───────────────────────────────────────────
-                if (onSecondChance != null) {
-                    GameButton(
-                        label           = stringResource(R.string.game_result_second_chance),
-                        icon            = Icons.Outlined.Replay,
-                        backgroundColor = colors.buttonTeal,
-                        contentColor    = colors.title,
-                        showBorder      = false,
-                        onClick         = onSecondChance,
-                        modifier        = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(Modifier.height(10.dp))
-                }
-
                 GameButton(
                     label           = stringResource(R.string.game_result_play_again),
+                    backgroundColor = colors.buttonTeal,
+                    contentColor    = colors.title,
+                    showBorder      = false,
+                    onClick         = onRestart,
+                    modifier        = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                GameButton(
+                    label           = stringResource(R.string.game_result_close),
                     backgroundColor = Color.Transparent,
                     contentColor    = colors.title,
                     showBorder      = true,
-                    borderColor     = colors.border,
-                    onClick         = onRestart,
+                    borderColor     = colors.buttonPink,
+                    onClick         = onClose,
                     modifier        = Modifier.fillMaxWidth()
                 )
             }
@@ -200,7 +196,6 @@ private fun PreviewGameOverBottomSheetLost() {
         answer          = "GHOST",
         accentColor     = Color(0xFFB59F3B),
         onRestart       = {},
-        onSecondChance  = {}
     )
 }
 

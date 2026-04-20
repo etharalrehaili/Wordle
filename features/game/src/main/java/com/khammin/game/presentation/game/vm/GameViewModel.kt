@@ -7,6 +7,8 @@ import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
+import com.khammin.game.domain.usecases.game.RecordWinUseCase
+import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import com.khammin.game.presentation.game.contract.GameEffect
 import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
@@ -17,7 +19,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
-    private val getWordsUseCase: GetWordsUseCase
+    private val getWordsUseCase: GetWordsUseCase,
+    private val recordWinUseCase: RecordWinUseCase,
+    private val validateWordUseCase: ValidateWordUseCase,
 ) : BaseMviViewModel<GameIntent, GameUiState, GameEffect>(
     initialState = GameUiState()
 ) {
@@ -30,7 +34,6 @@ class GameViewModel @Inject constructor(
             is GameIntent.SubmitGuess  -> submitGuess()
             is GameIntent.RestartGame  -> restartGame()
             is GameIntent.UseHint      -> useHint()
-            is GameIntent.SecondChance -> secondChance()
         }
     }
 
@@ -43,6 +46,7 @@ class GameViewModel @Inject constructor(
                     setState {
                         copy(
                             isLoading  = false,
+                            language   = language,
                             wordLength = wordLength,
                             wordList   = words,
                             targetWord = words.random().normalizeForWordle(),
@@ -60,7 +64,7 @@ class GameViewModel @Inject constructor(
 
     private fun enterLetter(letter: Char) {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.targetWord.isEmpty()) return
         if (state.currentCol >= state.wordLength) return
 
@@ -77,7 +81,7 @@ class GameViewModel @Inject constructor(
 
     private fun deleteLetter() {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.currentCol <= 0) return
 
         val colToDelete = state.currentCol - 1
@@ -91,42 +95,52 @@ class GameViewModel @Inject constructor(
 
     private fun submitGuess() {
         val state = uiState.value
-        if (state.isGameOver) return
-            if (state.currentCol < state.wordLength) {
+        if (state.isGameOver || state.isValidating) return
+        if (state.currentCol < state.wordLength) {
             sendEffect { GameEffect.InvalidWord }
             sendEffect { GameEffect.RowShake }
             return
         }
 
-        val rawGuess     = state.board[state.currentRow].map { it.letter }.joinToString("")
-        val guessNorm    = rawGuess.normalizeForWordle()
-        val isInWordList = state.wordList.any { it.normalizeForWordle() == guessNorm }
-        if (!isInWordList) {
-            sendEffect { GameEffect.NotInWordList }
-            sendEffect { GameEffect.RowShake }
-            return
-        }
+        val rawGuess = state.board[state.currentRow].map { it.letter }.joinToString("")
 
-        val evaluatedRow = evaluateGuess(rawGuess, state.targetWord)
-        val newBoard = state.board.toMutableList()
-            .also { it[state.currentRow] = evaluatedRow }.toList()
-        val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
+        viewModelScope.launch {
+            setState { copy(isValidating = true) }
+            val normalizedGuess  = rawGuess.normalizeForWordle()
+            val normalizedTarget = state.targetWord.normalizeForWordle()
+            val isValid = normalizedGuess == normalizedTarget ||
+                validateWordUseCase(rawGuess, state.language, state.wordList)
+            setState { copy(isValidating = false) }
 
-        val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
-        val isLast = state.currentRow == state.board.size - 1
+            if (!isValid) {
+                sendEffect { GameEffect.NotInWordList }
+                sendEffect { GameEffect.RowShake }
+                return@launch
+            }
 
-        setState {
-            copy(
-                board          = newBoard,
-                keyboardStates = newKeyboardStates,
-                currentRow     = if (isWin || isLast) currentRow else currentRow + 1,
-                currentCol     = 0,
-                isGameOver     = isWin || isLast
-            )
-        }
+            // Re-read state in case it changed while validating
+            val s = uiState.value
+            val evaluatedRow      = evaluateGuess(rawGuess, s.targetWord)
+            val newBoard          = s.board.toMutableList().also { it[s.currentRow] = evaluatedRow }.toList()
+            val newKeyboardStates = s.keyboardStates.mergeWith(evaluatedRow)
 
-        if (isWin || isLast) {
-            sendEffect { GameEffect.ShowGameDialog(isWin = isWin, targetWord = state.targetWord) }
+            val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
+            val isLast = s.currentRow == s.board.size - 1
+
+            setState {
+                copy(
+                    board          = newBoard,
+                    keyboardStates = newKeyboardStates,
+                    currentRow     = if (isWin || isLast) currentRow else currentRow + 1,
+                    currentCol     = 0,
+                    isGameOver     = isWin || isLast
+                )
+            }
+
+            if (isWin || isLast) {
+                if (isWin) recordWinUseCase(s.wordLength)
+                sendEffect { GameEffect.ShowGameDialog(isWin = isWin, targetWord = s.targetWord) }
+            }
         }
     }
 
@@ -211,24 +225,6 @@ class GameViewModel @Inject constructor(
             }
         }
         return merged
-    }
-
-    private fun secondChance() {
-        val state = uiState.value
-        if (!state.isGameOver) return
-
-        val extraRow  = List(state.wordLength) { Tile() }
-        val newBoard  = state.board + listOf(extraRow)
-
-        setState {
-            copy(
-                board                = newBoard,
-                isGameOver           = false,
-                hasUsedSecondChance  = true,
-                currentRow           = newBoard.size - 1,
-                currentCol           = 0,
-            )
-        }
     }
 
     private fun useHint() {

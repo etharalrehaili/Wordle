@@ -6,6 +6,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.khammin.core.presentation.components.enums.AppColorTheme
 
@@ -79,7 +80,18 @@ data class WordleColors(
     val decorativeTeal: Color,
     val decorativeGreen: Color,
     val decorativePink: Color,
-    val purpleButton: Color
+    val purpleButton: Color,
+    val gradientPrimary: Color,
+    val gradientSecondary: Color,
+    val gradientAccent: Color,
+    val gradientBackground: Color,
+    val topBarBackground: Color,
+    val topBarBorder: Color,
+    val buttonPinkBrush: Brush,
+    val buttonTealBrush: Brush,
+    val buttonTaupeBrush: Brush,
+    val cardBackground: Color,
+    val cardBorder: Color,
 )
 
 val DarkWordleColors = WordleColors(
@@ -105,7 +117,18 @@ val DarkWordleColors = WordleColors(
     decorativeTeal  = DecorativeTeal,
     decorativeGreen = DecorativeGreen,
     decorativePink  = DecorativePink,
-    purpleButton = DarkButtonPurple
+    purpleButton = DarkButtonPurple,
+    gradientPrimary    = Color(0xFF8B7CF6).copy(alpha = 0.20f),
+    gradientSecondary  = Color(0xFFEC4899).copy(alpha = 0.15f),
+    gradientAccent     = Color(0xFF6366F1).copy(alpha = 0.18f),
+    gradientBackground = DarkBackground,
+    topBarBackground = DarkTopBarBackground,
+    topBarBorder     = DarkTopBarBorder,
+    buttonPinkBrush  = DarkButtonPinkBrush,
+    buttonTealBrush  = DarkButtonTealBrush,
+    buttonTaupeBrush = DarkButtonPinkBottomBrush,
+    cardBackground = DarkCardBackground,
+    cardBorder     = DarkCardBorder,
 )
 
 val LightWordleColors = WordleColors(
@@ -131,7 +154,18 @@ val LightWordleColors = WordleColors(
     decorativeTeal  = DecorativeTeal,
     decorativeGreen = DecorativeGreen,
     decorativePink  = DecorativePink,
-    purpleButton = LightButtonPurple
+    purpleButton = LightButtonPurple,
+    gradientPrimary    = Color(0xFF8B7CF6).copy(alpha = 0.45f),  // purple
+    gradientSecondary  = Color(0xFFEC9FB3).copy(alpha = 0.40f),  // pink
+    gradientAccent     = Color(0xFF9BB5F0).copy(alpha = 0.35f),  // blue-purple
+    gradientBackground = LightBackground,
+    topBarBackground = LightTopBarBackground,
+    topBarBorder     = LightTopBarBorder,
+    buttonPinkBrush  = LightButtonPinkBrush,
+    buttonTealBrush  = LightButtonTealBrush,
+    buttonTaupeBrush = LightButtonPinkBottomBrush,
+    cardBackground = LightCardBackground,
+    cardBorder     = LightCardBorder,
 )
 
 val LocalWordleColors = compositionLocalOf { DarkWordleColors }

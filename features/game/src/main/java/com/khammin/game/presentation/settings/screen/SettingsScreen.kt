@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -59,7 +60,6 @@ fun SettingsScreen(
     onBack: Action,
     onChangePasswordClick: Action,
     onSignOutClick: Action,
-    onSupportClick: Action,
     uiEffect: SharedFlow<SettingsEffect>,
     onSignOutSuccess: Action,
 ) {
@@ -78,7 +78,6 @@ fun SettingsScreen(
         onBack                = onBack,
         onChangePasswordClick = onChangePasswordClick,
         onSignOutClick        = onSignOutClick,
-        onSupportClick = onSupportClick
     )
 }
 
@@ -87,7 +86,6 @@ fun SettingsScreen(
 fun SettingsContent(
     onBack: Action,
     onChangePasswordClick: Action,
-    onSupportClick: Action,
     onSignOutClick: Action,
 ) {
     var showSignOutSheet by remember { mutableStateOf(false) }
@@ -99,18 +97,14 @@ fun SettingsContent(
     ) {
 
         // Topbar Section
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            GameTopBar(
-                title              = stringResource(R.string.settings_title),
-                startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
-                onStartIconClicked = onBack,
-                modifier           = Modifier.fillMaxWidth(),
-                containerColor     = Color.Transparent,
-            )
-        }
+        GameTopBar(
+            title              = stringResource(R.string.settings_title),
+            startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
+            onStartIconClicked = onBack,
+            showBackground     = false,
+            modifier           = Modifier.fillMaxWidth().statusBarsPadding(),
+            containerColor     = Color.Transparent,
+        )
 
         Column(
             modifier = Modifier
@@ -128,16 +122,6 @@ fun SettingsContent(
                 icon    = Icons.Filled.Lock,
                 accent  = colors.buttonTaupe,
                 onClick = onChangePasswordClick,
-            )
-
-            // Support Section
-            SectionLabel(stringResource(R.string.settings_support_section))
-
-            SettingsItem(
-                label   = stringResource(R.string.settings_support),
-                icon    = Icons.Filled.QuestionMark,
-                accent  = colors.buttonTaupe,
-                onClick = onSupportClick
             )
 
             Spacer(modifier = Modifier.height(spacing.lg))
@@ -256,7 +240,6 @@ private fun PreviewSettingsScreenDark() {
             onBack                = {},
             onChangePasswordClick = {},
             onSignOutClick        = {},
-            onSupportClick = {}
         )
     }
 }
@@ -269,7 +252,6 @@ private fun PreviewSettingsScreenLight() {
             onBack                = {},
             onChangePasswordClick = {},
             onSignOutClick        = {},
-            onSupportClick = {}
         )
     }
 }

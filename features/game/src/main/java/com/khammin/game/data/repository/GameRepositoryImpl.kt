@@ -43,4 +43,8 @@ class GameRepositoryImpl @Inject constructor(
             else throw e
         }
     }
+
+    override suspend fun validateWord(word: String, language: String): Boolean {
+        return remote.validateWord(word, language)
+    }
 }

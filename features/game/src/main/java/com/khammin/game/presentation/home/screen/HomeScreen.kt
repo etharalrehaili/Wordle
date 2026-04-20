@@ -3,10 +3,6 @@ package com.khammin.game.presentation.home.screen
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.EaseOutBack
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +25,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -43,9 +38,11 @@ import java.time.Duration
 import java.time.LocalDateTime
 import com.khammin.core.alias.LanguageAction
 import com.khammin.core.alias.ThemeAction
+import com.khammin.core.presentation.components.GradientBackground
 import com.khammin.core.presentation.components.Square
 import com.khammin.core.presentation.components.SquareContent
 import com.khammin.core.presentation.components.bottomsheets.AuthBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.CreateRoomWordBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.GameMenuDrawerSheet
 import com.khammin.core.presentation.components.bottomsheets.GameModeBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.JoinRoomBottomSheet
@@ -53,6 +50,7 @@ import com.khammin.core.presentation.components.bottomsheets.MultiplayerModeBott
 import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.WordLengthSelectionBottomSheet
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.components.navigation.GameTopBar
@@ -72,10 +70,11 @@ import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
 @Composable
 fun HomeScreen(
     onPlayClick: IntAction,
-    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String) -> Unit,
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean) -> Unit,
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
+    onSupportClick: Action,
     onThemeChanged: ThemeAction,
     onLanguageChanged: LanguageAction,
     onLoginWithEmail: Action,
@@ -86,27 +85,26 @@ fun HomeScreen(
     val homeUiState        by homeViewModel.uiState.collectAsStateWithLifecycle()
     val preferencesUiState by preferencesViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(preferencesUiState.selectedLanguage) {
-        homeViewModel.prefetchWords(
-            if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en"
-        )
+    LaunchedEffect(Unit) {
+        homeViewModel.prefetchWords("ar")
     }
 
     HomeContent(
         uiState            = preferencesUiState,
         onPlayClick        = onPlayClick,
         onMultiplayerClick = onMultiplayerClick,
-        onCreateRoom = { callback ->
+        onCreateRoom = { customWord, callback ->
             homeViewModel.createRoom(
-                language = if (preferencesUiState.selectedLanguage == AppLanguage.ARABIC) "ar" else "en",
+                language   = "ar",
+                customWord = customWord,
                 onRoomCreated = { roomId, myId ->
                     callback(roomId, myId)
                 }
             )
         },
         onJoinRoom = { code, callback ->
-            homeViewModel.joinRoom(code) { roomId, myId ->
-                callback(roomId, myId)
+            homeViewModel.joinRoom(code) { roomId, myId, isCustomWord ->
+                callback(roomId, myId, isCustomWord)
             }
         },
         joinRoomLoading  = homeUiState.joinRoomLoading,
@@ -116,6 +114,7 @@ fun HomeScreen(
         onChallengeClick   = onChallengeClick,
         onLeaderboardClick = onLeaderboardClick,
         onProfileClick     = onProfileClick,
+        onSupportClick     = onSupportClick,
         onIntent = { intent ->
             preferencesViewModel.onEvent(intent)
             when (intent) {
@@ -124,7 +123,10 @@ fun HomeScreen(
             }
         },
         isLoggedIn         = homeUiState.isLoggedIn,
+        isEmailVerified    = homeUiState.isEmailVerified,
         hasSolvedChallenge = homeUiState.hasSolvedChallenge,
+        easyWordsSolved    = homeUiState.easyWordsSolved,
+        classicWordsSolved = homeUiState.classicWordsSolved,
         onLoginWithEmail   = onLoginWithEmail,
         onSignUpClick      = onSignUpClick,
         noInternetError  = homeUiState.noInternetError,
@@ -138,9 +140,9 @@ fun HomeScreen(
 fun HomeContent(
     uiState: PreferencesUiState,
     onPlayClick: (Int) -> Unit,
-    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String) -> Unit = { _, _, _ -> },
-    onCreateRoom: (onRoomCreated: (roomId: String, myId: String) -> Unit) -> Unit = { _ -> },
-    onJoinRoom: (code: String, onJoined: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean) -> Unit = { _, _, _, _ -> },
+    onCreateRoom: (customWord: String?, onRoomCreated: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
+    onJoinRoom: (code: String, onJoined: (roomId: String, myId: String, isCustomWord: Boolean) -> Unit) -> Unit = { _, _ -> },
     joinRoomLoading: Boolean = false,
     createRoomLoading: Boolean = false,
     joinRoomError: String? = null,
@@ -148,9 +150,13 @@ fun HomeContent(
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
+    onSupportClick: Action,
     onIntent: (PreferencesIntent) -> Unit,
     isLoggedIn: Boolean = false,
+    isEmailVerified: Boolean = false,
     hasSolvedChallenge: Boolean = false,
+    easyWordsSolved: Int = 0,
+    classicWordsSolved: Int = 0,
     onLoginWithEmail: Action = {},
     onSignUpClick: Action = {},
     noInternetError: Boolean = false,
@@ -158,13 +164,16 @@ fun HomeContent(
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var showAuthSheet         by remember { mutableStateOf(false) }
-    var showLengthSheet       by remember { mutableStateOf(false) }
-    var countdownSeconds      by remember { mutableStateOf(secondsUntilMidnight()) }
-    var showGameModeSheet     by remember { mutableStateOf(false) }
-    var showMultiplayerSheet  by remember { mutableStateOf(false) }
-    var showJoinRoomSheet     by remember { mutableStateOf(false) }
+    var showAuthSheet           by remember { mutableStateOf(false) }
+    var showVerifyEmailDialog   by remember { mutableStateOf(false) }
+    var showLengthSheet         by remember { mutableStateOf(false) }
+    var countdownSeconds        by remember { mutableStateOf(secondsUntilMidnight()) }
+    var showGameModeSheet       by remember { mutableStateOf(false) }
+    var showMultiplayerSheet    by remember { mutableStateOf(false) }
+    var showWordPickerSheet     by remember { mutableStateOf(false) }
+    var showJoinRoomSheet       by remember { mutableStateOf(false) }
     var lastFailedAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var createRoomType by remember { mutableStateOf<String?>(null) }
 
     if (noInternetError) {
         NoInternetBottomSheet(
@@ -192,19 +201,25 @@ fun HomeContent(
         drawerContent = {
             GameMenuDrawerSheet(
                 selectedLanguage   = uiState.selectedLanguage,
-                selectedTheme      = uiState.selectedTheme,
                 onClose            = { scope.launch { drawerState.close() } },
                 onProfile          = {
                     scope.launch { drawerState.close() }
-                    onProfileClick()
+                    when {
+                        !isLoggedIn        -> showAuthSheet = true
+                        !isEmailVerified   -> showVerifyEmailDialog = true
+                        else               -> onProfileClick()
+                    }
                 },
                 isLoggedIn         = isLoggedIn,
                 onLoginClick       = {
                     scope.launch { drawerState.close() }
                     onLoginWithEmail()
                 },
+                onSupportClick     = {
+                    scope.launch { drawerState.close() }
+                    onSupportClick()
+                },
                 onLanguageSelected = { onIntent(PreferencesIntent.ChangeLanguage(it)) },
-                onThemeSelected    = { onIntent(PreferencesIntent.ChangeTheme(it)) },
             )
         },
         gesturesEnabled = drawerState.isOpen
@@ -215,14 +230,18 @@ fun HomeContent(
                 .background(colors.background)
         ) {
 
-            // Circles background
-            DecorativeBackground(modifier = Modifier.fillMaxSize())
+            GradientBackground()
 
             GameTopBar(
                 startIcon          = Icons.Filled.Menu,
                 onStartIconClicked = { scope.launch { drawerState.open() } },
-                modifier           = Modifier.align(Alignment.TopCenter),
-                containerColor     = Color.Transparent
+                modifier           = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding(),
+                containerColor     = Color.Transparent,
+                showBackground = false,
+                isDarkMode         = uiState.selectedTheme == AppColorTheme.DARK,
+                onThemeToggle      = { onIntent(PreferencesIntent.ChangeTheme(it)) }
             )
 
             Column(
@@ -236,7 +255,7 @@ fun HomeContent(
                 WordleText(
                     text          = stringResource(R.string.welcome_to),
                     color         = colors.pinkText,
-                    fontSize      = GameDesignTheme.typography.labelLarge,
+                    fontSize      = GameDesignTheme.typography.titleLarge,
                     fontWeight    = FontWeight.Bold,
                     letterSpacing = 2.sp,
                     textAlign     = TextAlign.Center
@@ -251,43 +270,10 @@ fun HomeContent(
                     textAlign     = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(GameDesignTheme.spacing.lg))
-
-                val demoWord = stringResource(R.string.wordle_letters)
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    demoWord.forEachIndexed { index, char ->
-                        var flipped by remember { mutableStateOf(false) }
-
-                        LaunchedEffect(Unit) {
-                            delay(300L + index * 150L)
-                            flipped = true
-                        }
-
-                        val rotationY by animateFloatAsState(
-                            targetValue   = if (flipped) 0f else 90f,
-                            animationSpec = tween(durationMillis = 400, easing = EaseOutBack),
-                            label         = "flip$index"
-                        )
-
-                        Square(
-                            content  = SquareContent.Letter(char),
-                            type     = listOf(Types.CORRECT, Types.PRESENT, Types.ABSENT, Types.ABSENT)[index],
-                            height   = 62.dp,
-                            modifier = Modifier.graphicsLayer { this.rotationY = rotationY }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(GameDesignTheme.spacing.lg))
-
                 WordleText(
                     text       = stringResource(R.string.home_description),
                     color      = colors.body,
-                    fontSize   = GameDesignTheme.typography.labelLarge,
+                    fontSize   = GameDesignTheme.typography.titleMedium,
                     textAlign  = TextAlign.Center,
                     lineHeight = 18.sp
                 )
@@ -296,7 +282,7 @@ fun HomeContent(
 
                 GameButton(
                     label           = stringResource(R.string.quick_play),
-                    backgroundColor = colors.buttonPink,
+                    backgroundBrush = colors.buttonPinkBrush,
                     contentColor    = colors.title,
                     showBorder      = false,
                     onClick         = { showGameModeSheet = true },
@@ -319,7 +305,9 @@ fun HomeContent(
 
                 if (showLengthSheet) {
                     WordLengthSelectionBottomSheet(
-                        onLengthSelected = { length ->
+                        easyWordsSolved    = easyWordsSolved,
+                        classicWordsSolved = classicWordsSolved,
+                        onLengthSelected   = { length ->
                             showLengthSheet = false
                             onPlayClick(length)
                         },
@@ -332,20 +320,49 @@ fun HomeContent(
                         isLoading    = createRoomLoading,
                         onCreateRoom = {
                             showMultiplayerSheet = false
-                            lastFailedAction = {
-                                onCreateRoom { roomId, myId ->
-                                    onMultiplayerClick(roomId, true, myId)
-                                }
-                            }
-                            onCreateRoom { roomId, myId ->
-                                onMultiplayerClick(roomId, true, myId)
-                            }
+                            showWordPickerSheet  = true
                         },
                         onJoinRoom = {
                             showMultiplayerSheet = false
                             showJoinRoomSheet    = true
                         },
-                        onDismiss      = { showMultiplayerSheet = false }
+                        onDismiss = { showMultiplayerSheet = false }
+                    )
+                }
+
+                if (showWordPickerSheet) {
+                    CreateRoomWordBottomSheet(
+                        isLoading    = createRoomLoading,
+                        loadingType  = createRoomType,
+                        onRandomWord = {
+                            createRoomType = "random"
+                            lastFailedAction = {
+                                onCreateRoom(null) { roomId, myId ->
+                                    showWordPickerSheet = false
+                                    createRoomType = null
+                                    onMultiplayerClick(roomId, true, myId, false)
+                                }
+                            }
+                            onCreateRoom(null) { roomId, myId ->
+                                showWordPickerSheet = false
+                                onMultiplayerClick(roomId, true, myId, false)
+                            }
+                        },
+                        onCustomWord = {
+                            createRoomType = "custom"
+                            lastFailedAction = {
+                                onCreateRoom("") { roomId, myId ->
+                                    showWordPickerSheet = false
+                                    createRoomType = null
+                                    onMultiplayerClick(roomId, true, myId, true)
+                                }
+                            }
+                            onCreateRoom("") { roomId, myId ->
+                                showWordPickerSheet = false
+                                onMultiplayerClick(roomId, true, myId, true)
+                            }
+                        },
+                        onDismiss = { showWordPickerSheet = false }
                     )
                 }
 
@@ -353,14 +370,14 @@ fun HomeContent(
                     JoinRoomBottomSheet(
                         onJoin = { code ->
                             lastFailedAction = {
-                                onJoinRoom(code) { roomId, myId ->
+                                onJoinRoom(code) { roomId, myId, isCustomWord ->
                                     showJoinRoomSheet = false
-                                    onMultiplayerClick(roomId, false, myId)
+                                    onMultiplayerClick(roomId, false, myId, isCustomWord)
                                 }
                             }
-                            onJoinRoom(code) { roomId, myId ->
+                            onJoinRoom(code) { roomId, myId, isCustomWord ->
                                 showJoinRoomSheet = false
-                                onMultiplayerClick(roomId, false, myId)
+                                onMultiplayerClick(roomId, false, myId, isCustomWord)
                             }
                         },
                         onDismiss    = {
@@ -376,12 +393,15 @@ fun HomeContent(
 
                 GameButton(
                     label           = stringResource(R.string.take_challenge),
-                    backgroundColor = colors.buttonTeal,
+                    backgroundBrush = colors.buttonTealBrush,
                     contentColor    = colors.title,
                     showBorder      = false,
                     onClick         = {
-                        if (isLoggedIn) onChallengeClick()
-                        else showAuthSheet = true
+                        when {
+                            !isLoggedIn      -> showAuthSheet = true
+                            !isEmailVerified -> showVerifyEmailDialog = true
+                            else             -> onChallengeClick()
+                        }
                     },
                     modifier        = Modifier.fillMaxWidth()
                 )
@@ -404,7 +424,7 @@ fun HomeContent(
 
                 GameButton(
                     label           = stringResource(R.string.leaderboard),
-                    backgroundColor = colors.buttonTaupe,
+                    backgroundBrush = colors.buttonTaupeBrush,
                     contentColor    = colors.title,
                     showBorder      = false,
                     onClick         = onLeaderboardClick,
@@ -455,21 +475,6 @@ private fun NextWordCountdownRow(countdownSeconds: Long) {
     }
 }
 
-@Composable
-fun DecorativeBackground(modifier: Modifier = Modifier) {
-    val colors = GameDesignTheme.colors
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-
-        drawCircle(color = colors.decorativeTeal.copy(alpha = 0.25f),  radius = w * 0.35f, center = Offset(w * 0.0f,  h * 0.12f))
-        drawCircle(color = colors.decorativePink.copy(alpha = 0.15f),  radius = w * 0.28f, center = Offset(w * 1.05f, h * 0.08f))
-        drawCircle(color = colors.decorativeGreen.copy(alpha = 0.12f), radius = w * 0.45f, center = Offset(w * 0.05f, h * 0.45f))
-        drawCircle(color = colors.decorativePink.copy(alpha = 0.15f),  radius = w * 0.38f, center = Offset(w * 1.0f,  h * 0.88f))
-        drawCircle(color = colors.decorativeTeal.copy(alpha = 0.18f),  radius = w * 0.25f, center = Offset(w * 0.1f,  h * 0.92f))
-    }
-}
-
 @RequiresApi(Build.VERSION_CODES.O)
 private fun secondsUntilMidnight(): Long {
     val now      = LocalDateTime.now()
@@ -482,19 +487,4 @@ private fun Long.toHhMmSs(): String {
     val m = (this % 3600) / 60
     val s = this % 60
     return "%02d : %02d : %02d".format(h, m, s)
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@GameLightBackgroundPreview
-@Composable
-private fun PreviewHomeScreenLightMode() {
-    HomeContent(
-        uiState            = PreferencesUiState(),
-        onPlayClick        = {},
-        onMultiplayerClick = { _, _, _ -> },
-        onChallengeClick   = {},
-        onLeaderboardClick = {},
-        onProfileClick     = {},
-        onIntent           = {}
-    )
 }

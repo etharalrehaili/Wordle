@@ -8,6 +8,9 @@
     <string name="drawer_language_desc">Switch language</string>
     <string name="drawer_login">Sign in</string>
     <string name="drawer_login_desc">Log in to your account</string>
+    <string name="drawer_support">Support</string>
+    <string name="drawer_support_desc">Help &amp; feedback</string>
+    <string name="app_version">Khammin v1.0</string>
 
     <!-- Word Length Sheet -->
     <string name="word_length_title">How long?</string>
@@ -15,6 +18,8 @@
     <string name="word_length_easy">Easy</string>
     <string name="word_length_classic">Classic</string>
     <string name="word_length_hard">Hard</string>
+    <string name="word_length_classic_requirement">Solve %1$d / %2$d easy words to unlock</string>
+    <string name="word_length_hard_requirement">Solve %1$d / %2$d classic words to unlock</string>
 
     <!-- Wordle Info Bottom Sheet -->
     <string name="info_how_to_play">How To Play</string>
@@ -22,18 +27,18 @@
     <string name="info_rule_1">Each guess must be a valid %d-letter word.</string>
     <string name="info_rule_2">The color of the tiles will change to show how close your guess was.</string>
     <string name="info_examples">Examples</string>
-    <string name="info_example_1_letter">P</string>
-    <string name="info_example_1_letters">PLAY</string>
     <string name="info_example_1_desc"> is in the word and in the correct spot.</string>
-    <string name="info_example_2_letter">U</string>
-    <string name="info_example_2_letters">HOUSE</string>
     <string name="info_example_2_desc"> is in the word but in the wrong spot.</string>
-    <string name="info_example_3_letter">S</string>
-    <string name="info_example_3_letters">FRIEND</string>
+    <string name="info_example_1_letter">ك</string>
+    <string name="info_example_1_letters">كتاب</string>
+    <string name="info_example_2_letter">د</string>
+    <string name="info_example_2_letters">صديق</string>
+    <string name="info_example_3_letter">ق</string>
+    <string name="info_example_3_letters">رفيق</string>
+    <string name="info_example_3_desc"> is not in the word in any spot.</string>
     <string name="info_example_4_letter">ه</string>
     <string name="info_example_4_letters">ورده</string>
-    <string name="info_example_4_desc"> موجود لكن تحقق من شكل الحرف (ة / ه).</string>
-    <string name="info_example_3_desc"> is not in the word in any spot.</string>
+    <string name="info_example_4_desc"> is in the word but check the letter shape (ة / ه).</string>
     <string name="info_new_wordle">A new challenge word will be available each day!</string>
 
     <!-- challenge -->
@@ -93,8 +98,8 @@
     <string name="join_room_join">Join</string>
 
     <!-- Leave Game Bottom Sheet -->
-    <string name="leave_game_title">Leave match?</string>
-    <string name="leave_game_subtitle">If you leave now, your opponent will win.</string>
+    <string name="leave_game_title">Leave match</string>
+    <string name="leave_game_subtitle">Are you sure you want to leave?</string>
     <string name="leave_game_confirm">Yes, leave</string>
     <string name="leave_game_stay">Stay</string>
 
@@ -111,6 +116,19 @@
     <string name="multiplayer_mode_create_room">Create Room</string>
     <string name="multiplayer_mode_join_room">Join Room</string>
 
+    <!-- Create Room Word Bottom Sheet -->
+    <string name="create_room_word_title">Choose the Word</string>
+    <string name="create_room_word_subtitle">Pick how the secret word will be selected for this room</string>
+    <string name="create_room_random_title">Random Word</string>
+    <string name="create_room_random_subtitle">Fetch a random word from the word list</string>
+    <string name="create_room_random_action">Use Random Word</string>
+    <string name="create_room_or">or</string>
+    <string name="create_room_custom_title">My Own Word</string>
+    <string name="create_room_custom_subtitle">Write the word your friend will guess</string>
+    <string name="create_room_custom_hint">Type a word…</string>
+    <string name="create_room_custom_length_hint">Must be 4, 5, or 6 letters</string>
+    <string name="create_room_custom_action">Use This Word</string>
+
     <!-- Game Mode Bottom Sheet -->
     <string name="game_mode_title">Choose Mode</string>
     <string name="game_mode_subtitle">How do you want to play today</string>
@@ -118,6 +136,9 @@
     <string name="game_mode_multiplayer">Multiplayer</string>
     <string name="multiplayer_default_my_name">You</string>
     <string name="multiplayer_default_guest_name">Guest</string>
+    <string name="spectator_title">You set the word!</string>
+    <string name="spectator_watching">Watching %s play…</string>
+    <string name="spectator_waiting">Waiting for your opponent to join…</string>
 
     <!-- Theme and Language options -->
     <string name="theme_dark">Dark</string>
@@ -136,5 +157,12 @@
     <string name="error_timeout">Request timed out. Please try again</string>
     <string name="error_unexpected">Something went wrong. Please try again</string>
     <string name="error_email_already_in_use">Email is already linked with another account</string>
+
+    <!-- Spectator Result Bottom Sheet -->
+    <string name="spectator_result_you_guessed">You Won!</string>
+    <string name="spectator_result_guessed">%1$s guessed it!</string>
+    <string name="spectator_result_left">%1$s left the game</string>
+    <string name="spectator_result_failed">%1$s didn\'t guess it</string>
+    <string name="spectator_result_back_home">Back Home</string>
 
 </resources>

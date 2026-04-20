@@ -25,10 +25,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,13 +61,12 @@ import com.khammin.core.presentation.theme.LocalWordleColors
 @Composable
 fun GameMenuDrawerSheet(
     selectedLanguage: AppLanguage = AppLanguage.ENGLISH,
-    selectedTheme: AppColorTheme = AppColorTheme.DARK,
     isLoggedIn: Boolean = true,
     onLoginClick: Action,
     onClose: Action,
     onProfile: Action,
-    onLanguageSelected: (AppLanguage) -> Unit,
-    onThemeSelected: (AppColorTheme) -> Unit
+    onSupportClick: Action,
+    onLanguageSelected: (AppLanguage) -> Unit
 ) {
 
     var currentScreen by remember { mutableStateOf(DrawerScreen.MENU) }
@@ -95,27 +96,18 @@ fun GameMenuDrawerSheet(
         ) { screen ->
             when (screen) {
                 DrawerScreen.MENU -> MenuScreen(
-                    onClose    = onClose,
-                    onTheme    = { isNavigatingForward = true; currentScreen = DrawerScreen.THEME },
-                    onLanguage = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
-                    onProfile  = onProfile,
-                    isLoggedIn = isLoggedIn,
-                    onLoginClick = onLoginClick
+                    onClose      = onClose,
+                    onLanguage   = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
+                    onProfile    = onProfile,
+                    isLoggedIn   = isLoggedIn,
+                    onLoginClick = onLoginClick,
+                    onSupport    = onSupportClick,
                 )
                 DrawerScreen.LANGUAGE -> LanguageScreen(
                     selectedLanguage = selectedLanguage,
                     onBack   = { isNavigatingForward = false; currentScreen = DrawerScreen.MENU },
                     onSelect = { lang ->
                         onLanguageSelected(lang)
-                        isNavigatingForward = false
-                        currentScreen = DrawerScreen.MENU
-                    }
-                )
-                DrawerScreen.THEME -> ThemeScreen(
-                    selectedTheme = selectedTheme,
-                    onBack   = { isNavigatingForward = false; currentScreen = DrawerScreen.MENU },
-                    onSelect = { theme ->
-                        onThemeSelected(theme)
                         isNavigatingForward = false
                         currentScreen = DrawerScreen.MENU
                     }
@@ -130,9 +122,9 @@ private fun MenuScreen(
     onClose: Action,
     isLoggedIn: Boolean,
     onLoginClick: Action,
-    onTheme: Action,
     onLanguage: Action,
-    onProfile: Action
+    onProfile: Action,
+    onSupport: Action,
 ) {
     data class Entry(
         val icon: ImageVector,
@@ -142,14 +134,13 @@ private fun MenuScreen(
         val action: () -> Unit,
     )
 
-
     val items = buildList {
         if (isLoggedIn) {
             add(Entry(
                 icon        = Icons.Filled.Person,
                 label       = stringResource(R.string.drawer_profile),
                 description = stringResource(R.string.drawer_profile_desc),
-                accent      = colors.buttonTaupe,
+                accent      = colors.buttonTeal,
                 action      = onProfile
             ))
         } else {
@@ -161,8 +152,8 @@ private fun MenuScreen(
                 action      = onLoginClick
             ))
         }
-        add(Entry(Icons.Filled.Palette,  stringResource(R.string.drawer_theme),    stringResource(R.string.drawer_theme_desc),    colors.buttonTaupe, onTheme))
         add(Entry(Icons.Filled.Language, stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc), colors.buttonTaupe, onLanguage))
+        add(Entry(Icons.AutoMirrored.Outlined.HelpOutline, stringResource(R.string.drawer_support), stringResource(R.string.drawer_support_desc), colors.buttonTaupe, onSupport))
     }
 
     DrawerColumn {
@@ -258,33 +249,6 @@ private fun LanguageScreen(
                 isSelected = lang == selectedLanguage,
                 accent     = colors.buttonTeal,
                 onClick    = { onSelect(lang) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ThemeScreen(
-    selectedTheme: AppColorTheme,
-    onBack: () -> Unit,
-    onSelect: (AppColorTheme) -> Unit,
-) {
-
-    DrawerColumn {
-
-        SelectionHeader(title = stringResource(R.string.drawer_theme), onBack = onBack)
-
-        AppColorTheme.entries.forEach { theme ->
-            SelectionRow(
-                label = stringResource(
-                    when (theme) {
-                        AppColorTheme.DARK  -> R.string.theme_dark
-                        AppColorTheme.LIGHT -> R.string.theme_light
-                    }
-                ),
-                isSelected = theme == selectedTheme,
-                accent     = colors.buttonTeal,
-                onClick    = { onSelect(theme) }
             )
         }
     }

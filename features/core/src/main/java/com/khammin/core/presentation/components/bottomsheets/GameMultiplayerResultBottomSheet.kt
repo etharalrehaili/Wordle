@@ -14,9 +14,11 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.components.PlayerAvatar
@@ -91,8 +93,6 @@ fun GameMultiplayerResultBottomSheet(
                         .padding(top = 36.dp, bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Animated trophy/emoji
-                    AnimatedEmoji(isWin = isWin)
 
                     Spacer(Modifier.height(16.dp))
 
@@ -204,25 +204,6 @@ private fun ConfettiLayer(modifier: Modifier = Modifier) {
     })
 }
 
-// ─── Animated emoji ───────────────────────────────────────────────────────────
-
-@Composable
-private fun AnimatedEmoji(isWin: Boolean) {
-    val scale by animateFloatAsState(
-        targetValue  = 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness    = Spring.StiffnessMedium
-        ),
-        label = "emojiScale"
-    )
-    Text(
-        text     = if (isWin) "🏆" else "😔",
-        fontSize = 56.sp,
-        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
-    )
-}
-
 // ─── Animated title ───────────────────────────────────────────────────────────
 
 @Composable
@@ -257,39 +238,41 @@ private fun AnimatedResultTitle(isWin: Boolean) {
 
 @Composable
 private fun AnimatedWordTiles(word: String, color: Color) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment     = Alignment.CenterVertically
-    ) {
-        word.forEachIndexed { index, char ->
-            var visible by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { delay(350L + index * 80L); visible = true }
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment     = Alignment.CenterVertically
+        ) {
+            word.forEachIndexed { index, char ->
+                var visible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { delay(350L + index * 80L); visible = true }
 
-            val rotY by animateFloatAsState(
-                targetValue   = if (visible) 0f else 90f,
-                animationSpec = tween(300),
-                label         = "tileRot$index"
-            )
-            val alpha by animateFloatAsState(
-                targetValue   = if (visible) 1f else 0f,
-                animationSpec = tween(300),
-                label         = "tileAlpha$index"
-            )
-
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .graphicsLayer { rotationY = rotY; this.alpha = alpha }
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(color),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text       = char.toString(),
-                    color      = Color.White,
-                    fontSize   = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                val rotY by animateFloatAsState(
+                    targetValue   = if (visible) 0f else 90f,
+                    animationSpec = tween(300),
+                    label         = "tileRot$index"
                 )
+                val alpha by animateFloatAsState(
+                    targetValue   = if (visible) 1f else 0f,
+                    animationSpec = tween(300),
+                    label         = "tileAlpha$index"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .graphicsLayer { rotationY = rotY; this.alpha = alpha }
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(color),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text       = char.toString(),
+                        color      = Color.White,
+                        fontSize   = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                }
             }
         }
     }

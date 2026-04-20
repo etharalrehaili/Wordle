@@ -9,13 +9,17 @@
     <string name="drawer_language_desc">تغيير اللغة</string>
     <string name="drawer_login">تسجيل الدخول</string>
     <string name="drawer_login_desc">سجّل دخولك إلى حسابك</string>
+    <string name="drawer_support">الدعم</string>
+    <string name="drawer_support_desc">المساعدة والملاحظات</string>
 
     <!-- Word Length Bottom Sheet -->
     <string name="word_length_title">كم طول الكلمة؟</string>
     <string name="word_length_subtitle">اختر طول الكلمة للبدء</string>
     <string name="word_length_easy">سهل</string>
-    <string name="word_length_classic">كلاسيكي</string>
+    <string name="word_length_classic">متوسط</string>
     <string name="word_length_hard">صعب</string>
+    <string name="word_length_classic_requirement">حل %1$d / %2$d كلمة سهلة للفتح</string>
+    <string name="word_length_hard_requirement">حل %1$d / %2$d كلمة متوسطة للفتح</string>
 
     <!-- Wordle Info Bottom Sheet -->
     <string name="info_how_to_play">كيفية اللعب</string>
@@ -33,6 +37,9 @@
     <string name="info_example_3_letters">اصدقاء</string>
     <string name="info_example_3_desc"> غير موجود في الكلمة في أي مكان.</string>
     <string name="info_new_wordle">كلمة تحدي جديدة ستكون متاحة كل يوم!</string>
+    <string name="info_example_4_letter">ه</string>
+    <string name="info_example_4_letters">ورده</string>
+    <string name="info_example_4_desc"> موجود لكن تحقق من شكل الحرف (ة / ه).</string>
 
     <!-- challenge -->
     <string name="result_win_title">رائع!</string>
@@ -90,8 +97,8 @@
     <string name="join_room_join">انضمام</string>
 
     <!-- Leave Game Bottom Sheet -->
-    <string name="leave_game_title">مغادرة المباراة؟</string>
-    <string name="leave_game_subtitle">إذا غادرت الآن، سيفوز منافسك.</string>
+    <string name="leave_game_title">مغادرة المباراة</string>
+    <string name="leave_game_subtitle">هل أنت متأكد أنك تريد المغادرة؟</string>
     <string name="leave_game_confirm">نعم، غادر</string>
     <string name="leave_game_stay">ابقَ</string>
 
@@ -108,6 +115,19 @@
     <string name="multiplayer_mode_create_room">إنشاء غرفة</string>
     <string name="multiplayer_mode_join_room">الانضمام لغرفة</string>
 
+    <!-- Create Room Word Bottom Sheet -->
+    <string name="create_room_word_title">اختر الكلمة</string>
+    <string name="create_room_word_subtitle">حدد كيف يتم اختيار الكلمة السرية لهذه الغرفة</string>
+    <string name="create_room_random_title">كلمة عشوائية</string>
+    <string name="create_room_random_subtitle">جلب كلمة عشوائية من قائمة الكلمات</string>
+    <string name="create_room_random_action">استخدام كلمة عشوائية</string>
+    <string name="create_room_or">أو</string>
+    <string name="create_room_custom_title">كلمتي الخاصة</string>
+    <string name="create_room_custom_subtitle">اكتب الكلمة التي سيخمّنها صديقك</string>
+    <string name="create_room_custom_hint">اكتب كلمة…</string>
+    <string name="create_room_custom_length_hint">يجب أن تكون 4 أو 5 أو 6 أحرف</string>
+    <string name="create_room_custom_action">استخدام هذه الكلمة</string>
+
     <!-- Game Mode Bottom Sheet -->
     <string name="game_mode_title">اختر الوضع</string>
     <string name="game_mode_subtitle">كيف تريد أن تلعب اليوم</string>
@@ -115,6 +135,9 @@
     <string name="game_mode_multiplayer">اللعب الجماعي</string>
     <string name="multiplayer_default_my_name">أنت</string>
     <string name="multiplayer_default_guest_name">ضيف</string>
+    <string name="spectator_title">أنت اخترت الكلمة!</string>
+    <string name="spectator_watching">تراقب %s يلعب…</string>
+    <string name="spectator_waiting">في انتظار انضمام خصمك…</string>
 
     <!-- Theme and Language options -->
     <string name="theme_dark">داكن</string>
@@ -133,5 +156,12 @@
     <string name="error_timeout">انتهت مهلة الطلب. حاول مجدداً</string>
     <string name="error_unexpected">حدث خطأ ما. يرجى المحاولة مجدداً</string>
     <string name="error_email_already_in_use">البريد الإلكتروني مرتبط بحساب آخر بالفعل</string>
+
+    <!-- Spectator Result Bottom Sheet -->
+    <string name="spectator_result_you_guessed">لقد فزت!</string>
+    <string name="spectator_result_guessed">%1$s خمّن الكلمة!</string>
+    <string name="spectator_result_left">%1$s غادر اللعبة</string>
+    <string name="spectator_result_failed">%1$s لم يخمّن الكلمة</string>
+    <string name="spectator_result_back_home">العودة للرئيسية</string>
 
 </resources>

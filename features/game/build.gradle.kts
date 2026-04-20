@@ -18,11 +18,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            consumerProguardFiles("proguard-rules.pro")
         }
     }
     compileOptions {
@@ -87,4 +88,11 @@ dependencies {
 
     // SQLCipher for encrypted database
     implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    // WorkManager + Hilt integration for offline sync
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Haze for state management
+    implementation("dev.chrisbanes.haze:haze:0.7.3")
 }

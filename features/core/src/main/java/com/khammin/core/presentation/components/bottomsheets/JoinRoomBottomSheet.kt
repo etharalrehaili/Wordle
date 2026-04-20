@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MeetingRoom
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -191,15 +192,31 @@ fun JoinRoomBottomSheet(
 
                 Spacer(Modifier.height(24.dp))
 
-                GameButton(
-                    label           = if (isLoading) stringResource(R.string.join_room_joining) else stringResource(
-                        R.string.join_room_join),
-                    backgroundColor = if (isValid && !isLoading) colors.buttonTeal else colors.border,
-                    contentColor    = colors.title,
-                    showBorder      = false,
-                    onClick         = { if (isValid && !isLoading) onJoin(roomCode.trim()) },
-                    modifier        = Modifier.fillMaxWidth()
-                )
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.buttonTeal),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color       = colors.title,
+                            modifier    = Modifier.size(22.dp),
+                            strokeWidth = 2.5.dp,
+                        )
+                    }
+                } else {
+                    GameButton(
+                        label           = stringResource(R.string.join_room_join),
+                        backgroundColor = if (isValid) colors.buttonTeal else colors.border,
+                        contentColor    = colors.title,
+                        showBorder      = false,
+                        onClick         = { if (isValid) onJoin(roomCode.trim()) },
+                        modifier        = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

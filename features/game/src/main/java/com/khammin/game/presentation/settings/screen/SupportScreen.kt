@@ -1,6 +1,7 @@
 package com.khammin.game.presentation.settings.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +28,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -62,7 +64,8 @@ fun SupportContent(onBack: Action) {
                 title              = stringResource(R.string.support_title),
                 startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
                 onStartIconClicked = onBack,
-                modifier           = Modifier.fillMaxWidth(),
+                showBackground     = false,
+                modifier           = Modifier.fillMaxWidth().statusBarsPadding(),
                 containerColor     = Color.Transparent,
             )
 
@@ -115,6 +118,10 @@ fun SupportContent(onBack: Action) {
                             color = colors.border.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(16.dp)
                         )
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(linkedInUrl))
+                            context.startActivity(intent)
+                        }
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -159,20 +166,6 @@ fun SupportContent(onBack: Action) {
 
                 Spacer(Modifier.height(8.dp))
 
-                // ── CTA Button ────────────────────────────────────────
-                GameButton(
-                    label = stringResource(R.string.support_cta_button),
-                    backgroundColor = Color(0xFF0A66C2),
-                    contentColor    = Color.White,
-                    showBorder      = false,
-                    onClick         = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(linkedInUrl))
-                        context.startActivity(intent)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(16.dp))
             }
         }
     }

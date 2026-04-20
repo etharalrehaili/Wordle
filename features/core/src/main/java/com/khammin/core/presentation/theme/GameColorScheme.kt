@@ -1,10 +1,11 @@
 package com.khammin.core.presentation.theme
 
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val DarkBackground      = Color(0xFF2c313d)
-val DarkSurface         = Color(0xFF1A1A1B)
+val DarkSurface         = Color(0xFF3A3A3F)
 val DarkTopBar          = Color(0xFF121620)
 val DarkDivider         = Color(0xFF3A3D47)
 val DarkCorrect         = Color(0xFF7BC47F)
@@ -47,6 +48,37 @@ val LightButtonPurple  = Color(0xFF9B7BC7)
 val DecorativeTeal  = Color(0xFF4DD0E1)
 val DecorativeGreen = Color(0xFF4EC9A0)
 val DecorativePink  = Color(0xFFF06292)
+val LightTopBarBackground = Color(0xFFFFFFFF).copy(alpha = 0.55f)
+val LightTopBarBorder     = Color(0xFFFFFFFF).copy(alpha = 0.60f)
+val DarkTopBarBackground  = Color(0xFF1A1A2E).copy(alpha = 0.55f)
+val DarkTopBarBorder      = Color(0xFFFFFFFF).copy(alpha = 0.15f)
+
+// Dark mode brushes
+val DarkButtonPinkBrush = Brush.linearGradient(
+    colors = listOf(Color(0xFF5144a3), Color(0xFF654fcc))
+)
+val DarkButtonTealBrush = Brush.linearGradient(
+    colors = listOf(Color(0xFF3b7a9e), Color(0xFF4597c5))
+)
+val DarkButtonPinkBottomBrush = Brush.linearGradient(
+    colors = listOf(Color(0xFF984882), Color(0xFFc2579f))
+)
+
+val LightButtonPinkBrush = Brush.linearGradient(
+    colors = listOf(Color(0xFF917EE5), Color(0xFFADA0EF))
+)
+val LightButtonTealBrush = Brush.linearGradient(
+    colors = listOf(Color(0xFF76B9E3), Color(0xFF9DCCE8))
+)
+val LightButtonPinkBottomBrush = Brush.linearGradient(
+    colors = listOf(Color(0xFFE182C2), Color(0xFFECA7D5))
+)
+
+val LightCardBackground = Color(0xFFFFFFFF).copy(alpha = 0.35f)
+val LightCardBorder     = Color(0xFFFFFFFF).copy(alpha = 0.60f)
+
+val DarkCardBackground  = Color(0xFF2A2D3E).copy(alpha = 0.55f)
+val DarkCardBorder      = Color(0xFFFFFFFF).copy(alpha = 0.10f)
 
 data class GameColorScheme(
     // Text Colors

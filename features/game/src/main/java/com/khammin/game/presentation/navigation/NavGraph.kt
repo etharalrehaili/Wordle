@@ -55,12 +55,12 @@ fun NavGraphBuilder.navGraph(
 
         HomeScreen(
             onPlayClick = { length ->
-                navController.navigate(Route.GameScreen(length)) {
+                navController.navigate(Route.GameScreen(length, currentLanguage().code)) {
                     launchSingleTop = true
                 }
             },
-            onMultiplayerClick = { roomId, isHost, userId ->
-                navController.navigate(Route.MultiplayerGameScreen(roomId, isHost, userId)) {
+            onMultiplayerClick = { roomId, isHost, userId, isCustomWord ->
+                navController.navigate(Route.MultiplayerGameScreen(roomId, isHost, userId, isCustomWord)) {
                     launchSingleTop = true
                 }
             },
@@ -76,6 +76,11 @@ fun NavGraphBuilder.navGraph(
             },
             onProfileClick = {
                 navController.navigate(Route.ProfileScreen) {
+                    launchSingleTop = true
+                }
+            },
+            onSupportClick = {
+                navController.navigate(Route.SupportScreen) {
                     launchSingleTop = true
                 }
             },
@@ -101,8 +106,7 @@ fun NavGraphBuilder.navGraph(
                     navController.popBackStack()
                 }
             },
-            currentLanguage = currentLanguage(),
-            wordLength      = route.wordLength,
+            wordLength = route.wordLength,
         )
     }
 
@@ -118,6 +122,7 @@ fun NavGraphBuilder.navGraph(
             roomId          = route.roomId,
             isHost          = route.isHost,
             userId          = route.userId,
+            isCustomWord    = route.isCustomWord,
         )
     }
 
@@ -174,7 +179,6 @@ fun NavGraphBuilder.navGraph(
                 }
             },
             onChangePasswordClick = { navController.navigate(Route.ResetPasswordScreen) },
-            onSupportClick = { navController.navigate(Route.SupportScreen) },
             onSignOutClick        = { viewModel.onEvent(SettingsIntent.OnSignOutClick) },
             uiEffect              = viewModel.uiEffect,
             onSignOutSuccess      = {
@@ -290,13 +294,14 @@ sealed interface Route {
     data object HomeScreen : Route
 
     @Serializable
-    data class GameScreen(val wordLength: Int) : Route
+    data class GameScreen(val wordLength: Int, val gameLanguage: String) : Route
 
     @Serializable
     data class MultiplayerGameScreen(
         val roomId: String = "",
         val isHost: Boolean = false,
-        val userId: String = ""
+        val userId: String = "",
+        val isCustomWord: Boolean = false,
     ) : Route
 
     @Serializable

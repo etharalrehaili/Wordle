@@ -8,6 +8,7 @@ import com.khammin.game.data.remote.datasource.game.GameRemoteDataSource
 import com.khammin.game.data.remote.datasource.game.GameRemoteDataSourceImpl
 import com.khammin.game.domain.repository.GameRepository
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
+import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,6 +41,12 @@ object GameModule {
     fun provideGetWordsUseCase(
         repository: GameRepository
     ): GetWordsUseCase = GetWordsUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideValidateWordUseCase(
+        repository: GameRepository
+    ): ValidateWordUseCase = ValidateWordUseCase(repository)
 
     @Provides
     @Singleton

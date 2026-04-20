@@ -35,4 +35,9 @@ interface ProfileRepository {
     /** Fetches the top [limit] players sorted by points for the leaderboard. */
     suspend fun getLeaderboard(limit: Int, language: String): List<Profile>
 
+    /**
+     * Pushes all locally-saved profile updates (pendingSync = true) to the server.
+     * Called by [ProfileSyncWorker] once network connectivity is restored.
+     */
+    suspend fun syncPendingUpdates()
 }

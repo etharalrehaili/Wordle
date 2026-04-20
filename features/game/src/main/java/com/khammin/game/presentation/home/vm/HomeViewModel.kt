@@ -1,5 +1,6 @@
 package com.khammin.game.presentation.home.vm
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.authentication.domain.usecase.GetAuthStateUseCase
@@ -7,10 +8,12 @@ import com.khammin.core.domain.model.GameRoom
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
+import kotlinx.coroutines.tasks.await
 import com.khammin.game.domain.usecases.challenge.GetChallengeSolvedStateUseCase
 import com.khammin.game.domain.usecases.game.CreateRoomUseCase
 import com.khammin.game.domain.usecases.game.FindRoomByCodeUseCase
 import com.khammin.game.domain.usecases.game.GetRoomUseCase
+import com.khammin.game.domain.usecases.game.GetGameProgressUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.JoinRoomUseCase
 import com.khammin.game.domain.usecases.profile.CreateProfileUseCase
@@ -27,10 +30,12 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     getAuthState : GetAuthStateUseCase,
     getChallengeSolvedState: GetChallengeSolvedStateUseCase,
+    getGameProgressUseCase: GetGameProgressUseCase,
     private val getProfileUseCase   : GetProfileUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val createRoomUseCase: CreateRoomUseCase,
     private val joinRoomUseCase: JoinRoomUseCase,
+    private val addGuestToRoomUseCase: com.khammin.game.domain.usecases.game.AddGuestToRoomUseCase,
     private val findRoomByCodeUseCase: FindRoomByCodeUseCase,
     private val getRoomUseCase       : GetRoomUseCase,
     private val getWordsUseCase: GetWordsUseCase,
@@ -41,9 +46,22 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            getAuthState().collect { isLoggedIn ->
-                setState { copy(isLoggedIn = isLoggedIn) }
-                if (isLoggedIn) ensureProfileExists()
+            getAuthState().collect {
+                val user = FirebaseAuth.getInstance().currentUser
+                val isRealUser = user != null && !user.isAnonymous
+                val verified = isRealUser && user.isEmailVerified == true
+                setState { copy(isLoggedIn = isRealUser, isEmailVerified = verified) }
+                if (isRealUser) ensureProfileExists()
+            }
+        }
+        viewModelScope.launch {
+            getGameProgressUseCase().collect { progress ->
+                setState {
+                    copy(
+                        easyWordsSolved    = progress.easyWordsSolved,
+                        classicWordsSolved = progress.classicWordsSolved,
+                    )
+                }
             }
         }
         viewModelScope.launch {
@@ -75,10 +93,12 @@ class HomeViewModel @Inject constructor(
     private fun ensureProfileExists() {
         viewModelScope.launch {
             val user  = FirebaseAuth.getInstance().currentUser ?: return@launch
+
+            if (user.isAnonymous) return@launch
+
             val uid   = user.uid
             val email = user.email ?: uid
 
-            // Only create if no profile exists yet
             when (val result = getProfileUseCase(uid)) {
                 is Resource.Success -> {
                     if (result.data == null) {
@@ -86,7 +106,6 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 is Resource.Error -> {
-                    // Profile fetch failed — attempt creation anyway as a fallback
                     createProfileUseCase(uid, email.substringBefore("@"))
                 }
                 else -> Unit
@@ -94,41 +113,70 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun createRoom(language: String, onRoomCreated: (String, String) -> Unit) {
+    fun createRoom(
+        language: String,
+        customWord: String? = null,
+        onRoomCreated: (String, String) -> Unit,
+    ) {
         viewModelScope.launch {
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
                 return@launch
             }
 
-            val myId = FirebaseAuth.getInstance().currentUser?.uid
+            setState { copy(createRoomLoading = true) }
+
+            // Anonymous auth is required to associate the room with a host ID,
+            // but we don't want to force users to create an account just to play with friends.
+            // If they're not logged in, sign them in anonymously. This way they can still create/join
+            // rooms and have a consistent identity across sessions until they choose to log out or create an account.
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) {
+                try { auth.signInAnonymously().await() } catch (_: Exception) { /* proceed as guest */ }
+            }
+
+            val myId = auth.currentUser?.uid
                 ?: "guest_${System.currentTimeMillis()}"
 
-            val wordLength = listOf(4, 5, 6).random()
-            val cacheKey = "$language-$wordLength"
+            val isCustomWordRoom = customWord != null
+            val isWordProvided   = !customWord.isNullOrEmpty()
 
-            // Use cache if available, otherwise fetch
-            val words = cachedWords[cacheKey] ?: run {
-                val result = getWordsUseCase(language, wordLength)
-                if (result is Resource.Success) {
-                    cachedWords[cacheKey] = result.data
-                    result.data
-                } else {
-                    setState { copy(createRoomLoading = false) }
-                    return@launch
+            val (word, wordLength) = when {
+                isWordProvided -> {
+                    Log.d("WordleRoom", "customWord (raw)='$customWord'  stored='${customWord!!.uppercase()}'  length=${customWord.length}")
+                    customWord.uppercase() to customWord.length
+                }
+                isCustomWordRoom -> {
+                    // Host will set the word in the lobby — create room with empty word in waiting status
+                    "" to 0
+                }
+                else -> {
+                    val length = listOf(4, 5, 6).random()
+                    val cacheKey = "$language-$length"
+                    val words = cachedWords[cacheKey] ?: run {
+                        val result = getWordsUseCase(language, length)
+                        if (result is Resource.Success) {
+                            cachedWords[cacheKey] = result.data
+                            result.data
+                        } else {
+                            setState { copy(createRoomLoading = false) }
+                            return@launch
+                        }
+                    }
+                    val randomWord = words.randomOrNull() ?: run {
+                        setState { copy(createRoomLoading = false) }
+                        return@launch
+                    }
+                    randomWord.uppercase() to length
                 }
             }
 
-            val word = words.randomOrNull() ?: run {
-                setState { copy(createRoomLoading = false) }
-                return@launch
-            }
-
             val room = GameRoom(
-                hostId     = myId,
-                word       = word.uppercase(),
-                language   = language,
-                wordLength = wordLength
+                hostId       = myId,
+                word         = word,
+                language     = language,
+                wordLength   = wordLength,
+                isCustomWord = isCustomWordRoom,
             )
 
             val roomId = createRoomUseCase(room)
@@ -137,14 +185,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun joinRoom(code: String, onJoined: (String, String) -> Unit) {
+    fun joinRoom(code: String, onJoined: (String, String, Boolean) -> Unit) {
         viewModelScope.launch {
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
                 return@launch
             }
 
-            val myId = FirebaseAuth.getInstance().currentUser?.uid
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) {
+                try { auth.signInAnonymously().await() } catch (_: Exception) { /* proceed as guest */ }
+            }
+
+            val myId = auth.currentUser?.uid
                 ?: "guest_${System.currentTimeMillis()}"
 
             val fullRoomId = findRoomByCodeUseCase(code.trim())
@@ -154,7 +207,7 @@ class HomeViewModel @Inject constructor(
             }
 
             // ← Check if room is still joinable
-            val room = getRoomUseCase(fullRoomId)   // see step 3 below
+            val room = getRoomUseCase(fullRoomId)
             when {
                 room == null -> {
                     setState { copy(joinRoomLoading = false, joinRoomError = "Room not found.") }
@@ -164,15 +217,27 @@ class HomeViewModel @Inject constructor(
                     setState { copy(joinRoomLoading = false, joinRoomError = "This game has already ended.") }
                     return@launch
                 }
-                room.status == "playing" || room.guestId.isNotEmpty() -> {
+                room.status == "playing" -> {
+                    setState { copy(joinRoomLoading = false, joinRoomError = "This game has already started.") }
+                    return@launch
+                }
+                room.isCustomWord && room.guestIds.size >= 6 -> {
+                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 6 players).") }
+                    return@launch
+                }
+                !room.isCustomWord && room.guestId.isNotEmpty() -> {
                     setState { copy(joinRoomLoading = false, joinRoomError = "This room is already full.") }
                     return@launch
                 }
             }
 
-            joinRoomUseCase(fullRoomId, myId)
+            if (room.isCustomWord) {
+                addGuestToRoomUseCase(fullRoomId, myId)
+            } else {
+                joinRoomUseCase(fullRoomId, myId)
+            }
             setState { copy(joinRoomLoading = false, joinRoomError = null) }
-            onJoined(fullRoomId, myId)
+            onJoined(fullRoomId, myId, room.isCustomWord)
         }
     }
 

@@ -1,8 +1,11 @@
 <resources>
 
     <!-- Home Screen -->
-    <string name="welcome_to">WELCOME TO</string>
-    <string name="Khammin">Khammin</string>
+    <string name="verify_email_title">Email Not Verified</string>
+    <string name="verify_email_message">Please verify your email address before accessing this feature. Check your inbox for a verification link.</string>
+    <string name="ok">OK</string>
+    <string name="welcome_to">Welcome To</string>
+    <string name="Khammin">KHAMMIN</string>
     <string name="quick_play">Quick Play</string>
     <string name="take_challenge">Take Challenge</string>
     <string name="leaderboard">Leaderboard</string>
@@ -47,6 +50,21 @@
     <string name="profile_updated_successfully">Profile Updated Successfully</string>
     <string name="profile_stat_arabic">ar</string>
     <string name="profile_stat_english">en</string>
+    <string name="error_name_too_long">Name must not exceed 25 characters</string>
+
+    <!-- Game Multiplayer Screen -->
+    <string name="spectator_waiting">Waiting for players to join…</string>
+    <string name="multiplayer_room_code">ROOM CODE</string>
+    <string name="multiplayer_room_tap_copy">Tap to copy</string>
+    <string name="room_code_copied_label">Room Code</string>
+    <string name="multiplayer_result_title">RESULTS</string>
+    <string name="spectator_round">Round %1$d</string>
+    <string name="spectator_votes">👋  Votes for play again: %1$d / %2$d</string>
+    <string name="spectator_solved">Solved in %1$d  ·  %2$d pts</string>
+    <string name="spectator_failed">Failed ✗</string>
+    <string name="spectator_waiting_guess">Waiting…</string>
+    <string name="spectator_guess_progress">%1$d/%2$d</string>
+    <string name="spectator_total_points">Total: %1$d pts</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>
@@ -58,4 +76,6 @@
     <string name="error_name_empty">Name cannot be empty</string>
     <string name="error_upload_failed">Upload failed</string>
     <string name="error_generic">Error</string>
+
+
 </resources>

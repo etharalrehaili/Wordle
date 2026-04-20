@@ -14,6 +14,7 @@ import com.khammin.game.domain.usecases.challenge.LoadTodayChallengeUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.challenge.SaveChallengeStateUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
+import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import com.khammin.game.domain.usecases.profile.UpdateProfileUseCase
 import com.khammin.game.presentation.challenge.contract.ChallengeEffect
 import com.khammin.game.presentation.challenge.contract.ChallengeIntent
@@ -32,7 +33,8 @@ class ChallengeViewModel @Inject constructor(
     private val saveChallengeStateUseCase: SaveChallengeStateUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
-) : BaseMviViewModel<ChallengeIntent, ChallengeUiState, ChallengeEffect>(
+    private val validateWordUseCase: ValidateWordUseCase,
+    ) : BaseMviViewModel<ChallengeIntent, ChallengeUiState, ChallengeEffect>(
     initialState = ChallengeUiState()
 ) {
 
@@ -51,7 +53,6 @@ class ChallengeViewModel @Inject constructor(
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
             val today = LocalDate.now().toString()
-
             val saved = loadTodayChallengeUseCase(language)
 
             // Only restore saved state if it matches the requested language
@@ -122,7 +123,7 @@ class ChallengeViewModel @Inject constructor(
 
     private fun enterLetter(letter: Char) {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.targetWord.isEmpty()) return
         if (state.currentCol >= state.wordLength) return
 
@@ -138,7 +139,7 @@ class ChallengeViewModel @Inject constructor(
 
     private fun deleteLetter() {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.currentCol <= 0) return
 
         val colToDelete = state.currentCol - 1
@@ -152,57 +153,65 @@ class ChallengeViewModel @Inject constructor(
 
     private fun submitGuess() {
         val state = uiState.value
-        if (state.isGameOver) return
+        if (state.isGameOver || state.isValidating) return
         if (state.currentCol < state.wordLength) {
             sendEffect { ChallengeEffect.InvalidWord }
             sendEffect { ChallengeEffect.RowShake }
             return
         }
 
-        val rawGuess     = state.board[state.currentRow].map { it.letter }.joinToString("")
-        val guessNorm    = rawGuess.normalizeForWordle()
-        val isInWordList = state.wordList.any { it.normalizeForWordle() == guessNorm }
-        if (!isInWordList) {
-            sendEffect { ChallengeEffect.NotInWordList }
-            sendEffect { ChallengeEffect.RowShake }
-            return
-        }
-
-        val evaluatedRow = evaluateGuess(rawGuess, state.targetWord)
-        val newBoard = state.board.toMutableList().also { it[state.currentRow] = evaluatedRow }.toList()
-        val newKeyboardStates = state.keyboardStates.mergeWith(evaluatedRow)
-
-        val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
-        val isLast = state.currentRow == MAX_GUESSES - 1
-
-        setState {
-            copy(
-                board          = newBoard,
-                keyboardStates = newKeyboardStates,
-                currentRow     = if (isWin || isLast) currentRow else currentRow + 1,
-                currentCol     = 0,
-                isGameOver     = isWin || isLast
-            )
-        }
+        val rawGuess = state.board[state.currentRow].map { it.letter }.joinToString("")
 
         viewModelScope.launch {
+            setState { copy(isValidating = true) }
+
+            val normalizedGuess  = rawGuess.normalizeForWordle()
+            val normalizedTarget = state.targetWord.normalizeForWordle()
+            val isValid = normalizedGuess == normalizedTarget ||
+                validateWordUseCase(rawGuess, state.language, state.wordList)
+
+            setState { copy(isValidating = false) }
+
+            if (!isValid) {
+                sendEffect { ChallengeEffect.NotInWordList }
+                sendEffect { ChallengeEffect.RowShake }
+                return@launch
+            }
+
+            // Re-read state in case it changed while validating
             val s = uiState.value
+            val evaluatedRow      = evaluateGuess(rawGuess, s.targetWord)
+            val newBoard          = s.board.toMutableList().also { it[s.currentRow] = evaluatedRow }.toList()
+            val newKeyboardStates = s.keyboardStates.mergeWith(evaluatedRow)
+
+            val isWin  = evaluatedRow.all { it.state == TileState.CORRECT }
+            val isLast = s.currentRow == MAX_GUESSES - 1
+
+            setState {
+                copy(
+                    board          = newBoard,
+                    keyboardStates = newKeyboardStates,
+                    currentRow     = if (isWin || isLast) currentRow else currentRow + 1,
+                    currentCol     = 0,
+                    isGameOver     = isWin || isLast
+                )
+            }
+
             saveChallengeStateUseCase(
                 language       = s.language,
                 targetWord     = s.targetWord,
-                board          = s.board,
-                keyboardStates = s.keyboardStates,
-                currentRow     = s.currentRow,
-                currentCol     = s.currentCol,
-                isGameOver     = s.isGameOver,
+                board          = newBoard,
+                keyboardStates = newKeyboardStates,
+                currentRow     = if (isWin || isLast) s.currentRow else s.currentRow + 1,
+                currentCol     = 0,
+                isGameOver     = isWin || isLast,
                 isWin          = isWin,
             )
-        }
 
-        val currentLanguage = state.language
-        if (isWin || isLast) {
-            sendEffect { ChallengeEffect.ShowGameDialog(isWin = isWin, targetWord = state.targetWord) }
-            updateProfileStats(isWin = isWin, guessCount = state.currentRow + 1, language = currentLanguage)
+            if (isWin || isLast) {
+                sendEffect { ChallengeEffect.ShowGameDialog(isWin = isWin, targetWord = s.targetWord) }
+                updateProfileStats(isWin = isWin, guessCount = s.currentRow + 1, language = s.language)
+            }
         }
     }
 
@@ -246,6 +255,13 @@ class ChallengeViewModel @Inject constructor(
         }
     }
 
+    private val similarPairs: List<Set<Char>> = listOf(
+        setOf('\u0647', '\u0629') // ه ↔ ة
+    )
+
+    private fun areSimilarArabicLetters(a: Char, b: Char): Boolean =
+        a != b && similarPairs.any { it.contains(a) && it.contains(b) }
+
     private fun evaluateGuess(guess: String, target: String): List<Tile> {
         val g               = guess.normalizeForWordle()
         val t               = target.normalizeForWordle()
@@ -254,14 +270,22 @@ class ChallengeViewModel @Inject constructor(
         val guessArr        = g.toCharArray()
         val remainingTarget = targetArr.toMutableList()
 
+        // First pass: exact matches and similar-letter matches (right position)
         for (i in guessArr.indices) {
-            if (guessArr[i] == targetArr[i]) {
-                result[i]          = TileState.CORRECT
-                remainingTarget[i] = '\u0000'
+            when {
+                guessArr[i] == targetArr[i] -> {
+                    result[i]          = TileState.CORRECT
+                    remainingTarget[i] = '\u0000'
+                }
+                areSimilarArabicLetters(guessArr[i], targetArr[i]) -> {
+                    result[i]          = TileState.SIMILAR
+                    remainingTarget[i] = '\u0000'
+                }
             }
         }
+        // Second pass: misplaced letters (skip CORRECT and SIMILAR positions)
         for (i in guessArr.indices) {
-            if (result[i] == TileState.CORRECT) continue
+            if (result[i] == TileState.CORRECT || result[i] == TileState.SIMILAR) continue
             val idx = remainingTarget.indexOf(guessArr[i])
             if (idx != -1) {
                 result[i]            = TileState.MISPLACED
@@ -279,7 +303,8 @@ class ChallengeViewModel @Inject constructor(
 
     private fun Map<Char, TileState>.mergeWith(row: List<Tile>): Map<Char, TileState> {
         val priority = mapOf(
-            TileState.CORRECT   to 4,
+            TileState.CORRECT   to 5,
+            TileState.SIMILAR   to 4,
             TileState.MISPLACED to 3,
             TileState.WRONG     to 2,
             TileState.FILLED    to 1,

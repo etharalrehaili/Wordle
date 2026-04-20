@@ -36,16 +36,15 @@ import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.theme.LocalWordleColors
 
-// ─── English layout ───────────────────────────────────────────────────────────
-private val ROW_1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
-private val ROW_2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
-private val ROW_3 = listOf('Z', 'X', 'C', 'V', 'B', 'N', 'M')
-
 // ─── Arabic layout ────────────────────────────────────────────────────────────
 private val AR_ROW_1 = listOf('ج', 'ح', 'خ', 'ه', 'ع', 'غ', 'ف', 'ق', 'ث', 'ص', 'ض')
 private val AR_ROW_2 = listOf('ط', 'ك', 'م', 'ن', 'ت', 'ا', 'ل', 'ب', 'ي', 'س', 'ش')
 private val AR_ROW_3 = listOf('د', 'ظ', 'ز', 'و', 'ة', 'ى', 'ر', 'ؤ', 'ء', 'ذ')
 
+// ─── English layout ───────────────────────────────────────────────────────────
+private val EN_ROW_1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')
+private val EN_ROW_2 = listOf('A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L')
+private val EN_ROW_3 = listOf('Z', 'X', 'C', 'V', 'B', 'N', 'M')
 
 private val KEY_HEIGHT_EN = 58.dp
 private val KEY_HEIGHT_AR = 44.dp
@@ -63,6 +62,10 @@ fun GameKeyboard(
     val isArabic = language == AppLanguage.ARABIC
     val keyHeight = if (isArabic) KEY_HEIGHT_AR else KEY_HEIGHT_EN
 
+    val row1 = if (isArabic) AR_ROW_1 else EN_ROW_1
+    val row2 = if (isArabic) AR_ROW_2 else EN_ROW_2
+    val row3 = if (isArabic) AR_ROW_3 else EN_ROW_3
+
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -73,7 +76,7 @@ fun GameKeyboard(
     ) {
         // ── Row 1 ─────────────────────────────────────────────────────────────
         KeyRow {
-            (if (isArabic) AR_ROW_1 else ROW_1).forEach { letter ->
+            row1.forEach { letter ->
                 LetterKey(
                     letter = letter,
                     type = keyStates[letter] ?: Types.DEFAULT,
@@ -84,7 +87,7 @@ fun GameKeyboard(
 
         // ── Row 2 ─────────────────────────────────────────────────────────────
         KeyRow {
-            (if (isArabic) AR_ROW_2 else ROW_2).forEach { letter ->
+            row2.forEach { letter ->
                 LetterKey(
                     letter = letter,
                     type = keyStates[letter] ?: Types.DEFAULT,
@@ -96,7 +99,7 @@ fun GameKeyboard(
         // ── Row 3 ─────────────────────────────────────────────────────────────
         KeyRow {
             if (isArabic) {
-                // Backspace first → renders on the right in RTL
+                // In RTL the backspace icon renders on the right
                 IconKey(
                     icon = Icons.AutoMirrored.Filled.Backspace,
                     contentDescription = "Backspace",
@@ -104,21 +107,15 @@ fun GameKeyboard(
                     keyHeight = keyHeight,
                     onClick = onBackspace
                 )
-                AR_ROW_3.forEach { letter ->
-                    LetterKey(
-                        letter = letter,
-                        type = keyStates[letter] ?: Types.DEFAULT,
-                        keyHeight = keyHeight,
-                        onClick = { onKey(letter) })
-                }
-            } else {
-                ROW_3.forEach { letter ->
-                    LetterKey(
-                        letter = letter,
-                        type = keyStates[letter] ?: Types.DEFAULT,
-                        keyHeight = keyHeight,
-                        onClick = { onKey(letter) })
-                }
+            }
+            row3.forEach { letter ->
+                LetterKey(
+                    letter = letter,
+                    type = keyStates[letter] ?: Types.DEFAULT,
+                    keyHeight = keyHeight,
+                    onClick = { onKey(letter) })
+            }
+            if (!isArabic) {
                 IconKey(
                     icon = Icons.AutoMirrored.Filled.Backspace,
                     contentDescription = "Backspace",
@@ -271,6 +268,7 @@ private fun PreviewGameKeyboardEn() {
             'T' to Types.PRESENT, 'O' to Types.CORRECT,
             'S' to Types.CORRECT, 'A' to Types.ABSENT,
         ),
+        language = AppLanguage.ENGLISH,
         onBackspace = {}
     )
 }

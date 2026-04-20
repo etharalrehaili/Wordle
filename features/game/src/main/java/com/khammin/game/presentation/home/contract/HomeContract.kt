@@ -7,11 +7,14 @@ import com.khammin.core.mvi.UiState
 data class HomeUiState(
     val isLoading: Boolean = false,
     val isLoggedIn: Boolean = false,
+    val isEmailVerified: Boolean = false,
     val hasSolvedChallenge: Boolean = false,
     val joinRoomLoading: Boolean = false,
     val joinRoomError: String? = null,
     val createRoomLoading: Boolean = false,
-    val noInternetError: Boolean = false
+    val noInternetError: Boolean = false,
+    val easyWordsSolved: Int = 0,
+    val classicWordsSolved: Int = 0,
 ) : UiState
 
 sealed interface HomeEffect : UiEffect

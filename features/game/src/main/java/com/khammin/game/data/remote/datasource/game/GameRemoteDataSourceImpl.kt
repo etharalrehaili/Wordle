@@ -1,6 +1,7 @@
 package com.khammin.game.data.remote.datasource.game
 
 import com.khammin.game.data.remote.api.GameApiService
+import com.khammin.game.data.remote.model.ValidateWordRequest
 import com.khammin.game.data.remote.model.WordItem
 import javax.inject.Inject
 
@@ -24,6 +25,10 @@ class GameRemoteDataSourceImpl @Inject constructor(
             page++
         }
         return all
+    }
+
+    override suspend fun validateWord(word: String, language: String): Boolean {
+        return api.validateWord(ValidateWordRequest(word = word, language = language)).isValid
     }
 
     private companion object {

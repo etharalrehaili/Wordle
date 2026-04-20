@@ -15,7 +15,7 @@ enum class AppLanguage(val code: String) {
 
 enum class AppColorTheme { DARK, LIGHT }
 
-enum class DrawerScreen { MENU, THEME, LANGUAGE }
+enum class DrawerScreen { MENU, LANGUAGE }
 
 enum class LeaderboardFilter { THIS_WEEK, THIS_MONTH, ALL_TIME }
 

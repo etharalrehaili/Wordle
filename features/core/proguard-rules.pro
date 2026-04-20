@@ -1,21 +1,29 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ─────────────────────────────────────────────────────────────────────────────
+# core module — consumer rules (applied when the app is built)
+# ─────────────────────────────────────────────────────────────────────────────
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ── KeyManager (JNI) ──────────────────────────────────────────────────────────
+# Native method names must match exactly what is compiled in native-lib.so.
+# Both the class name and every native method must be preserved as-is.
+-keep class com.khammin.core.data.ndk.KeyManager {
+    native <methods>;
+    *;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── DataStore ─────────────────────────────────────────────────────────────────
+-keep class androidx.datastore.** { *; }
+-keepclassmembers class * extends androidx.datastore.preferences.protobuf.GeneratedMessageLite {
+    <fields>;
+}
+-dontwarn androidx.datastore.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── Kotlin Serialization ──────────────────────────────────────────────────────
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.AnnotationsKt
+-keep,includedescriptorclasses class com.khammin.core.**$$serializer { *; }
+-keepclassmembers class com.khammin.core.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.khammin.core.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
