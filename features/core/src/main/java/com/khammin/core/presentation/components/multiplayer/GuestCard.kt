@@ -95,6 +95,12 @@ fun GuestCard(
                             .alpha(shimmerAlpha)
                             .background(colors.surface)
                     )
+                    avatarUrl != null -> PlayerAvatar(
+                        name      = name,
+                        avatarUrl = avatarUrl,
+                        modifier  = Modifier.fillMaxSize(),
+                        fontSize  = 24.sp,
+                    )
                     avatarColor != null && avatarEmoji != null -> {
                         val circleColor = Color(avatarColor)
                         Box(
@@ -124,7 +130,7 @@ fun GuestCard(
                     }
                     else -> PlayerAvatar(
                         name      = name,
-                        avatarUrl = avatarUrl,
+                        avatarUrl = null,
                         modifier  = Modifier.fillMaxSize(),
                         fontSize  = 24.sp,
                     )

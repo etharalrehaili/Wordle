@@ -219,6 +219,12 @@ class MultiplayerDataSourceImpl @Inject constructor(
             .await()
     }
 
+    override suspend fun setLobbyWinner(roomId: String, winnerId: String) {
+        rooms.document(roomId)
+            .update("winnerId", winnerId)
+            .await()
+    }
+
     override fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean> = callbackFlow {
         Log.d("PresenceDebug", "[observeOpponentPresence] Attaching listener | roomId=$roomId | opponentId=$opponentId")
         val ref = rtdb.getReference("presence/$roomId/$opponentId")

@@ -16,6 +16,7 @@ import com.khammin.core.presentation.components.toGuessRows
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
 import com.khammin.game.domain.usecases.game.AddGuestToRoomUseCase
+import com.khammin.game.domain.usecases.game.SetLobbyWinnerUseCase
 import com.khammin.game.domain.usecases.game.FinishRoomUseCase
 import com.khammin.game.domain.usecases.game.GetRoomUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
@@ -78,6 +79,7 @@ class MultiplayerGameViewModel @Inject constructor(
     private val updateGuestProfileUseCase: UpdateGuestProfileUseCase,
     private val updateSessionPointsUseCase: UpdateSessionPointsUseCase,
     private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
+    private val setLobbyWinnerUseCase: SetLobbyWinnerUseCase,
     private val auth: FirebaseAuth
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
@@ -138,6 +140,7 @@ class MultiplayerGameViewModel @Inject constructor(
             is MultiplayerGameIntent.StartMatchWithWord     -> startMatchWithWord(intent.word)
             is MultiplayerGameIntent.PlayAgainCustomWord    -> playAgainCustomWord(intent.newWord)
             MultiplayerGameIntent.VotePlayAgain          -> votePlayAgain()
+            MultiplayerGameIntent.PlayAgainLobbyMode     -> playAgainLobbyMode()
             MultiplayerGameIntent.RejoinRoom             -> rejoinRoom()
             is MultiplayerGameIntent.UpdateGuestProfile  -> updateGuestProfile(intent.name, intent.avatarColor, intent.avatarEmoji)
         }
@@ -446,6 +449,16 @@ class MultiplayerGameViewModel @Inject constructor(
                 sendEffect { MultiplayerGameEffect.HostLeftRoom }
             }
 
+            // Lobby mode: winner broadcast — force ALL players to game-over via room.winnerId
+            android.util.Log.d("LobbyDebug", "winnerId check: isLobbyMode=$isLobbyModeRoom | winnerId=${room.winnerId} | isGameOver=${uiState.value.isGameOver} | myId=$myId")
+            if (isLobbyModeRoom && !room.winnerId.isNullOrEmpty() && !uiState.value.isGameOver) {
+                val iWon = room.winnerId == myId
+                val winnerProgress = uiState.value.opponentsProgress[room.winnerId]
+                val winnerName = if (iWon) "" else (winnerProgress?.name?.takeIf { it.isNotBlank() } ?: "")
+                android.util.Log.d("LobbyDebug", "→ forcing game-over: iWon=$iWon | winnerName=$winnerName")
+                setState { copy(isGameOver = true, isMyWin = iWon, lobbyWinnerName = winnerName) }
+            }
+
             if (room.status == "finished" && uiState.value.isGameOver && !isMultiPlayer) {
                 val opponentJustLeft = room.leftBy.isNotEmpty()
                     && room.leftBy != myId
@@ -473,8 +486,29 @@ class MultiplayerGameViewModel @Inject constructor(
                 sendEffect { MultiplayerGameEffect.DismissResultDialog }
             }
 
+            // Lobby mode: new round started → reset board for ALL players (host + guests)
+            if (room.status == "playing" && isLobbyModeRoom && uiState.value.isGameOver
+                && room.word.isNotEmpty() && room.word.uppercase() != previousWord) {
+                setState {
+                    copy(
+                        isGameOver        = false,
+                        isMyWin           = false,
+                        lobbyWinnerName   = "",
+                        currentRow        = 0,
+                        currentCol        = 0,
+                        board             = List(board.size) { List(room.wordLength) { Tile() } },
+                        keyboardStates    = emptyMap(),
+                        targetWord        = room.word.uppercase(),
+                        roundNumber       = room.roundNumber,
+                        opponentsProgress = opponentsProgress.mapValues { (_, p) ->
+                            p.copy(solved = false, failed = false, guessCount = 0, guessRows = List(MAX_GUESSES) { GuessRow() })
+                        },
+                    )
+                }
+            }
+
             // Custom-word guest: host started a NEW round (word changed) → reset board
-            if (room.status == "playing" && isMultiPlayer && !isHostOfRoom && uiState.value.isGameOver
+            if (room.status == "playing" && isCustomWordRoom && !isLobbyModeRoom && !isHostOfRoom && uiState.value.isGameOver
                 && room.word.isNotEmpty() && room.word.uppercase() != previousWord) {
                 setState {
                     copy(
@@ -511,11 +545,16 @@ class MultiplayerGameViewModel @Inject constructor(
             setState { copy(opponentsProgress = updatedProgress) }
 
             // Guest: another player just won → force this player to the lobby as a loss
-            if (!s.isHost && !s.isGameOver && updated.solved && !s.isLobbyMode) {
-                setState { copy(isGameOver = true, isMyWin = false) }
+            if (!s.isHost && !s.isGameOver && updated.solved) {
+                setState { copy(isGameOver = true, isMyWin = false, lobbyWinnerName = if (s.isLobbyMode) updated.name else "") }
             }
 
-            // Host: show result sheet as soon as someone wins, or when all have finished
+            // Host in lobby mode: a guest won → host is also game over as a loss
+            if (s.isHost && s.isLobbyMode && !s.isGameOver && updated.solved) {
+                setState { copy(isGameOver = true, isMyWin = false, lobbyWinnerName = updated.name) }
+            }
+
+            // Custom-word host: show result sheet as soon as someone wins, or when all have finished
             if (s.isHost && !s.isGameOver && s.guestIds.isNotEmpty() && !s.isLobbyMode) {
                 val anyoneSolved = updatedProgress.values.any { it.solved }
                 val allDone = s.guestIds.all { id ->
@@ -945,7 +984,17 @@ class MultiplayerGameViewModel @Inject constructor(
                 if (s2.isCustomWord || s2.isLobbyMode) {
                     // ── Custom word / lobby mode: go to in-screen result lobby ─
                     setState { copy(isGameOver = true, isMyWin = solved) }
-                    // host will see ShowGameDialog when all guests finish (observeGuestState)
+                    if (solved && s2.isLobbyMode) {
+                        // Award points to the winner and broadcast to all players via room.winnerId
+                        val pts = when (newRow) { 1 -> 100; 2 -> 80; 3 -> 60; 4 -> 40; 5 -> 20; else -> 10 }
+                        val newSessionPts = s2.sessionPoints.toMutableMap()
+                        newSessionPts[s2.myUserId] = (newSessionPts[s2.myUserId] ?: 0) + pts
+                        setState { copy(sessionPoints = newSessionPts) }
+                        viewModelScope.launch {
+                            runCatching { updateSessionPointsUseCase(s2.roomId, newSessionPts) }
+                            runCatching { setLobbyWinnerUseCase(s2.roomId, s2.myUserId) }
+                        }
+                    }
                 } else {
                     // ── 1v1 non-custom: finish room as before ─────────────────
                     if (solved) {
@@ -967,6 +1016,28 @@ class MultiplayerGameViewModel @Inject constructor(
             } else {
                 votePlayAgainUseCase.vote(s.roomId, s.myUserId)
             }
+        }
+    }
+
+    private fun playAgainLobbyMode() {
+        val s = uiState.value
+        if (!s.isHost || !s.isLobbyMode) return
+        viewModelScope.launch {
+            val length = listOf(4, 5, 6).random()
+            val words = wordCache[length] ?: run {
+                val result = getWordsUseCase(s.language, length)
+                if (result is Resource.Success && result.data.isNotEmpty()) {
+                    wordCache[length] = result.data; result.data
+                } else null
+            }
+            val word = words?.randomOrNull()?.uppercase() ?: return@launch
+            val newRound = s.roundNumber + 1
+            // Clear all players' states so boards start fresh
+            updatePlayerStateUseCase(s.roomId, s.myUserId, PlayerState())
+            s.guestIds.forEach { guestId ->
+                updatePlayerStateUseCase(s.roomId, guestId, PlayerState())
+            }
+            restartRoomUseCase(s.roomId, word, word.length, newRound, s.sessionPoints)
         }
     }
 

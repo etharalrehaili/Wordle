@@ -86,7 +86,7 @@ import com.khammin.game.presentation.game.components.AllPlayersLeftBottomSheet
 import com.khammin.game.presentation.game.components.CustomWordLobbyGuest
 import com.khammin.game.presentation.game.components.CustomWordLobbyHost
 import com.khammin.game.presentation.game.components.GuestGameOverLobby
-import com.khammin.game.presentation.game.components.GuestLeftBottomSheet
+import com.khammin.game.presentation.game.components.RandomWordGameOverLobby
 import com.khammin.game.presentation.game.components.RandomWordLobbyGuest
 import com.khammin.game.presentation.game.components.RandomWordLobbyHost
 import com.khammin.game.presentation.game.components.RejoinBottomSheet
@@ -438,22 +438,21 @@ fun MultiplayerGameContent(
 
                 // ── Lobby views (custom word, waiting state) ──────────────────────
                 if (state.isLobbyMode && state.isGameOver) {
-                    GuestGameOverLobby(
+                    RandomWordGameOverLobby(
                         isWin             = state.isMyWin,
+                        winnerName        = state.lobbyWinnerName,
                         targetWord        = state.targetWord,
-                        opponentsProgress = state.opponentsProgress,
-                        wordLength        = state.wordLength.takeIf { it > 0 } ?: 4,
-                        roundNumber       = state.roundNumber,
                         myName            = state.myName,
                         myAvatarColor     = state.avatarColor,
                         myAvatarEmoji     = state.avatarEmoji,
+                        myAvatarUrl       = state.avatarUrl,
                         myUserId          = state.myUserId,
-                        myGuessCount      = state.currentRow,
-                        myTotalPoints     = 0,
-                        sessionPoints     = emptyMap(),
-                        playAgainVotes    = emptyList(),
-                        hasVotedPlayAgain = false,
-                        onVotePlayAgain   = {},
+                        roundNumber       = state.roundNumber,
+                        opponentsProgress = state.opponentsProgress,
+                        sessionPoints     = state.sessionPoints,
+                        isHost            = state.isHost,
+                        onPlayAgain       = { onIntent(MultiplayerGameIntent.PlayAgainLobbyMode) },
+                        onLeave           = { onIntent(MultiplayerGameIntent.LeaveMatch) },
                         modifier          = Modifier.fillMaxWidth().weight(1f),
                     )
                 } else if (state.isCustomWord && !state.isHost && state.isGameOver) {
@@ -564,6 +563,7 @@ fun MultiplayerGameContent(
                                     items(opponents) { progress ->
                                         GuestCard(
                                             name        = progress.name,
+                                            avatarUrl   = progress.avatarUrl,
                                             avatarColor = progress.avatarColor,
                                             avatarEmoji = progress.avatarEmoji,
                                             guesses     = progress.guessRows,
