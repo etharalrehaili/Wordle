@@ -87,6 +87,8 @@ import com.khammin.game.presentation.game.components.CustomWordLobbyGuest
 import com.khammin.game.presentation.game.components.CustomWordLobbyHost
 import com.khammin.game.presentation.game.components.GuestGameOverLobby
 import com.khammin.game.presentation.game.components.GuestLeftBottomSheet
+import com.khammin.game.presentation.game.components.RandomWordLobbyGuest
+import com.khammin.game.presentation.game.components.RandomWordLobbyHost
 import com.khammin.game.presentation.game.components.RejoinBottomSheet
 import com.khammin.game.presentation.game.components.HostLeftBottomSheet
 import com.khammin.game.presentation.game.components.ResultButton
@@ -105,6 +107,7 @@ fun MultiplayerGameScreen(
     isHost: Boolean = false,
     userId: String = "",
     isCustomWord: Boolean = false,
+    isLobbyMode: Boolean = false,
     viewModel: MultiplayerGameViewModel = hiltViewModel()
 ) {
 
@@ -132,7 +135,7 @@ fun MultiplayerGameScreen(
 
     BackHandler {
         when {
-            state.isCustomWord -> showLeaveSheet = true
+            state.isCustomWord || state.isLobbyMode -> showLeaveSheet = true
             state.opponentId.isNotEmpty() && !state.opponentLeft -> showLeaveSheet = true
             else -> onClose()
         }
@@ -189,6 +192,7 @@ fun MultiplayerGameScreen(
                     myUserId = userId.takeIf { it.isNotEmpty() }
                         ?: FirebaseAuth.getInstance().currentUser?.uid ?: "",
                     isCustomWord = isCustomWord,
+                    isLobbyMode = isLobbyMode,
                     defaultMyName = defaultMyName,
                     defaultGuestName = defaultGuestName,
                 )
@@ -378,7 +382,7 @@ fun MultiplayerGameScreen(
     MultiplayerGameContent(
         onClose = {
             when {
-                state.isCustomWord -> showLeaveSheet = true
+                state.isCustomWord || state.isLobbyMode -> showLeaveSheet = true
                 state.opponentId.isNotEmpty() && !state.opponentLeft -> showLeaveSheet = true
                 else -> onClose()
             }
@@ -433,7 +437,26 @@ fun MultiplayerGameContent(
                 )
 
                 // ── Lobby views (custom word, waiting state) ──────────────────────
-                if (state.isCustomWord && !state.isHost && state.isGameOver) {
+                if (state.isLobbyMode && state.isGameOver) {
+                    GuestGameOverLobby(
+                        isWin             = state.isMyWin,
+                        targetWord        = state.targetWord,
+                        opponentsProgress = state.opponentsProgress,
+                        wordLength        = state.wordLength.takeIf { it > 0 } ?: 4,
+                        roundNumber       = state.roundNumber,
+                        myName            = state.myName,
+                        myAvatarColor     = state.avatarColor,
+                        myAvatarEmoji     = state.avatarEmoji,
+                        myUserId          = state.myUserId,
+                        myGuessCount      = state.currentRow,
+                        myTotalPoints     = 0,
+                        sessionPoints     = emptyMap(),
+                        playAgainVotes    = emptyList(),
+                        hasVotedPlayAgain = false,
+                        onVotePlayAgain   = {},
+                        modifier          = Modifier.fillMaxWidth().weight(1f),
+                    )
+                } else if (state.isCustomWord && !state.isHost && state.isGameOver) {
                     GuestGameOverLobby(
                         isWin             = state.isMyWin,
                         targetWord        = state.targetWord,
@@ -484,6 +507,40 @@ fun MultiplayerGameContent(
                             modifier = Modifier.fillMaxWidth().weight(1f)
                         )
                     }
+                } else if (state.isLobbyMode && state.roomStatus == "waiting") {
+                    if (state.isHost) {
+                        RandomWordLobbyHost(
+                            myName          = state.myName,
+                            avatarColor     = state.avatarColor,
+                            avatarEmoji     = state.avatarEmoji,
+                            avatarUrl       = state.avatarUrl,
+                            waitingPlayers  = state.waitingPlayers,
+                            roomId          = roomId,
+                            onStart         = { onIntent(MultiplayerGameIntent.StartMatch) },
+                            onUpdateProfile = { name, color, emoji ->
+                                onIntent(MultiplayerGameIntent.UpdateGuestProfile(name, color, emoji))
+                            },
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        )
+                    } else {
+                        RandomWordLobbyGuest(
+                            hostName        = state.opponentName,
+                            hostAvatarColor = state.opponentAvatarColor,
+                            hostAvatarEmoji = state.opponentAvatarEmoji,
+                            hostAvatarUrl   = state.opponentAvatarUrl,
+                            myName          = state.myName,
+                            avatarColor     = state.avatarColor,
+                            avatarEmoji     = state.avatarEmoji,
+                            avatarUrl       = state.avatarUrl,
+                            otherPlayers = state.waitingPlayers.filter {
+                                it.userId != state.myUserId && it.userId != state.opponentId
+                            },
+                            onUpdateProfile = { name, color, emoji ->
+                                onIntent(MultiplayerGameIntent.UpdateGuestProfile(name, color, emoji))
+                            },
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        )
+                    }
                 } else {
                     // ── In-game views ─────────────────────────────────────────────
                     Spacer(Modifier.height(8.dp))
@@ -496,8 +553,8 @@ fun MultiplayerGameContent(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        if (state.isCustomWord && !state.isHost) {
-                            // Custom word guest: show all opponents' mini boards
+                        if ((state.isCustomWord && !state.isHost) || state.isLobbyMode) {
+                            // Custom word guest / lobby mode: show all opponents' mini boards
                             val opponents = state.opponentsProgress.values.toList()
                             if (opponents.isNotEmpty()) {
                                 LazyRow(
@@ -520,7 +577,7 @@ fun MultiplayerGameContent(
                             if (showResultButton) {
                                 ResultButton(isWin = resultIsWin, onClick = onShowResult)
                             }
-                        } else if (!state.isCustomWord) {
+                        } else if (!state.isCustomWord && !state.isLobbyMode) {
                             // 1v1 mode only
                             if (state.opponentId.isNotEmpty()) {
                                 GuestCard(
@@ -569,7 +626,7 @@ fun MultiplayerGameContent(
                         }
                     }
 
-                    if (state.isHost && state.isCustomWord) {
+                    if (state.isHost && state.isCustomWord && !state.isLobbyMode) {
                         if (showResultButton) {
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -590,7 +647,7 @@ fun MultiplayerGameContent(
                             modifier           = Modifier.fillMaxWidth().weight(1f)
                         )
                     } else {
-                        val keyboardEnabled = if (state.isCustomWord) {
+                        val keyboardEnabled = if (state.isCustomWord || state.isLobbyMode) {
                             state.roomStatus == "playing"
                         } else {
                             state.opponentId.isNotEmpty()

@@ -151,23 +151,8 @@ class HomeViewModel @Inject constructor(
                     "" to 0
                 }
                 else -> {
-                    val length = listOf(4, 5, 6).random()
-                    val cacheKey = "$language-$length"
-                    val words = cachedWords[cacheKey] ?: run {
-                        val result = getWordsUseCase(language, length)
-                        if (result is Resource.Success) {
-                            cachedWords[cacheKey] = result.data
-                            result.data
-                        } else {
-                            setState { copy(createRoomLoading = false) }
-                            return@launch
-                        }
-                    }
-                    val randomWord = words.randomOrNull() ?: run {
-                        setState { copy(createRoomLoading = false) }
-                        return@launch
-                    }
-                    randomWord.uppercase() to length
+                    // Random word lobby — host picks word at start time
+                    "" to 0
                 }
             }
 
@@ -177,6 +162,7 @@ class HomeViewModel @Inject constructor(
                 language     = language,
                 wordLength   = wordLength,
                 isCustomWord = isCustomWordRoom,
+                isLobbyMode  = !isCustomWordRoom,   // true for random word path
             )
 
             val roomId = createRoomUseCase(room)
@@ -185,7 +171,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun joinRoom(code: String, onJoined: (String, String, Boolean) -> Unit) {
+    fun joinRoom(code: String, onJoined: (String, String, Boolean, Boolean) -> Unit) {
         viewModelScope.launch {
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
@@ -225,19 +211,23 @@ class HomeViewModel @Inject constructor(
                     setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 4 players).") }
                     return@launch
                 }
-                !room.isCustomWord && room.guestId.isNotEmpty() -> {
+                room.isLobbyMode && room.guestIds.size >= 2 -> {
+                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 3 players).") }
+                    return@launch
+                }
+                !room.isCustomWord && !room.isLobbyMode && room.guestId.isNotEmpty() -> {
                     setState { copy(joinRoomLoading = false, joinRoomError = "This room is already full.") }
                     return@launch
                 }
             }
 
-            if (room.isCustomWord) {
+            if (room.isCustomWord || room.isLobbyMode) {
                 addGuestToRoomUseCase(fullRoomId, myId)
             } else {
                 joinRoomUseCase(fullRoomId, myId)
             }
             setState { copy(joinRoomLoading = false, joinRoomError = null) }
-            onJoined(fullRoomId, myId, room.isCustomWord)
+            onJoined(fullRoomId, myId, room.isCustomWord, room.isLobbyMode)
         }
     }
 
