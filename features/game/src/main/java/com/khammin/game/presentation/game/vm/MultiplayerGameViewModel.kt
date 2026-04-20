@@ -34,7 +34,9 @@ import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
 import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
+import com.khammin.game.domain.usecases.profile.GetGuestProfileUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
+import com.khammin.game.domain.usecases.profile.SaveGuestProfileUseCase
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
 import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
 import com.khammin.game.presentation.game.contract.MultiplayerGameUiState
@@ -64,6 +66,8 @@ class MultiplayerGameViewModel @Inject constructor(
     private val getRoomUseCase: GetRoomUseCase,
     private val getWordsUseCase: GetWordsUseCase,
     private val getProfileUseCase: GetProfileUseCase,
+    private val getGuestProfileUseCase: GetGuestProfileUseCase,
+    private val saveGuestProfileUseCase: SaveGuestProfileUseCase,
     private val registerPresenceUseCase: RegisterPresenceUseCase,
     private val observeOpponentPresenceUseCase: ObserveOpponentPresenceUseCase,
     private val validateWordUseCase: ValidateWordUseCase,
@@ -165,14 +169,15 @@ class MultiplayerGameViewModel @Inject constructor(
             ?: return
 
         val isAnonymous = auth.currentUser?.isAnonymous == true || myId.startsWith("guest_")
-        val initialMyName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
+        // Use a placeholder name until the coroutine below resolves the real one
+        val fallbackName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
 
         setState {
             copy(
                 roomId = roomId, myUserId = myId, isHost = isHost,
                 isCustomWord = isCustomWord, language = language,
                 defaultMyName = defaultMyName, defaultGuestName = defaultGuestName,
-                myName = initialMyName,
+                myName = fallbackName,
                 isAnonymous = isAnonymous,
             )
         }
@@ -180,7 +185,29 @@ class MultiplayerGameViewModel @Inject constructor(
         viewModelScope.launch { registerPresenceUseCase(roomId, myId) }
 
         viewModelScope.launch {
-            if (!isAnonymous) {
+            if (isAnonymous) {
+                // Load persisted guest profile; seed one on first launch so the name is stable
+                val saved = getGuestProfileUseCase()
+                val resolvedName        = saved?.name        ?: fallbackName
+                val resolvedAvatarColor = saved?.avatarColor
+                val resolvedAvatarEmoji = saved?.avatarEmoji
+                if (saved != null) {
+                    setState {
+                        copy(
+                            myName      = resolvedName,
+                            avatarColor = resolvedAvatarColor,
+                            avatarEmoji = resolvedAvatarEmoji,
+                        )
+                    }
+                } else {
+                    // First launch: persist the generated name so it stays consistent
+                    saveGuestProfileUseCase(fallbackName, null, null)
+                }
+                // Always push local profile to Firestore so other players see the correct name/avatar
+                runCatching {
+                    updateGuestProfileUseCase(roomId, myId, resolvedName, resolvedAvatarColor, resolvedAvatarEmoji)
+                }
+            } else {
                 val result = getProfileUseCase(myId)
                 if (result is Resource.Success) {
                     val name = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
@@ -888,8 +915,11 @@ class MultiplayerGameViewModel @Inject constructor(
         val trimmed = name.trim().ifBlank { uiState.value.myName }
         setState { copy(myName = trimmed, avatarColor = avatarColor, avatarEmoji = avatarEmoji) }
         val s = uiState.value
-        if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            // Persist locally so the profile survives app restarts
+            runCatching { saveGuestProfileUseCase(trimmed, avatarColor, avatarEmoji) }
+            // Push to Firestore so other players see the updated name/avatar
+            if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                 runCatching { updateGuestProfileUseCase(s.roomId, s.myUserId, trimmed, avatarColor, avatarEmoji) }
             }
         }

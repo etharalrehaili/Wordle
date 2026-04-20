@@ -1,5 +1,6 @@
 package com.khammin.game.presentation.game.screen
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
 import com.khammin.game.presentation.game.contract.toTypes
 import com.khammin.game.presentation.game.vm.MultiplayerGameViewModel
 import androidx.activity.compose.BackHandler
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -91,6 +93,7 @@ import com.khammin.game.presentation.game.components.SpectatorView
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
 import com.khammin.game.presentation.game.contract.MultiplayerGameUiState
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MultiplayerGameScreen(
@@ -606,7 +609,8 @@ fun MultiplayerGameContent(
                             currentRow = state.currentRow,
                             currentCol = state.currentCol,
                             wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                                .padding(top = 16.dp)
                         )
 
                         GameKeyboard(
@@ -622,7 +626,8 @@ fun MultiplayerGameContent(
                             onKey = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.EnterLetter(it)) },
                             onBackspace = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.DeleteLetter) },
                             language = keyboardLanguage,
-                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 32.dp)
+                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 32.dp)
+
                         )
                     }
                 }
