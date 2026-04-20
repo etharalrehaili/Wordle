@@ -43,8 +43,6 @@ fun CustomWordLobbyGuest(
         verticalArrangement = Arrangement.spacedBy(20.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 24.dp, bottom = 32.dp),
     ) {
-        item { Text(text = "⏳", fontSize = 48.sp) }
-
         item {
             Text(
                 text       = "Waiting for host to start…",

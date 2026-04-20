@@ -71,6 +71,7 @@ data class MultiplayerGameUiState(
     // Firebase account photo for logged-in (non-anonymous) users
     val avatarUrl: String? = null,
     val isAnonymous: Boolean = false,
+    val isLobbyMode: Boolean = false,
     // Session-cumulative points per player (guestId -> pts), updated after each round
     val sessionPoints: Map<String, Int> = emptyMap(),
 ) : UiState
@@ -96,6 +97,7 @@ sealed class MultiplayerGameIntent : UiIntent {
         val isHost: Boolean,
         val myUserId: String = "",
         val isCustomWord: Boolean = false,
+        val isLobbyMode: Boolean = false,
         val defaultMyName: String = "You",
         val defaultGuestName: String = "Guest",
     ) : MultiplayerGameIntent()

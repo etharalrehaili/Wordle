@@ -70,7 +70,7 @@ import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
 @Composable
 fun HomeScreen(
     onPlayClick: IntAction,
-    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean) -> Unit,
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean, isLobbyMode: Boolean) -> Unit,
     onChallengeClick: Action,
     onLeaderboardClick: Action,
     onProfileClick: Action,
@@ -103,8 +103,8 @@ fun HomeScreen(
             )
         },
         onJoinRoom = { code, callback ->
-            homeViewModel.joinRoom(code) { roomId, myId, isCustomWord ->
-                callback(roomId, myId, isCustomWord)
+            homeViewModel.joinRoom(code) { roomId, myId, isCustomWord, isLobbyMode ->
+                callback(roomId, myId, isCustomWord, isLobbyMode)
             }
         },
         joinRoomLoading  = homeUiState.joinRoomLoading,
@@ -140,9 +140,9 @@ fun HomeScreen(
 fun HomeContent(
     uiState: PreferencesUiState,
     onPlayClick: (Int) -> Unit,
-    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean) -> Unit = { _, _, _, _ -> },
+    onMultiplayerClick: (roomId: String, isHost: Boolean, userId: String, isCustomWord: Boolean, isLobbyMode: Boolean) -> Unit = { _, _, _, _, _ -> },
     onCreateRoom: (customWord: String?, onRoomCreated: (roomId: String, myId: String) -> Unit) -> Unit = { _, _ -> },
-    onJoinRoom: (code: String, onJoined: (roomId: String, myId: String, isCustomWord: Boolean) -> Unit) -> Unit = { _, _ -> },
+    onJoinRoom: (code: String, onJoined: (roomId: String, myId: String, isCustomWord: Boolean, isLobbyMode: Boolean) -> Unit) -> Unit = { _, _ -> },
     joinRoomLoading: Boolean = false,
     createRoomLoading: Boolean = false,
     joinRoomError: String? = null,
@@ -340,12 +340,12 @@ fun HomeContent(
                                 onCreateRoom(null) { roomId, myId ->
                                     showWordPickerSheet = false
                                     createRoomType = null
-                                    onMultiplayerClick(roomId, true, myId, false)
+                                    onMultiplayerClick(roomId, true, myId, false, true)
                                 }
                             }
                             onCreateRoom(null) { roomId, myId ->
                                 showWordPickerSheet = false
-                                onMultiplayerClick(roomId, true, myId, false)
+                                onMultiplayerClick(roomId, true, myId, false, true)
                             }
                         },
                         onCustomWord = {
@@ -354,12 +354,12 @@ fun HomeContent(
                                 onCreateRoom("") { roomId, myId ->
                                     showWordPickerSheet = false
                                     createRoomType = null
-                                    onMultiplayerClick(roomId, true, myId, true)
+                                    onMultiplayerClick(roomId, true, myId, true, false)
                                 }
                             }
                             onCreateRoom("") { roomId, myId ->
                                 showWordPickerSheet = false
-                                onMultiplayerClick(roomId, true, myId, true)
+                                onMultiplayerClick(roomId, true, myId, true, false)
                             }
                         },
                         onDismiss = { showWordPickerSheet = false }
@@ -370,14 +370,14 @@ fun HomeContent(
                     JoinRoomBottomSheet(
                         onJoin = { code ->
                             lastFailedAction = {
-                                onJoinRoom(code) { roomId, myId, isCustomWord ->
+                                onJoinRoom(code) { roomId, myId, isCustomWord, isLobbyMode ->
                                     showJoinRoomSheet = false
-                                    onMultiplayerClick(roomId, false, myId, isCustomWord)
+                                    onMultiplayerClick(roomId, false, myId, isCustomWord, isLobbyMode)
                                 }
                             }
-                            onJoinRoom(code) { roomId, myId, isCustomWord ->
+                            onJoinRoom(code) { roomId, myId, isCustomWord, isLobbyMode ->
                                 showJoinRoomSheet = false
-                                onMultiplayerClick(roomId, false, myId, isCustomWord)
+                                onMultiplayerClick(roomId, false, myId, isCustomWord, isLobbyMode)
                             }
                         },
                         onDismiss    = {
