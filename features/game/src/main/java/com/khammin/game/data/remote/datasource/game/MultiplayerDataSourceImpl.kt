@@ -129,8 +129,30 @@ class MultiplayerDataSourceImpl @Inject constructor(
 
     override suspend fun registerPresence(roomId: String, userId: String) {
         val presenceRef = rtdb.getReference("presence/$roomId/$userId")
-        presenceRef.setValue(true).await()
+        Log.d("PresenceDebug", "[registerPresence] Setting value='online' | roomId=$roomId | userId=$userId")
+        presenceRef.setValue("online").await()
+        Log.d("PresenceDebug", "[registerPresence] Registering onDisconnect().removeValue() | roomId=$roomId | userId=$userId")
         presenceRef.onDisconnect().removeValue().await()
+        Log.d("PresenceDebug", "[registerPresence] onDisconnect registered ✓ | roomId=$roomId | userId=$userId")
+    }
+
+    override suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean) {
+        val ref = rtdb.getReference("presence/$roomId/$userId")
+        if (isForeground) {
+            Log.d("PresenceDebug", "[updatePresenceState] App FOREGROUND → writing 'online' + re-registering onDisconnect | roomId=$roomId | userId=$userId")
+            ref.setValue("online").await()
+            ref.onDisconnect().removeValue().await()
+            Log.d("PresenceDebug", "[updatePresenceState] Foreground setup complete ✓ | roomId=$roomId | userId=$userId")
+        } else {
+            // Do NOT cancel or re-register onDisconnect here.
+            // The hook registered in registerPresence stays active so that if the app
+            // is killed while in the background, Firebase still removes the node.
+            // Brief null spikes from connection drops are absorbed by the grace period
+            // in the ViewModel observer.
+            Log.d("PresenceDebug", "[updatePresenceState] App BACKGROUND → writing 'background' (onDisconnect hook unchanged) | roomId=$roomId | userId=$userId")
+            ref.setValue("background").await()
+            Log.d("PresenceDebug", "[updatePresenceState] Background setup complete ✓ | roomId=$roomId | userId=$userId")
+        }
     }
 
     override suspend fun addGuestToRoom(roomId: String, guestId: String) {
@@ -197,13 +219,22 @@ class MultiplayerDataSourceImpl @Inject constructor(
     }
 
     override fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean> = callbackFlow {
+        Log.d("PresenceDebug", "[observeOpponentPresence] Attaching listener | roomId=$roomId | opponentId=$opponentId")
         val ref = rtdb.getReference("presence/$roomId/$opponentId")
         val listener = ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                trySend(snapshot.exists())
+                val raw = snapshot.getValue(String::class.java)
+                val isPresent = raw != null
+                Log.d("PresenceDebug", "[observeOpponentPresence] Value changed → raw='$raw' | isPresent=$isPresent | roomId=$roomId | opponentId=$opponentId")
+                trySend(isPresent)
             }
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                Log.d("PresenceDebug", "[observeOpponentPresence] Listener cancelled | error=${error.message} | roomId=$roomId | opponentId=$opponentId")
+            }
         })
-        awaitClose { ref.removeEventListener(listener) }
+        awaitClose {
+            Log.d("PresenceDebug", "[observeOpponentPresence] Removing listener | roomId=$roomId | opponentId=$opponentId")
+            ref.removeEventListener(listener)
+        }
     }
 }

@@ -77,5 +77,11 @@
     <string name="error_upload_failed">Upload failed</string>
     <string name="error_generic">Error</string>
 
+    <!-- Rejoin sheet -->
+    <string name="rejoin_title">You left the room</string>
+    <string name="rejoin_subtitle">You were disconnected from the room. Want to rejoin?</string>
+    <string name="rejoin_button">Rejoin</string>
+    <string name="rejoin_go_home">Go Home</string>
+
 
 </resources>

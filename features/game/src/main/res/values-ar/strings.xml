@@ -79,4 +79,10 @@
     <string name="error_name_empty">يرجى إدخال الاسم</string>
     <string name="error_upload_failed">فشل الرفع</string>
     <string name="error_generic">خطأ</string>
+
+    <!-- Rejoin sheet -->
+    <string name="rejoin_title">غادرت الغرفة</string>
+    <string name="rejoin_subtitle">انقطع اتصالك. هل تريد الانضمام مجدداً؟</string>
+    <string name="rejoin_button">انضم مجدداً</string>
+    <string name="rejoin_go_home">الصفحة الرئيسية</string>
 </resources>

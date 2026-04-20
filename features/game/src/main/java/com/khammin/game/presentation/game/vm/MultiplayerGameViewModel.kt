@@ -1,5 +1,10 @@
 package com.khammin.game.presentation.game.vm
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.domain.model.PlayerState
@@ -7,11 +12,12 @@ import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
-import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.components.toGuessRows
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
+import com.khammin.game.domain.usecases.game.AddGuestToRoomUseCase
 import com.khammin.game.domain.usecases.game.FinishRoomUseCase
+import com.khammin.game.domain.usecases.game.GetRoomUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.LeaveRoomUseCase
 import com.khammin.game.domain.usecases.game.ObserveOpponentPresenceUseCase
@@ -23,6 +29,7 @@ import com.khammin.game.domain.usecases.game.RemoveGuestFromRoomUseCase
 import com.khammin.game.domain.usecases.game.ResetCustomRoomUseCase
 import com.khammin.game.domain.usecases.game.StartRoomUseCase
 import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
+import com.khammin.game.domain.usecases.game.UpdatePresenceStateUseCase
 import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
 import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
@@ -35,19 +42,26 @@ import com.khammin.game.presentation.game.contract.OpponentProgress
 import com.khammin.game.presentation.game.contract.Tile
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class MultiplayerGameViewModel @Inject constructor(
+    private val addGuestToRoomUseCase: AddGuestToRoomUseCase,
     private val observeRoomUseCase: ObserveRoomUseCase,
     private val observeOpponentUseCase: ObserveOpponentUseCase,
     private val updatePlayerStateUseCase: UpdatePlayerStateUseCase,
     private val finishRoomUseCase: FinishRoomUseCase,
     private val leaveRoomUseCase: LeaveRoomUseCase,
     private val restartRoomUseCase: RestartRoomUseCase,
+    private val getRoomUseCase: GetRoomUseCase,
     private val getWordsUseCase: GetWordsUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val registerPresenceUseCase: RegisterPresenceUseCase,
@@ -59,10 +73,51 @@ class MultiplayerGameViewModel @Inject constructor(
     private val votePlayAgainUseCase: VotePlayAgainUseCase,
     private val updateGuestProfileUseCase: UpdateGuestProfileUseCase,
     private val updateSessionPointsUseCase: UpdateSessionPointsUseCase,
+    private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
     private val auth: FirebaseAuth
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
 ) {
+
+    private val isAppForegroundFlow = MutableStateFlow(true)
+
+    init {
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                isAppForegroundFlow.value = true
+                android.util.Log.d("PresenceDebug", "[Lifecycle] ON_START → app is FOREGROUND | userId=${uiState.value.myUserId} | roomId=${uiState.value.roomId}")
+                val s = uiState.value
+                if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
+                    viewModelScope.launch {
+                        runCatching { updatePresenceStateUseCase(s.roomId, s.myUserId, isForeground = true) }
+                    }
+                    // Custom-word guest: check if we were removed from guestIds while away
+                    if (s.isCustomWord && !s.isHost) {
+                        viewModelScope.launch {
+                            val room = runCatching { getRoomUseCase(s.roomId) }.getOrNull()
+                            if (room != null && room.status in listOf("waiting", "playing")
+                                && s.myUserId !in room.guestIds) {
+                                sendEffect { MultiplayerGameEffect.ShowRejoinSheet }
+                            }
+                        }
+                    }
+                }
+            }
+            override fun onStop(owner: LifecycleOwner) {
+                isAppForegroundFlow.value = false
+                android.util.Log.d("PresenceDebug", "[Lifecycle] ON_STOP → app is BACKGROUND | userId=${uiState.value.myUserId} | roomId=${uiState.value.roomId}")
+                val s = uiState.value
+                if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
+                    viewModelScope.launch {
+                        runCatching { updatePresenceStateUseCase(s.roomId, s.myUserId, isForeground = false) }
+                    }
+                }
+            }
+            override fun onDestroy(owner: LifecycleOwner) {
+                android.util.Log.d("PresenceDebug", "[Lifecycle] ON_DESTROY → app is KILLED | userId=${uiState.value.myUserId} | roomId=${uiState.value.roomId}")
+            }
+        })
+    }
 
     override fun onEvent(intent: MultiplayerGameIntent) {
         when (intent) {
@@ -79,6 +134,7 @@ class MultiplayerGameViewModel @Inject constructor(
             is MultiplayerGameIntent.StartMatchWithWord     -> startMatchWithWord(intent.word)
             is MultiplayerGameIntent.PlayAgainCustomWord    -> playAgainCustomWord(intent.newWord)
             MultiplayerGameIntent.VotePlayAgain          -> votePlayAgain()
+            MultiplayerGameIntent.RejoinRoom             -> rejoinRoom()
             is MultiplayerGameIntent.UpdateGuestProfile  -> updateGuestProfile(intent.name, intent.avatarColor, intent.avatarEmoji)
         }
     }
@@ -87,10 +143,12 @@ class MultiplayerGameViewModel @Inject constructor(
     private val observingGuestIds = mutableSetOf<String>()
     private val observingGuestPresenceIds = mutableSetOf<String>()
     private val guestSeenOnline = mutableSetOf<String>()
-    private val guestPresenceJobs = mutableMapOf<String, kotlinx.coroutines.Job>()
-    private var hostPresenceJob: kotlinx.coroutines.Job? = null
     private val wordCache: MutableMap<Int, List<String>> = mutableMapOf()
     private var presenceStarted = false
+
+    // Grace-period jobs: cancelled if the player comes back online within the window
+    private var opponentPresenceDropJob: Job? = null
+    private val guestPresenceDropJobs = mutableMapOf<String, Job>()
 
     private fun loadGame(
         roomId: String,
@@ -471,78 +529,92 @@ class MultiplayerGameViewModel @Inject constructor(
     }
 
     private fun observeOpponentPresence(roomId: String, opponentId: String) {
-        observeOpponentPresenceUseCase(roomId, opponentId).onEach { isOnline ->
-            if (!presenceStarted) {
-                presenceStarted = isOnline
-                return@onEach
-            }
-            if (isOnline) {
-                // Came back (backgrounded, not killed) — cancel any pending left event
-                hostPresenceJob?.cancel()
-                hostPresenceJob = null
-                return@onEach
-            }
-            val s = uiState.value
-            if (s.isCustomWord && !s.isHostLeft) {
-                // Grace period: fire only if still offline after delay (true kill, not background switch)
-                hostPresenceJob?.cancel()
-                hostPresenceJob = viewModelScope.launch {
-                    kotlinx.coroutines.delay(PRESENCE_GRACE_MS)
-                    val current = uiState.value
-                    if (!current.isHostLeft) {
+        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Starting observation | roomId=$roomId | opponentId=$opponentId")
+        observeOpponentPresenceUseCase(roomId, opponentId)
+            .combine(isAppForegroundFlow) { isOnline, isForeground -> isOnline to isForeground }
+            .onEach { (isOnline, isForeground) ->
+                android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Event → isOnline=$isOnline | isForeground=$isForeground | presenceStarted=$presenceStarted | opponentId=$opponentId")
+                if (!presenceStarted) {
+                    presenceStarted = isOnline
+                    android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Initial value — presenceStarted=$presenceStarted, skipping reaction")
+                    return@onEach
+                }
+                if (isOnline) {
+                    // Opponent came back — cancel any pending grace-period job
+                    opponentPresenceDropJob?.cancel()
+                    opponentPresenceDropJob = null
+                    return@onEach
+                }
+                if (!isForeground) {
+                    android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Opponent offline but WE are in background — suppressing | opponentId=$opponentId")
+                    return@onEach
+                }
+                if (opponentPresenceDropJob != null) return@onEach // grace period already running
+                android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Opponent offline — starting 12s grace period | opponentId=$opponentId")
+                opponentPresenceDropJob = viewModelScope.launch {
+                    delay(12_000)
+                    opponentPresenceDropJob = null
+                    val s = uiState.value
+                    android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Grace period expired — firing left event | opponentId=$opponentId")
+                    if (s.isCustomWord && !s.isHostLeft) {
+                        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] ACTION: host killed → firing HostLeftRoom | roomId=${s.roomId}")
                         setState { copy(isHostLeft = true) }
                         sendEffect { MultiplayerGameEffect.HostLeftRoom }
-                    }
-                }
-            } else if (!s.isCustomWord && !s.isGameOver) {
-                hostPresenceJob?.cancel()
-                hostPresenceJob = viewModelScope.launch {
-                    kotlinx.coroutines.delay(PRESENCE_GRACE_MS)
-                    val current = uiState.value
-                    if (!current.isGameOver) {
+                    } else if (!s.isCustomWord && !s.isGameOver) {
+                        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] ACTION: opponent killed → firing ShowGameDialog(opponentLeft=true) | roomId=${s.roomId}")
                         setState { copy(opponentLeft = true, isGameOver = true) }
                         sendEffect {
                             MultiplayerGameEffect.ShowGameDialog(
-                                isWin = true, targetWord = current.targetWord, opponentLeft = true
+                                isWin = true, targetWord = s.targetWord, opponentLeft = true
                             )
                         }
-                        finishRoomUseCase(current.roomId, current.myUserId)
+                        viewModelScope.launch { finishRoomUseCase(s.roomId, s.myUserId) }
+                    } else {
+                        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Grace period expired but no action — isCustomWord=${s.isCustomWord} isHostLeft=${s.isHostLeft} isGameOver=${s.isGameOver}")
                     }
                 }
-            }
-        }.launchIn(viewModelScope)
+            }.launchIn(viewModelScope)
     }
 
     private fun observeGuestPresence(roomId: String, guestId: String) {
         if (guestId in observingGuestPresenceIds) return
         observingGuestPresenceIds.add(guestId)
-        observeOpponentPresenceUseCase(roomId, guestId).onEach { isOnline ->
-            if (isOnline) {
-                guestSeenOnline.add(guestId)
-                // Came back before grace period expired — cancel pending left event
-                guestPresenceJobs[guestId]?.cancel()
-                guestPresenceJobs.remove(guestId)
-                return@onEach
-            }
-            if (guestId !in guestSeenOnline) return@onEach
-            val s = uiState.value
-            if (!s.isHost || !s.isCustomWord) return@onEach
-            // Grace period before declaring the guest truly gone
-            guestPresenceJobs[guestId]?.cancel()
-            guestPresenceJobs[guestId] = viewModelScope.launch {
-                kotlinx.coroutines.delay(PRESENCE_GRACE_MS)
-                val current = uiState.value
-                if (!current.isHost || !current.isCustomWord) return@launch
-                val guestName = current.waitingPlayers.firstOrNull { it.userId == guestId }?.name
-                    ?: guestNameFromId(guestId)
-                runCatching { removeGuestFromRoomUseCase(current.roomId, guestId) }
-                sendEffect { MultiplayerGameEffect.GuestLeftRoom(guestName) }
-            }
-        }.launchIn(viewModelScope)
-    }
-
-    companion object {
-        private const val PRESENCE_GRACE_MS = 15_000L
+        android.util.Log.d("PresenceDebug", "[observeGuestPresence] Starting observation | roomId=$roomId | guestId=$guestId")
+        observeOpponentPresenceUseCase(roomId, guestId)
+            .combine(isAppForegroundFlow) { isOnline, isForeground -> isOnline to isForeground }
+            .onEach { (isOnline, isForeground) ->
+                android.util.Log.d("PresenceDebug", "[observeGuestPresence] Event → isOnline=$isOnline | isForeground=$isForeground | seenOnline=${guestId in guestSeenOnline} | guestId=$guestId")
+                if (isOnline) {
+                    guestSeenOnline.add(guestId)
+                    // Guest came back — cancel any pending grace-period job
+                    guestPresenceDropJobs[guestId]?.cancel()
+                    guestPresenceDropJobs.remove(guestId)
+                    return@onEach
+                }
+                if (guestId !in guestSeenOnline) {
+                    android.util.Log.d("PresenceDebug", "[observeGuestPresence] Guest offline but never seen online — skipping | guestId=$guestId")
+                    return@onEach
+                }
+                if (!isForeground) {
+                    android.util.Log.d("PresenceDebug", "[observeGuestPresence] Guest offline but WE are in background — suppressing | guestId=$guestId")
+                    return@onEach
+                }
+                if (guestId in guestPresenceDropJobs) return@onEach // grace period already running
+                android.util.Log.d("PresenceDebug", "[observeGuestPresence] Guest offline — starting 12s grace period | guestId=$guestId")
+                guestPresenceDropJobs[guestId] = viewModelScope.launch {
+                    delay(12_000)
+                    guestPresenceDropJobs.remove(guestId)
+                    val s = uiState.value
+                    if (!s.isHost || !s.isCustomWord) return@launch
+                    val guestName = s.waitingPlayers.firstOrNull { it.userId == guestId }?.name
+                        ?: guestNameFromId(guestId)
+                    android.util.Log.d("PresenceDebug", "[observeGuestPresence] ACTION: grace period expired → firing GuestLeftRoom('$guestName') | roomId=${s.roomId} | guestId=$guestId")
+                    viewModelScope.launch {
+                        runCatching { removeGuestFromRoomUseCase(s.roomId, guestId) }
+                    }
+                    sendEffect { MultiplayerGameEffect.GuestLeftRoom(guestName) }
+                }
+            }.launchIn(viewModelScope)
     }
 
     private val similarPairs: List<Set<Char>> = listOf(
@@ -632,6 +704,17 @@ class MultiplayerGameViewModel @Inject constructor(
                 leaveRoomUseCase(s.roomId, s.myUserId)
             }
             sendEffect { MultiplayerGameEffect.NavigateBack }
+        }
+    }
+
+    private fun rejoinRoom() {
+        val s = uiState.value
+        if (s.roomId.isEmpty() || s.myUserId.isEmpty()) return
+        viewModelScope.launch {
+            runCatching {
+                addGuestToRoomUseCase(s.roomId, s.myUserId)
+                registerPresenceUseCase(s.roomId, s.myUserId)
+            }
         }
     }
 

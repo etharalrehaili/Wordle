@@ -17,6 +17,7 @@ interface MultiplayerDataSource {
     suspend fun restartRoom(roomId: String, newWord: String, wordLength: Int, roundNumber: Int = 1, totalPoints: Map<String, Int> = emptyMap())
     suspend fun claimRestart(roomId: String)
     suspend fun registerPresence(roomId: String, userId: String)
+    suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean)
     fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean>
     suspend fun addGuestToRoom(roomId: String, guestId: String)
     suspend fun removeGuestFromRoom(roomId: String, guestId: String)
