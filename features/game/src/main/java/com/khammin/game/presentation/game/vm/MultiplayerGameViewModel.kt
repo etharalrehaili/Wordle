@@ -283,8 +283,10 @@ class MultiplayerGameViewModel @Inject constructor(
                         else -> WaitingPlayer(guestId, guestNameFromId(guestId)) // placeholder until fetchGuestInfo fills it in
                     }
                 }
+                val keepProgressIds = room.guestIds.toMutableSet()
+                if (isLobbyModeRoom) keepProgressIds.add(room.hostId)
                 val updatedProgress = opponentsProgress
-                    .filter { it.key in room.guestIds }
+                    .filter { it.key in keepProgressIds }
                     .mapValues { (guestId, progress) ->
                         val profile = room.guestProfiles[guestId]
                         if (profile != null) progress.copy(
@@ -330,8 +332,11 @@ class MultiplayerGameViewModel @Inject constructor(
                 )
             }
 
-            // Remove departed guests from the tracking set so they are re-observed when they rejoin
-            observingGuestIds.retainAll(room.guestIds.toSet())
+            // Remove departed guests from the tracking set so they are re-observed when they rejoin.
+            // In lobby mode also keep the host so we don't repeatedly start duplicate observations.
+            val keepObservingIds = room.guestIds.toMutableSet()
+            if (isLobbyModeRoom) keepObservingIds.add(room.hostId)
+            observingGuestIds.retainAll(keepObservingIds)
 
             // Host: all guests left during a live game
             if (isHostOfRoom && isMultiPlayer && room.status == "playing"
@@ -385,8 +390,8 @@ class MultiplayerGameViewModel @Inject constructor(
                 observeOpponentPresence(roomId, opponentId)
             }
 
-            // ── Custom-word guest: observe other guests' progress for game-over lobby ──
-            if (isCustomWordRoom && !isHostOfRoom) {
+            // ── Custom-word / lobby guest: observe all other guests' progress ──
+            if (isMultiPlayer && !isHostOfRoom) {
                 val newOtherGuests = room.guestIds.filter { it != myId && it !in observingGuestIds }
                 for (guestId in newOtherGuests) {
                     observingGuestIds.add(guestId)
