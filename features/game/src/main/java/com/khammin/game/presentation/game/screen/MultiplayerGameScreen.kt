@@ -83,6 +83,7 @@ import com.khammin.game.presentation.game.components.CustomWordLobbyGuest
 import com.khammin.game.presentation.game.components.CustomWordLobbyHost
 import com.khammin.game.presentation.game.components.GuestGameOverLobby
 import com.khammin.game.presentation.game.components.GuestLeftBottomSheet
+import com.khammin.game.presentation.game.components.RejoinBottomSheet
 import com.khammin.game.presentation.game.components.HostLeftBottomSheet
 import com.khammin.game.presentation.game.components.ResultButton
 import com.khammin.game.presentation.game.components.RoomCodeCard
@@ -118,6 +119,7 @@ fun MultiplayerGameScreen(
     var showHostLeftSheet by remember { mutableStateOf(false) }
     var showAllPlayersLeftSheet by remember { mutableStateOf(false) }
     var guestLeftName by remember { mutableStateOf<String?>(null) }
+    var showRejoinSheet by remember { mutableStateOf(false) }
     var showNewWordSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -164,6 +166,7 @@ fun MultiplayerGameScreen(
                 is MultiplayerGameEffect.HostLeftRoom -> showHostLeftSheet = true
                 is MultiplayerGameEffect.AllPlayersLeft -> showAllPlayersLeftSheet = true
                 is MultiplayerGameEffect.GuestLeftRoom -> guestLeftName = effect.guestName
+                is MultiplayerGameEffect.ShowRejoinSheet -> showRejoinSheet = true
                 else -> Unit
             }
         }
@@ -218,6 +221,19 @@ fun MultiplayerGameScreen(
         GuestLeftBottomSheet(
             guestName = name,
             onDismiss = { guestLeftName = null },
+        )
+    }
+
+    if (showRejoinSheet) {
+        RejoinBottomSheet(
+            onRejoin = {
+                showRejoinSheet = false
+                viewModel.onEvent(MultiplayerGameIntent.RejoinRoom)
+            },
+            onGoHome = {
+                showRejoinSheet = false
+                viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
+            },
         )
     }
 
@@ -590,7 +606,7 @@ fun MultiplayerGameContent(
                             currentRow = state.currentRow,
                             currentCol = state.currentCol,
                             wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
-                            modifier = Modifier.fillMaxWidth().weight(1f)
+                            modifier = Modifier.fillMaxWidth()
                         )
 
                         GameKeyboard(
@@ -606,7 +622,7 @@ fun MultiplayerGameContent(
                             onKey = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.EnterLetter(it)) },
                             onBackspace = { if (keyboardEnabled) onIntent(MultiplayerGameIntent.DeleteLetter) },
                             language = keyboardLanguage,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 32.dp)
                         )
                     }
                 }

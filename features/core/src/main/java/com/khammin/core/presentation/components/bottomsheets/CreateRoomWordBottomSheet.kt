@@ -156,29 +156,29 @@ fun CreateRoomWordBottomSheet(
                 }
 
                 // Divider with "or"
-                Row(
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier              = Modifier.fillMaxWidth(),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(1.dp)
-                            .background(colors.border)
-                    )
-                    WordleText(
-                        text     = stringResource(R.string.create_room_or),
-                        color    = colors.body.copy(alpha = 0.5f),
-                        fontSize = typography.labelSmall,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(1.dp)
-                            .background(colors.border)
-                    )
-                }
+//                Row(
+//                    verticalAlignment     = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+//                    modifier              = Modifier.fillMaxWidth(),
+//                ) {
+//                    Box(
+//                        modifier = Modifier
+//                            .weight(1f)
+//                            .height(1.dp)
+//                            .background(colors.border)
+//                    )
+//                    WordleText(
+//                        text     = stringResource(R.string.create_room_or),
+//                        color    = colors.body.copy(alpha = 0.5f),
+//                        fontSize = typography.labelSmall,
+//                    )
+//                    Box(
+//                        modifier = Modifier
+//                            .weight(1f)
+//                            .height(1.dp)
+//                            .background(colors.border)
+//                    )
+//                }
 
                 // ── Custom word card ──────────────────────────────────
                 Box(

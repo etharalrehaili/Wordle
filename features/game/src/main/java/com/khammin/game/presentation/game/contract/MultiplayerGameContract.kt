@@ -84,6 +84,7 @@ sealed interface MultiplayerGameEffect : UiEffect {
     data object HostLeftRoom : MultiplayerGameEffect
     data object AllPlayersLeft : MultiplayerGameEffect
     data class GuestLeftRoom(val guestName: String) : MultiplayerGameEffect
+    data object ShowRejoinSheet : MultiplayerGameEffect
 }
 
 sealed class MultiplayerGameIntent : UiIntent {
@@ -105,6 +106,7 @@ sealed class MultiplayerGameIntent : UiIntent {
     data class StartMatchWithWord(val word: String) : MultiplayerGameIntent()
     data class PlayAgainCustomWord(val newWord: String) : MultiplayerGameIntent()
     data object VotePlayAgain : MultiplayerGameIntent()
+    data object RejoinRoom : MultiplayerGameIntent()
     data class UpdateGuestProfile(
         val name: String,
         val avatarColor: Long?,

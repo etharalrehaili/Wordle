@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.database.ktx)
+    implementation(libs.androidx.lifecycle.process)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.core)

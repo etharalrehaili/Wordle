@@ -27,6 +27,8 @@ class MultiplayerRepositoryImpl @Inject constructor(
     override suspend fun claimRestart(roomId: String) = dataSource.claimRestart(roomId)
     override suspend fun registerPresence(roomId: String, userId: String) =
         dataSource.registerPresence(roomId, userId)
+    override suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean) =
+        dataSource.updatePresenceState(roomId, userId, isForeground)
 
     override fun observeOpponentPresence(roomId: String, opponentId: String) =
         dataSource.observeOpponentPresence(roomId, opponentId)
