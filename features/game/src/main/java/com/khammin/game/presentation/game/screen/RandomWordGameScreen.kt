@@ -373,7 +373,6 @@ private fun RandomWordGameContent(
                                 ResultButton(isWin = resultIsWin, onClick = onShowResult)
                             }
                         } else {
-                            // 1v1 mode
                             if (state.opponentId.isNotEmpty()) {
                                 GuestCard(
                                     name      = state.opponentName,
@@ -456,6 +455,7 @@ private fun RandomWordGameContent(
                                     TileState.CORRECT   -> Types.CORRECT
                                     TileState.MISPLACED -> Types.PRESENT
                                     TileState.WRONG     -> Types.ABSENT
+                                    TileState.SIMILAR   -> Types.SIMILAR
                                     else                -> Types.DEFAULT
                                 }
                             },

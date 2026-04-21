@@ -1,5 +1,7 @@
 package com.khammin.core.presentation.components.bottomsheets
 
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -38,8 +40,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -73,8 +76,14 @@ fun JoinRoomBottomSheet(
         else           -> errorMessage  // from ViewModel (not found / already used)
     }
 
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val focusManager       = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
+    val view         = LocalView.current
+    val imm          = LocalContext.current.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+    fun hideKeyboard() {
+        focusManager.clearFocus()
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -90,7 +99,7 @@ fun JoinRoomBottomSheet(
                 .pointerInput(Unit) {
                     awaitEachGesture {
                         awaitFirstDown(pass = PointerEventPass.Initial)
-                        focusManager.clearFocus()
+                        hideKeyboard()
                     }
                 },
             horizontalAlignment = Alignment.CenterHorizontally
@@ -180,8 +189,7 @@ fun JoinRoomBottomSheet(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             if (isValid) {
-                                keyboardController?.hide()
-                                focusManager.clearFocus()
+                                hideKeyboard()
                                 onJoin(roomCode.trim())
                             }
                         }
@@ -229,10 +237,10 @@ fun JoinRoomBottomSheet(
                 } else {
                     GameButton(
                         label    = stringResource(R.string.join_room_join),
+                        enabled  = roomCode.isNotEmpty(),
                         onClick  = {
                             if (isValid) {
-                                keyboardController?.hide()
-                                focusManager.clearFocus()
+                                hideKeyboard()
                                 onJoin(roomCode.trim())
                             }
                         },

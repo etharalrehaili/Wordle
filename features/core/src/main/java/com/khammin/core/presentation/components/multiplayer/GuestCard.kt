@@ -26,7 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -173,6 +175,9 @@ private fun MiniBoard(
     wordLength: Int,
     modifier: Modifier = Modifier
 ) {
+    val correctColor = colors.correct
+    val purpleColor  = colors.purpleButton
+
     Column(
         verticalArrangement = Arrangement.spacedBy(3.dp),
         modifier = modifier
@@ -185,18 +190,40 @@ private fun MiniBoard(
                     val filled = guess.letters.getOrNull(colIndex) != null
 
                     val cellColor = when (type) {
-                        Types.CORRECT -> colors.correct
-                        Types.PRESENT -> colors.present
-                        Types.ABSENT  -> colors.absent
-                        Types.SIMILAR  -> Color.Transparent // handled by KeyContainer's diagonal split
-                        Types.DEFAULT -> if (filled) colors.borderActive else colors.border
+                        Types.CORRECT  -> colors.correct
+                        Types.PRESENT  -> colors.present
+                        Types.ABSENT   -> colors.absent
+                        Types.SIMILAR  -> Color.Transparent
+                        Types.DEFAULT  -> if (filled) colors.borderActive else colors.border
                     }
 
+                    val shape = RoundedCornerShape(3.dp)
                     Box(
                         modifier = Modifier
                             .size(14.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(cellColor)
+                            .clip(shape)
+                            .then(
+                                if (type == Types.SIMILAR) {
+                                    Modifier.drawBehind {
+                                        val w = size.width
+                                        val h = size.height
+                                        drawPath(
+                                            path = Path().apply {
+                                                moveTo(0f, 0f); lineTo(w, 0f); lineTo(0f, h); close()
+                                            },
+                                            color = correctColor
+                                        )
+                                        drawPath(
+                                            path = Path().apply {
+                                                moveTo(w, 0f); lineTo(w, h); lineTo(0f, h); close()
+                                            },
+                                            color = purpleColor
+                                        )
+                                    }
+                                } else {
+                                    Modifier.background(cellColor)
+                                }
+                            )
                     )
                 }
             }
