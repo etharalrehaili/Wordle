@@ -1,7 +1,8 @@
 package com.khammin.core.presentation.components.bottomsheets
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -34,7 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -70,6 +74,7 @@ fun JoinRoomBottomSheet(
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager       = LocalFocusManager.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -83,9 +88,10 @@ fun JoinRoomBottomSheet(
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .pointerInput(Unit) {
-                    detectTapGestures(onTap = {
-                        keyboardController?.hide()
-                    })
+                    awaitEachGesture {
+                        awaitFirstDown(pass = PointerEventPass.Initial)
+                        focusManager.clearFocus()
+                    }
                 },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -172,7 +178,13 @@ fun JoinRoomBottomSheet(
                         imeAction      = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = { if (isValid) onJoin(roomCode.trim()) }
+                        onDone = {
+                            if (isValid) {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                                onJoin(roomCode.trim())
+                            }
+                        }
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor   = colors.logoBlue,
@@ -209,7 +221,7 @@ fun JoinRoomBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            color       = colors.title,
+                            color       = Color.White,
                             modifier    = Modifier.size(22.dp),
                             strokeWidth = 2.5.dp,
                         )
@@ -217,7 +229,13 @@ fun JoinRoomBottomSheet(
                 } else {
                     GameButton(
                         label    = stringResource(R.string.join_room_join),
-                        onClick  = { if (isValid) onJoin(roomCode.trim()) },
+                        onClick  = {
+                            if (isValid) {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                                onJoin(roomCode.trim())
+                            }
+                        },
                         variant  = GameButtonVariant.Primary,
                         modifier = Modifier.fillMaxWidth()
                     )

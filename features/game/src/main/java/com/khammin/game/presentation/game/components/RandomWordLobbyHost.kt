@@ -10,9 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.khammin.game.R
+import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 
@@ -48,7 +52,7 @@ fun RandomWordLobbyHost(
 
         item {
             Text(
-                text          = "Players (${waitingPlayers.size + 1}/3)",
+                text          = stringResource(R.string.multiplayer_players_count, waitingPlayers.size + 1),
                 color         = colors.body.copy(alpha = 0.6f),
                 fontSize      = 12.sp,
                 fontWeight    = FontWeight.Medium,
@@ -60,7 +64,7 @@ fun RandomWordLobbyHost(
         if (waitingPlayers.isEmpty()) {
             item {
                 Text(
-                    text     = "Waiting for players to join…",
+                    text     = stringResource(R.string.multiplayer_waiting_for_players),
                     color    = colors.body.copy(alpha = 0.45f),
                     fontSize = 13.sp,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -76,9 +80,9 @@ fun RandomWordLobbyHost(
                         .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
                 ) {
                     LobbyPlayerRow(
-                        name        = myName.ifBlank { "You" },
-                        badge       = "HOST",
-                        badgeColor  = colors.buttonTeal,
+                        name        = myName.ifBlank { stringResource(R.string.lobby_you) },
+                        badge       = stringResource(R.string.lobby_badge_host),
+                        badgeColor  = colors.logoGreen,
                         avatarColor = avatarColor,
                         avatarEmoji = avatarEmoji,
                         avatarUrl   = avatarUrl,
@@ -96,23 +100,14 @@ fun RandomWordLobbyHost(
         }
 
         item {
-            Button(
+            GameButton(
+                label = stringResource(R.string.lobby_start_game),
                 onClick  = onStart,
-                enabled  = waitingPlayers.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape    = RoundedCornerShape(14.dp),
-                colors   = ButtonDefaults.buttonColors(
-                    containerColor         = colors.buttonTeal,
-                    disabledContainerColor = colors.buttonTeal.copy(alpha = 0.3f),
-                )
-            ) {
-                Text(
-                    text       = "Start Game",
-                    fontSize   = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = colors.background,
-                )
-            }
+                variant  = if (waitingPlayers.isNotEmpty()) GameButtonVariant.Primary
+                else GameButtonVariant.Muted,
+                modifier = Modifier.fillMaxWidth()
+            )
+
         }
     }
 }

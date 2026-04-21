@@ -68,12 +68,34 @@
     <string name="spectator_waiting_guess">في الانتظار…</string>
     <string name="spectator_guess_progress">%1$d/%2$d</string>
     <string name="spectator_total_points">المجموع: %1$d نقطة</string>
+    <string name="multiplayer_waiting_for_players">في انتظار انضمام اللاعبين…</string>
+    <string name="multiplayer_waiting_for_host">في انتظار المضيف لبدء اللعبة…</string>
+    <string name="multiplayer_players_count">اللاعبون (%1$d/3)</string>
+    <string name="lobby_start_game">ابدأ اللعبة</string>
+    <string name="lobby_you">أنت</string>
+    <string name="lobby_badge_host">مضيف</string>
+    <string name="profile_edit">تعديل</string>
+    <string name="profile_display_name">اسم اللاعب</string>
+    <string name="profile_avatar_color">اختر اللون</string>
+    <string name="profile_avatar_emoji">اختر الرمز</string>
+    <string name="profile_save">حفظ</string>
+    <string name="profile_close">إغلاق</string>
+    <string name="profile_you">أنت</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>
     <string name="result_play_again">العب مجدداً</string>
     <string name="result_close">إغلاق</string>
     <string name="hint_message">Hint: the letter \'%1$c\' is at position %2$d</string>
+
+    <!-- Join Room Error Messages -->
+    <string name="join_error_not_found_hint">الغرفة غير موجودة. تحقق من الرمز وحاول مجدداً.</string>
+    <string name="join_error_not_found">الغرفة غير موجودة.</string>
+    <string name="join_error_game_ended">انتهت هذه اللعبة بالفعل.</string>
+    <string name="join_error_game_started">هذه اللعبة قد بدأت بالفعل.</string>
+    <string name="join_error_room_full_max4">الغرفة ممتلئة (الحد الأقصى 4 لاعبين).</string>
+    <string name="join_error_room_full_max3">الغرفة ممتلئة (الحد الأقصى 3 لاعبين).</string>
+    <string name="join_error_room_full">هذه الغرفة ممتلئة بالفعل.</string>
 
     <!-- Error Messages -->
     <string name="error_name_empty">يرجى إدخال الاسم</string>

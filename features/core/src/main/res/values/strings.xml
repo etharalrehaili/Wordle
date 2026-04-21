@@ -98,7 +98,7 @@
     <string name="join_room_join">Join</string>
 
     <!-- Leave Game Bottom Sheet -->
-    <string name="leave_game_title">Leave match</string>
+    <string name="leave_game_title">Leave Room</string>
     <string name="leave_game_subtitle">Are you sure you want to leave?</string>
     <string name="leave_game_confirm">Yes, leave</string>
     <string name="leave_game_stay">Stay</string>

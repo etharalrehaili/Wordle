@@ -36,6 +36,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.game.R
 
 @Composable
 fun ProfileEditCard(
@@ -54,7 +56,6 @@ fun ProfileEditCard(
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var draftName by remember(myName) { mutableStateOf(myName) }
-    // null = user selected the default letter-based avatar
     var draftColor by remember(avatarColor) { mutableStateOf(avatarColor) }
     var draftEmoji by remember(avatarEmoji) { mutableStateOf(avatarEmoji) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -67,20 +68,18 @@ fun ProfileEditCard(
             .border(1.dp, colors.border, RoundedCornerShape(14.dp))
             .padding(14.dp)
             .pointerInput(Unit) {
-                detectTapGestures(onTap = {
-                    keyboardController?.hide()
-                })
+                detectTapGestures(onTap = { keyboardController?.hide() })
             },
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // ── Header row ──────────────────────────────────────────────────────
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+            modifier              = Modifier.fillMaxWidth(),
+            verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 val previewColor = if (isEditing) draftColor else avatarColor
@@ -88,17 +87,16 @@ fun ProfileEditCard(
                 val previewName  = if (isEditing) draftName else myName
                 when {
                     avatarUrl != null && !isEditing -> AsyncImage(
-                        model = avatarUrl,
+                        model              = avatarUrl,
                         contentDescription = myName,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
+                        contentScale       = ContentScale.Crop,
+                        modifier           = Modifier
                             .size(44.dp)
                             .clip(CircleShape),
                     )
                     previewColor != null && previewEmoji != null ->
                         EmojiAvatar(color = previewColor, emoji = previewEmoji, size = 44)
                     previewColor != null -> {
-                        // Color chosen, emoji still "first letter of name"
                         val circleColor = Color(previewColor)
                         Box(
                             modifier = Modifier
@@ -109,27 +107,26 @@ fun ProfileEditCard(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = previewName.take(1).uppercase().ifBlank { "?" },
-                                color = circleColor,
-                                fontSize = 18.sp,
+                                text       = previewName.take(1).uppercase().ifBlank { "?" },
+                                color      = circleColor,
+                                fontSize   = 18.sp,
                                 fontWeight = FontWeight.Bold,
                             )
                         }
                     }
                     else -> {
-                        // Default: no color, no emoji — plain letter circle
                         Box(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(CircleShape)
-                                .background(colors.buttonPink.copy(alpha = 0.15f))
-                                .border(1.dp, colors.buttonPink.copy(alpha = 0.3f), CircleShape),
+                                .background(colors.logoPink.copy(alpha = 0.15f))
+                                .border(1.dp, colors.logoPink.copy(alpha = 0.3f), CircleShape),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = previewName.take(1).uppercase().ifBlank { "?" },
-                                color = colors.buttonPink,
-                                fontSize = 18.sp,
+                                text       = previewName.take(1).uppercase().ifBlank { "?" },
+                                color      = colors.logoPink,
+                                fontSize   = 18.sp,
                                 fontWeight = FontWeight.Bold,
                             )
                         }
@@ -137,14 +134,14 @@ fun ProfileEditCard(
                 }
                 Column {
                     Text(
-                        text = (if (isEditing) draftName else myName).ifBlank { "You" },
-                        color = colors.title,
-                        fontSize = 15.sp,
+                        text       = (if (isEditing) draftName else myName).ifBlank { stringResource(R.string.lobby_you) },
+                        color      = colors.title,
+                        fontSize   = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = "You",
-                        color = colors.body.copy(alpha = 0.5f),
+                        text     = stringResource(R.string.profile_you),
+                        color    = colors.body.copy(alpha = 0.5f),
                         fontSize = 12.sp,
                     )
                 }
@@ -153,17 +150,17 @@ fun ProfileEditCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(colors.buttonTeal.copy(alpha = 0.12f))
+                        .background(colors.logoBlue.copy(alpha = 0.12f))
                         .clickable(
-                            indication = null,
+                            indication        = null,
                             interactionSource = remember { MutableInteractionSource() },
                         ) { isEditing = true }
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 ) {
                     Text(
-                        text = "Edit",
-                        color = colors.buttonTeal,
-                        fontSize = 13.sp,
+                        text       = stringResource(R.string.profile_edit),
+                        color      = colors.logoBlue,
+                        fontSize   = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
@@ -172,60 +169,57 @@ fun ProfileEditCard(
 
         // ── Inline edit mode ─────────────────────────────────────────────────
         if (isEditing) {
-            // Name field
             OutlinedTextField(
-                value = draftName,
+                value         = draftName,
                 onValueChange = { if (it.length <= 15) draftName = it },
-                label = { Text("Display name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colors.buttonTeal,
+                label         = { Text(stringResource(R.string.profile_display_name)) },
+                singleLine    = true,
+                modifier      = Modifier.fillMaxWidth(),
+                colors        = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor   = colors.logoBlue,
                     unfocusedBorderColor = colors.border,
-                    focusedLabelColor = colors.buttonTeal,
-                    unfocusedLabelColor = colors.body.copy(alpha = 0.5f),
-                    focusedTextColor = colors.title,
-                    unfocusedTextColor = colors.title,
-                    cursorColor = colors.buttonTeal,
+                    focusedLabelColor    = colors.logoBlue,
+                    unfocusedLabelColor  = colors.body.copy(alpha = 0.5f),
+                    focusedTextColor     = colors.title,
+                    unfocusedTextColor   = colors.title,
+                    cursorColor          = colors.logoBlue,
                 ),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done,
+                    keyboardType   = KeyboardType.Text,
+                    imeAction      = ImeAction.Done,
                 ),
             )
 
-            // Color picker
             Text(
-                text = "Avatar color",
-                color = colors.body.copy(alpha = 0.55f),
-                fontSize = 12.sp,
+                text       = stringResource(R.string.profile_avatar_color),
+                color      = colors.body.copy(alpha = 0.55f),
+                fontSize   = 12.sp,
                 fontWeight = FontWeight.Medium,
             )
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Default slot — letter circle
                 item {
                     val selected = draftColor == null
                     Box(
                         modifier = Modifier
                             .size(34.dp)
                             .clip(CircleShape)
-                            .background(colors.buttonTeal.copy(alpha = 0.15f))
+                            .background(colors.logoBlue.copy(alpha = 0.15f))
                             .border(
                                 width = if (selected) 2.5.dp else 1.dp,
-                                color = if (selected) colors.title else colors.buttonTeal.copy(alpha = 0.3f),
+                                color = if (selected) colors.title else colors.logoBlue.copy(alpha = 0.3f),
                                 shape = CircleShape,
                             )
                             .clickable(
-                                indication = null,
+                                indication        = null,
                                 interactionSource = remember { MutableInteractionSource() },
                             ) { draftColor = null; draftEmoji = null },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = draftName.take(1).uppercase().ifBlank { "?" },
-                            color = colors.buttonTeal,
-                            fontSize = 13.sp,
+                            text       = draftName.take(1).uppercase().ifBlank { "?" },
+                            color      = colors.logoBlue,
+                            fontSize   = 13.sp,
                             fontWeight = FontWeight.Bold,
                         )
                     }
@@ -243,25 +237,21 @@ fun ProfileEditCard(
                                 shape = CircleShape,
                             )
                             .clickable(
-                                indication = null,
+                                indication        = null,
                                 interactionSource = remember { MutableInteractionSource() },
-                            ) {
-                                draftColor = colorLong
-                            },
+                            ) { draftColor = colorLong },
                     )
                 }
             }
 
-            // Emoji picker — hidden when default (null) color is selected
             if (draftColor != null) {
                 Text(
-                    text = "Avatar emoji",
-                    color = colors.body.copy(alpha = 0.55f),
-                    fontSize = 12.sp,
+                    text       = stringResource(R.string.profile_avatar_emoji),
+                    color      = colors.body.copy(alpha = 0.55f),
+                    fontSize   = 12.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // Default slot — first letter of name
                     item {
                         val selected = draftEmoji == null
                         Box(
@@ -269,20 +259,20 @@ fun ProfileEditCard(
                                 .size(40.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(
-                                    if (selected) colors.buttonTeal.copy(alpha = 0.18f)
+                                    if (selected) colors.logoBlue.copy(alpha = 0.18f)
                                     else Color.Transparent
                                 )
                                 .clickable(
-                                    indication = null,
+                                    indication        = null,
                                     interactionSource = remember { MutableInteractionSource() },
                                 ) { draftEmoji = null },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = draftName.take(1).uppercase().ifBlank { "?" },
-                                fontSize = 18.sp,
+                                text       = draftName.take(1).uppercase().ifBlank { "?" },
+                                fontSize   = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (selected) colors.buttonTeal else colors.body,
+                                color      = if (selected) colors.logoBlue else colors.body,
                             )
                         }
                     }
@@ -293,11 +283,11 @@ fun ProfileEditCard(
                                 .size(40.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(
-                                    if (selected) colors.buttonTeal.copy(alpha = 0.18f)
+                                    if (selected) colors.logoBlue.copy(alpha = 0.18f)
                                     else Color.Transparent
                                 )
                                 .clickable(
-                                    indication = null,
+                                    indication        = null,
                                     interactionSource = remember { MutableInteractionSource() },
                                 ) { draftEmoji = emoji },
                             contentAlignment = Alignment.Center,
@@ -308,50 +298,50 @@ fun ProfileEditCard(
                 }
             }
 
-            // Save / Close buttons
+            // ── Save / Close buttons ─────────────────────────────────────────
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(
-                    onClick = {
-                        draftName = myName
-                        draftColor = avatarColor
-                        draftEmoji = avatarEmoji
+                    onClick  = {
+                        onSave(draftName, draftColor, draftEmoji)
                         isEditing = false
                     },
+                    enabled  = draftName.isNotBlank(),
                     modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
+                    shape    = RoundedCornerShape(10.dp),
+                    colors   = ButtonDefaults.buttonColors(
+                        containerColor         = colors.logoBlue,
+                        disabledContainerColor = colors.logoBlue.copy(alpha = 0.3f),
+                    ),
+                ) {
+                    Text(
+                        text       = stringResource(R.string.profile_save),
+                        fontSize   = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color      = Color.White,
+                    )
+                }
+                Button(
+                    onClick  = {
+                        draftName  = myName
+                        draftColor = avatarColor
+                        draftEmoji = avatarEmoji
+                        isEditing  = false
+                    },
+                    modifier = Modifier.weight(1f).height(44.dp),
+                    shape    = RoundedCornerShape(10.dp),
+                    colors   = ButtonDefaults.buttonColors(
                         containerColor = colors.surface,
                     ),
                     border = androidx.compose.foundation.BorderStroke(1.dp, colors.border),
                 ) {
                     Text(
-                        text = "Close",
-                        fontSize = 14.sp,
+                        text       = stringResource(R.string.profile_close),
+                        fontSize   = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = colors.body,
-                    )
-                }
-                Button(
-                    onClick = {
-                        onSave(draftName, draftColor, draftEmoji)
-                        isEditing = false
-                    },
-                    enabled = draftName.isNotBlank(),
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.buttonTeal,
-                        disabledContainerColor = colors.buttonTeal.copy(alpha = 0.3f),
-                    ),
-                ) {
-                    Text(
-                        text = "Save",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.background,
+                        color      = colors.body,
                     )
                 }
             }
