@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.components.enums.Types
+import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.core.presentation.theme.LocalWordleColors
 import kotlinx.coroutines.delay
 
@@ -52,7 +53,6 @@ fun Square(
     modifier: Modifier = Modifier
 ) {
     val hasContent = content !is SquareContent.Empty
-    val colors = LocalWordleColors.current
     val isSimilar = type == Types.SIMILAR
 
     // Animated background (SIMILAR uses transparent — the split is drawn via drawBehind)

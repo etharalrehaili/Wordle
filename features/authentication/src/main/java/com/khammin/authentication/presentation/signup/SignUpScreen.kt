@@ -308,9 +308,6 @@ fun SignUpContent(
                 } else {
                     GameButton(
                         label           = stringResource(R.string.signup_button),
-                        backgroundColor = colors.buttonTeal,
-                        contentColor    = colors.title,
-                        showBorder      = false,
                         onClick         = onSignUpClick,
                         modifier        = Modifier.fillMaxWidth()
                     )

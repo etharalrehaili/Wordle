@@ -142,7 +142,6 @@ fun GameContent(
 
     val keyStates = uiState.keyboardStates.mapValues { (_, tileState) -> tileState.toTypes() }
 
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
@@ -190,16 +189,6 @@ fun GameContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    thickness = 1.dp,
-                    color = colors.body.copy(alpha = 0f)
                 )
 
                 Spacer(modifier = Modifier.height(140.dp))

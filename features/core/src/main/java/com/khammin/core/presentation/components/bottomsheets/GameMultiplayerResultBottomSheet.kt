@@ -28,16 +28,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.random.Random
 import com.khammin.core.R
-
-data class ConfettiParticle(
-    val x: Float,
-    val y: Float,
-    val color: Color,
-    val radius: Float,
-    val speed: Float,
-    val angle: Float,
-    val tilt: Float,
-)
+import com.khammin.core.presentation.components.ConfettiLayer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,9 +129,6 @@ fun GameMultiplayerResultBottomSheet(
                     if (onPlayAgain != null) {
                         GameButton(
                             label = stringResource(R.string.multiplayer_result_play_again),
-                            backgroundColor = if (isWin) colors.buttonTeal else colors.buttonPink,
-                            contentColor    = colors.title,
-                            showBorder      = false,
                             onClick         = onPlayAgain,
                             modifier        = Modifier.fillMaxWidth()
                         )
@@ -149,10 +137,6 @@ fun GameMultiplayerResultBottomSheet(
 
                     GameButton(
                         label = stringResource(R.string.multiplayer_result_back_home),
-                        backgroundColor = Color.Transparent,
-                        contentColor    = colors.title,
-                        showBorder      = true,
-                        borderColor     = colors.border,
                         onClick         = onBackHome,
                         modifier        = Modifier.fillMaxWidth()
                     )
@@ -160,48 +144,6 @@ fun GameMultiplayerResultBottomSheet(
             }
         }
     }
-}
-
-// ─── Confetti ─────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ConfettiLayer(modifier: Modifier = Modifier) {
-    val confettiColors = listOf(
-        Color(0xFF4CAF50), Color(0xFFFF9800), Color(0xFF9C27B0),
-        Color(0xFF2196F3), Color(0xFFF44336), Color(0xFF00BCD4)
-    )
-
-    val particles = remember {
-        List(60) {
-            ConfettiParticle(
-                x      = Random.nextFloat(),
-                y      = Random.nextFloat() * -1f,
-                color  = confettiColors.random(),
-                radius = Random.nextFloat() * 5f + 3f,
-                speed  = Random.nextFloat() * 2f + 1.5f,
-                angle  = Random.nextFloat() * 360f,
-                tilt   = Random.nextFloat() * 10f - 5f,
-            )
-        }
-    }
-
-    val time by produceState(0f) {
-        while (true) {
-            withFrameMillis { value = it / 1000f }
-        }
-    }
-
-    Box(modifier = modifier.drawBehind {
-        particles.forEach { p ->
-            val x     = (p.x + sin(time * p.speed * 0.3f + p.tilt) * 0.05f) * size.width
-            val y     = ((p.y + time * p.speed * 0.08f) % 1.2f) * size.height
-            drawCircle(
-                color  = p.color.copy(alpha = 0.85f),
-                radius = p.radius,
-                center = Offset(x, y)
-            )
-        }
-    })
 }
 
 // ─── Animated title ───────────────────────────────────────────────────────────

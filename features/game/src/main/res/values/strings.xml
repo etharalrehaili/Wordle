@@ -4,12 +4,12 @@
     <string name="verify_email_title">Email Not Verified</string>
     <string name="verify_email_message">Please verify your email address before accessing this feature. Check your inbox for a verification link.</string>
     <string name="ok">OK</string>
-    <string name="welcome_to">Welcome To</string>
-    <string name="Khammin">KHAMMIN</string>
     <string name="quick_play">Quick Play</string>
     <string name="take_challenge">Take Challenge</string>
     <string name="leaderboard">Leaderboard</string>
-    <string name="home_description">Get a chance to guess the hidden word</string>
+    <string name="home_title_start">Guess the\u0020</string>
+    <string name="home_title_bold">Word</string>
+    <string name="home_subtitle">Each guess brings you closer to the word</string>
     <string name="wordle_letters">Play</string>
 
     <!-- Countdown -->

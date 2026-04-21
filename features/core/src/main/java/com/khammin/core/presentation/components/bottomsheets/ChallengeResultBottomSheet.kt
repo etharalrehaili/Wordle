@@ -200,10 +200,6 @@ fun ChallengeResultBottomSheet(
                 // ── Close button ──────────────────────────────────────
                 GameButton(
                     label           = stringResource(R.string.result_close),
-                    backgroundColor = Color.Transparent,
-                    contentColor    = colors.title,
-                    showBorder      = true,
-                    borderColor     = colors.border,
                     onClick         = onDismiss,
                     modifier        = Modifier.fillMaxWidth()
                 )

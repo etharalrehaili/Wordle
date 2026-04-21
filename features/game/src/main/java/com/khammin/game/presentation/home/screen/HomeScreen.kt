@@ -3,6 +3,7 @@ package com.khammin.game.presentation.home.screen
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +28,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,9 +43,6 @@ import java.time.Duration
 import java.time.LocalDateTime
 import com.khammin.core.alias.LanguageAction
 import com.khammin.core.alias.ThemeAction
-import com.khammin.core.presentation.components.GradientBackground
-import com.khammin.core.presentation.components.Square
-import com.khammin.core.presentation.components.SquareContent
 import com.khammin.core.presentation.components.bottomsheets.AuthBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.CreateRoomWordBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.GameMenuDrawerSheet
@@ -50,16 +52,15 @@ import com.khammin.core.presentation.components.bottomsheets.MultiplayerModeBott
 import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.WordLengthSelectionBottomSheet
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.components.enums.AppColorTheme
-import com.khammin.core.presentation.components.enums.AppLanguage
-import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.components.navigation.GameTopBar
 import com.khammin.core.presentation.components.text.WordleText
-import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import kotlinx.coroutines.delay
 import com.khammin.game.R
+import com.khammin.core.R as CoreRes
 import kotlinx.coroutines.launch
 import com.khammin.game.presentation.preferences.contract.PreferencesIntent
 import com.khammin.game.presentation.preferences.contract.PreferencesUiState
@@ -230,8 +231,6 @@ fun HomeContent(
                 .background(colors.background)
         ) {
 
-            GradientBackground()
-
             GameTopBar(
                 startIcon          = Icons.Filled.Menu,
                 onStartIconClicked = { scope.launch { drawerState.open() } },
@@ -252,40 +251,52 @@ fun HomeContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                WordleText(
-                    text          = stringResource(R.string.welcome_to),
-                    color         = colors.pinkText,
-                    fontSize      = GameDesignTheme.typography.titleLarge,
-                    fontWeight    = FontWeight.Bold,
-                    letterSpacing = 2.sp,
-                    textAlign     = TextAlign.Center
+
+                val isDark = uiState.selectedTheme == AppColorTheme.DARK
+
+                Image(
+                    painter            = painterResource(id = CoreRes.drawable.newlogo),
+                    contentDescription = null,
+                    modifier           = Modifier
+                        .fillMaxWidth(0.85f)
+                        .aspectRatio(1f)
+                        .padding(bottom = 8.dp)
+                        .graphicsLayer {
+                            alpha = if (isDark) 0.90f else 1f
+                        }
+                )
+
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Normal)) {
+                            append(stringResource(R.string.home_title_start))
+                        }
+                        withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp)) {
+                            append(stringResource(R.string.home_title_bold))
+                        }
+                    },
+                    color     = colors.title,
+                    fontSize  = GameDesignTheme.typography.displayMedium,
+                    textAlign = TextAlign.Center,
+                    modifier  = Modifier.fillMaxWidth()
                 )
 
                 WordleText(
-                    text          = stringResource(R.string.Khammin),
-                    color         = colors.title,
-                    fontSize      = GameDesignTheme.typography.displayMedium,
-                    fontWeight    = FontWeight.ExtraBold,
-                    letterSpacing = 4.sp,
-                    textAlign     = TextAlign.Center
-                )
-
-                WordleText(
-                    text       = stringResource(R.string.home_description),
-                    color      = colors.body,
-                    fontSize   = GameDesignTheme.typography.titleMedium,
-                    textAlign  = TextAlign.Center,
-                    lineHeight = 18.sp
+                    text          = stringResource(R.string.home_subtitle),
+                    color         = colors.body,
+                    fontSize      = GameDesignTheme.typography.titleMedium,
+                    fontWeight    = FontWeight.Normal,
+                    textAlign     = TextAlign.Center,
+                    lineHeight    = 24.sp,
+                    letterSpacing = 0.sp
                 )
 
                 Spacer(modifier = Modifier.height(GameDesignTheme.spacing.xxl))
 
                 GameButton(
                     label           = stringResource(R.string.quick_play),
-                    backgroundBrush = colors.buttonPinkBrush,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = { showGameModeSheet = true },
+                    variant  = GameButtonVariant.Primary,
                     modifier        = Modifier.fillMaxWidth()
                 )
 
@@ -393,9 +404,6 @@ fun HomeContent(
 
                 GameButton(
                     label           = stringResource(R.string.take_challenge),
-                    backgroundBrush = colors.buttonTealBrush,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = {
                         when {
                             !isLoggedIn      -> showAuthSheet = true
@@ -403,6 +411,7 @@ fun HomeContent(
                             else             -> onChallengeClick()
                         }
                     },
+                    variant  = GameButtonVariant.Muted,
                     modifier        = Modifier.fillMaxWidth()
                 )
 
@@ -424,10 +433,8 @@ fun HomeContent(
 
                 GameButton(
                     label           = stringResource(R.string.leaderboard),
-                    backgroundBrush = colors.buttonTaupeBrush,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = onLeaderboardClick,
+                    variant  = GameButtonVariant.Ghost,
                     modifier        = Modifier.fillMaxWidth()
                 )
 

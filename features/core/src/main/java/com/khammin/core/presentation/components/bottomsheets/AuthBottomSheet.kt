@@ -162,9 +162,6 @@ fun AuthBottomSheet(
                 // ── Buttons ───────────────────────────────────────────
                 GameButton(
                     label       = stringResource(R.string.auth_login_email),
-                    backgroundColor = colors.buttonPink,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = onLoginWithEmail,
                     modifier        = Modifier.fillMaxWidth()
                 )
@@ -173,10 +170,6 @@ fun AuthBottomSheet(
 
                 GameButton(
                     label       = stringResource(R.string.auth_create_account),
-                    backgroundColor = Color.Transparent,
-                    contentColor    = colors.title,
-                    showBorder      = true,
-                    borderColor     = colors.buttonPink,
                     onClick         = onSignUpClick,
                     modifier        = Modifier.fillMaxWidth()
                 )

@@ -17,6 +17,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.khammin.core.R
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,11 +62,7 @@ fun GameModeBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(colors.buttonPink, colors.buttonTeal)
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -82,8 +80,8 @@ fun GameModeBottomSheet(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    colors.buttonTeal.copy(alpha = 0.25f),
-                                    colors.buttonPink.copy(alpha = 0.10f),
+                                    colors.logoBlue.copy(alpha = 0.20f),
+                                    colors.logoGreen.copy(alpha = 0.08f),
                                 )
                             )
                         ),
@@ -92,14 +90,14 @@ fun GameModeBottomSheet(
                     Icon(
                         imageVector        = Icons.Outlined.SportsEsports,
                         contentDescription = null,
-                        tint               = colors.buttonTeal,
+                        tint               = colors.logoBlue,
                         modifier           = Modifier.size(36.dp)
                     )
                 }
 
                 Spacer(Modifier.height(20.dp))
 
-                androidx.compose.material3.Text(
+                Text(
                     text          = stringResource(R.string.game_mode_title),
                     color         = colors.title,
                     fontSize      = 22.sp,
@@ -110,7 +108,7 @@ fun GameModeBottomSheet(
 
                 Spacer(Modifier.height(8.dp))
 
-                androidx.compose.material3.Text(
+                Text(
                     text      = stringResource(R.string.game_mode_subtitle),
                     color     = colors.body.copy(alpha = 0.75f),
                     fontSize  = 14.sp,
@@ -121,24 +119,19 @@ fun GameModeBottomSheet(
                 Spacer(Modifier.height(32.dp))
 
                 GameButton(
-                    label           = stringResource(R.string.game_mode_single_player),
-                    backgroundColor = colors.buttonTeal,
-                    contentColor    = colors.title,
-                    showBorder      = false,
-                    onClick         = onSinglePlayer,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.game_mode_single_player),
+                    onClick  = onSinglePlayer,
+                    variant  = GameButtonVariant.Primary,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(10.dp))
 
                 GameButton(
-                    label           = stringResource(R.string.game_mode_multiplayer),
-                    backgroundColor = Color.Transparent,
-                    contentColor    = colors.title,
-                    showBorder      = true,
-                    borderColor     = colors.buttonPink,
-                    onClick         = onMultiplayer,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.game_mode_multiplayer),
+                    onClick  = onMultiplayer,
+                    variant  = GameButtonVariant.Muted,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

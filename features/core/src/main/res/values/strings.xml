@@ -23,22 +23,22 @@
 
     <!-- Wordle Info Bottom Sheet -->
     <string name="info_how_to_play">How To Play</string>
-    <string name="info_guess_title">Guess the WORDLE in 6 tries.</string>
-    <string name="info_rule_1">Each guess must be a valid %d-letter word.</string>
-    <string name="info_rule_2">The color of the tiles will change to show how close your guess was.</string>
+    <string name="info_guess_title">Guess the WORDLE in 6 tries</string>
+    <string name="info_rule_1">Each guess must be a valid %d-letter word</string>
+    <string name="info_rule_2">The color of the tiles will change to show how close your guess was</string>
     <string name="info_examples">Examples</string>
-    <string name="info_example_1_desc"> is in the word and in the correct spot.</string>
-    <string name="info_example_2_desc"> is in the word but in the wrong spot.</string>
+    <string name="info_example_1_desc"> is in the word and in the correct spot</string>
+    <string name="info_example_2_desc"> is in the word but in the wrong spot</string>
     <string name="info_example_1_letter">ك</string>
     <string name="info_example_1_letters">كتاب</string>
     <string name="info_example_2_letter">د</string>
     <string name="info_example_2_letters">صديق</string>
     <string name="info_example_3_letter">ق</string>
     <string name="info_example_3_letters">رفيق</string>
-    <string name="info_example_3_desc"> is not in the word in any spot.</string>
+    <string name="info_example_3_desc"> is not in the word in any spot</string>
     <string name="info_example_4_letter">ه</string>
     <string name="info_example_4_letters">ورده</string>
-    <string name="info_example_4_desc"> is in the word but check the letter shape (ة / ه).</string>
+    <string name="info_example_4_desc"> is in the word but check the letter shape (ة / ه)</string>
     <string name="info_new_wordle">A new challenge word will be available each day!</string>
 
     <!-- challenge -->
@@ -111,13 +111,13 @@
 
     <!-- Multiplayer Mode Bottom Sheet -->
     <string name="multiplayer_mode_title">Multiplayer</string>
-    <string name="multiplayer_mode_subtitle">Challenge a friend to a word duel</string>
+    <string name="multiplayer_mode_subtitle">Play against a friend</string>
     <string name="multiplayer_mode_creating">Creating…</string>
     <string name="multiplayer_mode_create_room">Create Room</string>
     <string name="multiplayer_mode_join_room">Join Room</string>
 
     <!-- Create Room Word Bottom Sheet -->
-    <string name="create_room_word_title">Choose the Word</string>
+    <string name="create_room_word_title">Create Room</string>
     <string name="create_room_word_subtitle">Pick how the secret word will be selected for this room</string>
     <string name="create_room_random_title">Random Word</string>
     <string name="create_room_random_subtitle">Fetch a random word from the word list</string>

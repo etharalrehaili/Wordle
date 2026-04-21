@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Casino
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.GroupAdd
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,7 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.khammin.core.R
 import com.khammin.core.presentation.components.text.WordleText
-import com.khammin.core.presentation.theme.GameDesignTheme
+import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.core.presentation.theme.GameDesignTheme.typography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,8 +49,6 @@ fun CreateRoomWordBottomSheet(
     onDismiss: () -> Unit = {},
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    val colors = GameDesignTheme.colors
-    val typography = GameDesignTheme.typography
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -68,11 +68,7 @@ fun CreateRoomWordBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(colors.buttonTeal, colors.buttonPink)
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -83,6 +79,29 @@ fun CreateRoomWordBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+
+                // Icon
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    colors.logoBlue.copy(alpha = 0.20f),
+                                    colors.logoTeal.copy(alpha = 0.08f),
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector        = Icons.Outlined.GroupAdd,
+                        contentDescription = null,
+                        tint               = colors.logoBlue,
+                        modifier           = Modifier.size(36.dp)
+                    )
+                }
 
                 // Header
                 WordleText(
@@ -107,8 +126,8 @@ fun CreateRoomWordBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(colors.buttonTeal.copy(alpha = 0.1f))
-                        .border(1.5.dp, colors.buttonTeal.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .background(colors.logoBlue.copy(alpha = 0.1f))
+                        .border(1.5.dp, colors.logoBlue.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                         .clickable(enabled = !isLoading) { onRandomWord() }
                         .padding(horizontal = 20.dp, vertical = 18.dp)
                 ) {
@@ -120,21 +139,21 @@ fun CreateRoomWordBottomSheet(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(CircleShape)
-                                .background(colors.buttonTeal.copy(alpha = 0.18f)),
+                                .background(colors.logoBlue.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (isLoading && loadingType == "random") {
                                 CircularProgressIndicator(
-                                    color       = colors.buttonTeal,
+                                    color       = colors.logoBlue,
                                     modifier    = Modifier.size(20.dp),
                                     strokeWidth = 2.dp,
                                 )
                             } else {
                                 Icon(
-                                    imageVector        = Icons.Outlined.Casino,
+                                    imageVector = Icons.Outlined.Casino,
+                                    tint        = colors.logoBlue,
+                                    modifier    = Modifier.size(22.dp),
                                     contentDescription = null,
-                                    tint               = colors.buttonTeal,
-                                    modifier           = Modifier.size(22.dp),
                                 )
                             }
                         }
@@ -155,38 +174,13 @@ fun CreateRoomWordBottomSheet(
                     }
                 }
 
-                // Divider with "or"
-//                Row(
-//                    verticalAlignment     = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-//                    modifier              = Modifier.fillMaxWidth(),
-//                ) {
-//                    Box(
-//                        modifier = Modifier
-//                            .weight(1f)
-//                            .height(1.dp)
-//                            .background(colors.border)
-//                    )
-//                    WordleText(
-//                        text     = stringResource(R.string.create_room_or),
-//                        color    = colors.body.copy(alpha = 0.5f),
-//                        fontSize = typography.labelSmall,
-//                    )
-//                    Box(
-//                        modifier = Modifier
-//                            .weight(1f)
-//                            .height(1.dp)
-//                            .background(colors.border)
-//                    )
-//                }
-
                 // ── Custom word card ──────────────────────────────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(colors.buttonPink.copy(alpha = 0.1f))
-                        .border(1.5.dp, colors.buttonPink.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .background(colors.logoGreen.copy(alpha = 0.1f))
+                        .border(1.5.dp, colors.logoGreen.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                         .clickable(enabled = !isLoading) { onCustomWord() }
                         .padding(horizontal = 20.dp, vertical = 18.dp)
                 ) {
@@ -198,21 +192,21 @@ fun CreateRoomWordBottomSheet(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(CircleShape)
-                                .background(colors.buttonPink.copy(alpha = 0.18f)),
+                                .background(colors.logoGreen.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (isLoading && loadingType == "custom") {
                                 CircularProgressIndicator(
-                                    color       = colors.buttonPink,
+                                    color       = colors.logoGreen,
                                     modifier    = Modifier.size(20.dp),
                                     strokeWidth = 2.dp,
                                 )
                             } else {
                                 Icon(
-                                    imageVector        = Icons.Outlined.Edit,
+                                    imageVector = Icons.Outlined.Edit,
+                                    tint        = colors.logoGreen,
+                                    modifier    = Modifier.size(22.dp),
                                     contentDescription = null,
-                                    tint               = colors.buttonPink,
-                                    modifier           = Modifier.size(22.dp),
                                 )
                             }
                         }

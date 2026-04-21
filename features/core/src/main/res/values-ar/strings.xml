@@ -23,23 +23,23 @@
 
     <!-- Wordle Info Bottom Sheet -->
     <string name="info_how_to_play">كيفية اللعب</string>
-    <string name="info_guess_title">خمّن الكلمة في 6 محاولات.</string>
-    <string name="info_rule_1">يجب أن تكون كل محاولة كلمة صحيحة من %d أحرف.</string>
-    <string name="info_rule_2">سيتغير لون المربعات لتوضح مدى قرب تخمينك.</string>
+    <string name="info_guess_title">خمّن الكلمة في 6 محاولات</string>
+    <string name="info_rule_1">يجب أن تكون كل محاولة كلمة صحيحة من %d أحرف</string>
+    <string name="info_rule_2">سيتغير لون المربعات لتوضح مدى قرب تخمينك</string>
     <string name="info_examples">أمثلة</string>
     <string name="info_example_1_letter">ك</string>
     <string name="info_example_1_letters">كتاب</string>
-    <string name="info_example_1_desc"> موجود في الكلمة وفي المكان الصحيح.</string>
+    <string name="info_example_1_desc"> موجود في الكلمة وفي المكان الصحيح</string>
     <string name="info_example_2_letter">د</string>
     <string name="info_example_2_letters">مدينة</string>
-    <string name="info_example_2_desc"> موجود في الكلمة لكن في مكان خاطئ.</string>
+    <string name="info_example_2_desc"> موجود في الكلمة لكن في مكان خاطئ</string>
     <string name="info_example_3_letter">ق</string>
     <string name="info_example_3_letters">اصدقاء</string>
-    <string name="info_example_3_desc"> غير موجود في الكلمة في أي مكان.</string>
+    <string name="info_example_3_desc"> غير موجود في الكلمة في أي مكان</string>
     <string name="info_new_wordle">كلمة تحدي جديدة ستكون متاحة كل يوم!</string>
     <string name="info_example_4_letter">ه</string>
     <string name="info_example_4_letters">ورده</string>
-    <string name="info_example_4_desc"> موجود لكن تحقق من شكل الحرف (ة / ه).</string>
+    <string name="info_example_4_desc"> موجود لكن تحقق من شكل الحرف (ة / ه)</string>
 
     <!-- challenge -->
     <string name="result_win_title">رائع!</string>
@@ -110,13 +110,13 @@
 
     <!-- Multiplayer Mode Bottom Sheet -->
     <string name="multiplayer_mode_title">اللعب الجماعي</string>
-    <string name="multiplayer_mode_subtitle">تحدَّ صديقاً في مبارزة كلمات</string>
+    <string name="multiplayer_mode_subtitle">العب ضد صديق</string>
     <string name="multiplayer_mode_creating">جارٍ الإنشاء…</string>
     <string name="multiplayer_mode_create_room">إنشاء غرفة</string>
     <string name="multiplayer_mode_join_room">الانضمام لغرفة</string>
 
     <!-- Create Room Word Bottom Sheet -->
-    <string name="create_room_word_title">اختر الكلمة</string>
+    <string name="create_room_word_title">إنشاء غرفة</string>
     <string name="create_room_word_subtitle">حدد كيف يتم اختيار الكلمة السرية لهذه الغرفة</string>
     <string name="create_room_random_title">كلمة عشوائية</string>
     <string name="create_room_random_subtitle">جلب كلمة عشوائية من قائمة الكلمات</string>

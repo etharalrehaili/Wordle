@@ -4,18 +4,18 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-val DarkBackground      = Color(0xFF2c313d)
+val DarkBackground      = Color(0xFF1A1A1A)
 val DarkSurface         = Color(0xFF3A3A3F)
 val DarkTopBar          = Color(0xFF121620)
 val DarkDivider         = Color(0xFF3A3D47)
-val DarkCorrect         = Color(0xFF7BC47F)
-val DarkPresent         = Color(0xFFE0C96A)
+val DarkCorrect         = Color(0xFF538D4E)
+val DarkPresent         = Color(0xFFB59F3B)
 val DarkAbsent          = Color(0xFF3A3A3C)
 val DarkKey             = Color(0xFF818384)
 val DarkTitle           = Color(0xFFFFFFFF)
 val DarkBody            = Color(0xFFCACBCC)
 val DarkError  = Color(0xFFCF6679)
-val DarkBorder       = Color(0xFF3A3A3C)
+val DarkBorder       = Color(0xFF4A4A4C)
 val DarkBorderActive = Color(0xFF565758)
 val DarkActiveTile   = Color(0xFF1565C0)
 val DarkSoftPink = Color(0xFFe7a1c8)
@@ -25,7 +25,7 @@ val DarkButtonTeal    = Color(0xFF6aafbf)
 val DarkButtonTaupe   = Color(0xFF7a7370)
 val DarkButtonPurple = Color(0xFF7B5EA7)
 
-val LightBackground     = Color(0xFFF2F0EF)
+val LightBackground     = Color(0xFFF5F0E8)
 val LightSurface        = Color(0xFFF5F5F5)
 val LightTopBar         = Color(0xFFEEEEF0)
 val LightDivider        = Color(0xFFD3D6DA)
@@ -79,6 +79,31 @@ val LightCardBorder     = Color(0xFFFFFFFF).copy(alpha = 0.60f)
 
 val DarkCardBackground  = Color(0xFF2A2D3E).copy(alpha = 0.55f)
 val DarkCardBorder      = Color(0xFFFFFFFF).copy(alpha = 0.10f)
+
+val ButtonPrimaryBg        = Color(0xFF296CAA)
+val ButtonPrimaryContent   = Color(0xFFFFFFFF)
+
+val ButtonMutedBgDark      = Color(0xFF444441)
+val ButtonMutedBgLight     = Color(0xFFD3D1C7)
+val ButtonMutedContentDark = Color(0xFFCCCCCC)
+val ButtonMutedContentLight= Color(0xFF444441)
+
+val ButtonGhostBorder      = Color(0xFF888780)
+val ButtonGhostContentDark = Color(0xFFCCCCCC)
+val ButtonGhostContentLight= Color(0xFF5F5E5A)
+
+// Logo gradient strip colors
+val LogoBlue    = Color(0xFF4A7EC7)
+val LogoPink    = Color(0xFFE8547A)
+val LogoGreen   = Color(0xFF2E9E6B)
+
+val TileDefault = Color(0xFF1A2535)
+val DarkEmptyTile  = Color(0xFF2C2C2E)
+val LightEmptyTile = Color(0xFFFFFFFF)
+
+val LogoOrange = Color(0xFFF5A623)
+val LogoTeal   = Color(0xFF2BB5C8)
+val LogoPurple = Color(0xFF8B5DB5)
 
 data class GameColorScheme(
     // Text Colors

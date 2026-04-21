@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.khammin.core.R
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,11 +63,7 @@ fun MultiplayerModeBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(colors.buttonPink, colors.buttonTeal)
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -84,8 +81,8 @@ fun MultiplayerModeBottomSheet(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    colors.buttonPink.copy(alpha = 0.25f),
-                                    colors.buttonTeal.copy(alpha = 0.10f),
+                                    colors.logoBlue.copy(alpha = 0.20f),
+                                    colors.logoGreen.copy(alpha = 0.08f),
                                 )
                             )
                         ),
@@ -94,7 +91,7 @@ fun MultiplayerModeBottomSheet(
                     Icon(
                         imageVector        = Icons.Outlined.Groups,
                         contentDescription = null,
-                        tint               = colors.buttonPink,
+                        tint               = colors.logoBlue,
                         modifier           = Modifier.size(36.dp)
                     )
                 }
@@ -124,10 +121,8 @@ fun MultiplayerModeBottomSheet(
 
                 GameButton(
                     label           = if (isLoading) stringResource(R.string.multiplayer_mode_creating) else stringResource(R.string.multiplayer_mode_create_room),
-                    backgroundColor = if (isLoading) colors.border else colors.buttonPink,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = { if (!isLoading) onCreateRoom() },
+                    variant  = GameButtonVariant.Primary,
                     modifier        = Modifier.fillMaxWidth()
                 )
 
@@ -135,11 +130,8 @@ fun MultiplayerModeBottomSheet(
 
                 GameButton(
                     label           = stringResource(R.string.multiplayer_mode_join_room),
-                    backgroundColor = Color.Transparent,
-                    contentColor    = colors.title.copy(alpha = if (isLoading) 0.4f else 1f),
-                    showBorder      = true,
-                    borderColor     = colors.buttonPink,
                     onClick         = { if (!isLoading) onJoinRoom() },
+                    variant  = GameButtonVariant.Muted,
                     modifier        = Modifier.fillMaxWidth()
                 )
 

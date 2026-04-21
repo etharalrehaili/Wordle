@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.SentimentDissatisfied
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,7 +36,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.R
+import com.khammin.core.presentation.components.ConfettiLayer
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,136 +53,139 @@ fun GameResultsBottomSheet(
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
 
+    val isWin = accentColor == colors.correct
+    val resultColor = if (isWin) colors.logoGreen else colors.logoPink
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState       = sheetState,
-        containerColor   = colors.background,
-        dragHandle       = null,
-        shape            = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        sheetState = sheetState,
+        containerColor = colors.background,
+        dragHandle = null,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
-        Column(
-            modifier            = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // ── Top accent strip ──────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                colors.buttonPink,
-                                colors.buttonTeal,
-                            )
-                        )
-                    )
-            )
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            if (isWin) {
+                ConfettiLayer(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                )
+            }
 
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 28.dp)
-                    .padding(top = 36.dp, bottom = 32.dp),
+                    .navigationBarsPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                // ── Icon ─────────────────────────────────────────────
+                // ── Top accent strip ──────────────────────────────────────
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    colors.buttonPink.copy(alpha = 0.25f),
-                                    colors.buttonPink.copy(alpha = 0.08f),
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(brush = colors.logoStripBrush)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 28.dp)
+                        .padding(top = 36.dp, bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector        = if (accentColor == colors.correct)
-                            Icons.Outlined.EmojiEvents else Icons.Outlined.SentimentDissatisfied,
-                        contentDescription = null,
-                        tint               = colors.buttonPink,
-                        modifier           = Modifier.size(36.dp)
-                    )
-                }
 
-                Spacer(Modifier.height(20.dp))
-
-                // ── Title ─────────────────────────────────────────────
-                Text(
-                    text          = title,
-                    color         = colors.title,
-                    fontSize      = 22.sp,
-                    fontWeight    = FontWeight.ExtraBold,
-                    textAlign     = TextAlign.Center,
-                    letterSpacing = 0.3.sp,
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text      = stringResource(R.string.result_the_word_was),
-                    color     = colors.body.copy(alpha = 0.45f),
-                    fontSize  = 13.sp,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                // ── Answer tiles ──────────────────────────────────────
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    answer.forEach { letter ->
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier         = Modifier
-                                .size(52.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(colors.buttonPink.copy(alpha = 0.15f))
-                                .border(
-                                    width = 1.dp,
-                                    color = colors.buttonPink.copy(alpha = 0.35f),
-                                    shape = RoundedCornerShape(12.dp)
+                    // ── Icon ─────────────────────────────────────────────
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        resultColor.copy(alpha = 0.25f),
+                                        resultColor.copy(alpha = 0.08f),
+                                    )
                                 )
-                        ) {
-                            Text(
-                                text       = letter.toString(),
-                                color      = colors.buttonPink,
-                                fontSize   = 20.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isWin) Icons.Outlined.EmojiEvents
+                            else Icons.Outlined.SentimentDissatisfied,
+                            contentDescription = null,
+                            tint = resultColor,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.height(20.dp))
+
+                    // ── Title ─────────────────────────────────────────────
+                    Text(
+                        text = title,
+                        color = colors.title,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 0.3.sp,
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = stringResource(R.string.result_the_word_was),
+                        color = colors.body.copy(alpha = 0.45f),
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // ── Answer tiles ──────────────────────────────────────
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        answer.forEach { letter ->
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(resultColor.copy(alpha = 0.15f))
+                                    .border(
+                                        width = 1.dp,
+                                        color = resultColor.copy(alpha = 0.35f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                            ) {
+                                Text(
+                                    text = letter.toString(),
+                                    color = resultColor,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
                         }
                     }
+
+                    Spacer(Modifier.height(20.dp))
+
+                    // ── Buttons ───────────────────────────────────────────
+                    GameButton(
+                        label = stringResource(R.string.game_result_play_again),
+                        onClick = onRestart,
+                        variant = GameButtonVariant.Primary,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    GameButton(
+                        label = stringResource(R.string.game_result_close),
+                        onClick = onClose,
+                        variant = GameButtonVariant.Ghost,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-
-                Spacer(Modifier.height(20.dp))
-
-                GameButton(
-                    label           = stringResource(R.string.game_result_play_again),
-                    backgroundColor = colors.buttonTeal,
-                    contentColor    = colors.title,
-                    showBorder      = false,
-                    onClick         = onRestart,
-                    modifier        = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(10.dp))
-
-                GameButton(
-                    label           = stringResource(R.string.game_result_close),
-                    backgroundColor = Color.Transparent,
-                    contentColor    = colors.title,
-                    showBorder      = true,
-                    borderColor     = colors.buttonPink,
-                    onClick         = onClose,
-                    modifier        = Modifier.fillMaxWidth()
-                )
             }
         }
     }

@@ -129,9 +129,6 @@ fun SignOutConfirmationBottomSheet(
                 // ── Buttons ───────────────────────────────────────────
                 GameButton(
                     label           = stringResource(R.string.sign_out_button_confirm),
-                    backgroundColor = colors.error,
-                    contentColor    = Color.White,
-                    showBorder      = false,
                     onClick         = onConfirm,
                     modifier        = Modifier.fillMaxWidth()
                 )
@@ -140,10 +137,6 @@ fun SignOutConfirmationBottomSheet(
 
                 GameButton(
                     label           = stringResource(R.string.sign_out_button_cancel),
-                    backgroundColor = Color.Transparent,
-                    contentColor    = colors.title,
-                    showBorder      = true,
-                    borderColor     = colors.border,
                     onClick         = onDismiss,
                     modifier        = Modifier.fillMaxWidth()
                 )

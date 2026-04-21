@@ -162,9 +162,6 @@ fun LeaderboardContent(
                             Spacer(Modifier.height(8.dp))
                             GameButton(
                                 label           = "Try Again",
-                                backgroundColor = colors.buttonTeal,
-                                contentColor    = colors.title,
-                                showBorder      = false,
                                 onClick         = { onIntent(LeaderboardIntent.ChangeLanguage(uiState.language)) },
                                 modifier        = Modifier.fillMaxWidth()
                             )

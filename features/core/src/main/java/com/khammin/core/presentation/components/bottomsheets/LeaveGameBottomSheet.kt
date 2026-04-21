@@ -118,9 +118,6 @@ fun LeaveGameBottomSheet(
 
                 GameButton(
                     label           = stringResource(R.string.leave_game_confirm),
-                    backgroundColor = colors.buttonPink,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = onConfirm,
                     modifier        = Modifier.fillMaxWidth()
                 )
@@ -129,9 +126,6 @@ fun LeaveGameBottomSheet(
 
                 GameButton(
                     label           = stringResource(R.string.leave_game_stay),
-                    backgroundColor = colors.surface,
-                    contentColor    = colors.title,
-                    showBorder      = true,
                     onClick         = onDismiss,
                     modifier        = Modifier.fillMaxWidth()
                 )
