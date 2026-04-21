@@ -26,7 +26,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -61,14 +60,7 @@ fun WordleInfoBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                colors.buttonPink,
-                                colors.buttonTeal,
-                            )
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             // ── Main content ──────────────────────────────────────────
@@ -229,16 +221,16 @@ private fun ExampleRow(
                             }
                         } else {
                             Modifier.background(
-                                color = if (isHighlighted) color else Color(0xFF1A2535),
+                                color = if (isHighlighted) color else wordleColors.emptyTile,
                                 shape = tileShape
                             )
                         }
                     )
             ) {
                 Text(
-                    text = letter.toString(),
-                    color = Color.White,
-                    fontSize = 18.sp,
+                    text       = letter.toString(),
+                    color      = if (isHighlighted) Color.White else wordleColors.title,
+                    fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
             }

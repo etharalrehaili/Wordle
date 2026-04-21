@@ -249,9 +249,6 @@ fun LoginContent(
             } else {
                 GameButton(
                     label           = stringResource(R.string.login_button),
-                    backgroundColor = colors.buttonTeal,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = {
                         focusManager.clearFocus()
                         onLoginClick()

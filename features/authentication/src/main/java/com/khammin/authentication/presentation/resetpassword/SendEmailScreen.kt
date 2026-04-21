@@ -185,9 +185,6 @@ fun ResetPasswordContent(
                 } else {
                     GameButton(
                         label           = stringResource(R.string.reset_password_send_email_button),
-                        backgroundColor = colors.buttonTeal,
-                        contentColor    = colors.title,
-                        showBorder      = false,
                         onClick         = {
                             focusManager.clearFocus()
                             onResetPasswordClick()

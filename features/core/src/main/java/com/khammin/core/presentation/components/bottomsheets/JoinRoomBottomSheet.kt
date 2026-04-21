@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.R
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,11 +94,7 @@ fun JoinRoomBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(colors.buttonPink, colors.buttonTeal)
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -115,8 +112,8 @@ fun JoinRoomBottomSheet(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    colors.buttonTeal.copy(alpha = 0.25f),
-                                    colors.buttonPink.copy(alpha = 0.10f),
+                                    colors.logoBlue.copy(alpha = 0.20f),
+                                    colors.logoTeal.copy(alpha = 0.08f),
                                 )
                             )
                         ),
@@ -125,7 +122,7 @@ fun JoinRoomBottomSheet(
                     Icon(
                         imageVector        = Icons.Outlined.MeetingRoom,
                         contentDescription = null,
-                        tint               = colors.buttonTeal,
+                        tint               = colors.logoBlue,
                         modifier           = Modifier.size(36.dp)
                     )
                 }
@@ -177,12 +174,12 @@ fun JoinRoomBottomSheet(
                     keyboardActions = KeyboardActions(
                         onDone = { if (isValid) onJoin(roomCode.trim()) }
                     ),
-                    colors  = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = colors.buttonTeal,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor   = colors.logoBlue,
                         unfocusedBorderColor = colors.border,
                         focusedTextColor     = colors.title,
                         unfocusedTextColor   = colors.title,
-                        cursorColor          = colors.buttonTeal,
+                        cursorColor          = colors.logoBlue,
                     ),
                     shape    = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
@@ -193,7 +190,7 @@ fun JoinRoomBottomSheet(
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text      = displayError,
-                        color     = colors.buttonPink,
+                        color     = colors.logoPink,
                         fontSize  = 13.sp,
                         textAlign = TextAlign.Center,
                         modifier  = Modifier.fillMaxWidth()
@@ -206,9 +203,9 @@ fun JoinRoomBottomSheet(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(colors.buttonTeal),
+                            .height(64.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(colors.buttonPrimaryBg),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
@@ -219,12 +216,10 @@ fun JoinRoomBottomSheet(
                     }
                 } else {
                     GameButton(
-                        label           = stringResource(R.string.join_room_join),
-                        backgroundColor = if (isValid) colors.buttonTeal else colors.border,
-                        contentColor    = colors.title,
-                        showBorder      = false,
-                        onClick         = { if (isValid) onJoin(roomCode.trim()) },
-                        modifier        = Modifier.fillMaxWidth()
+                        label    = stringResource(R.string.join_room_join),
+                        onClick  = { if (isValid) onJoin(roomCode.trim()) },
+                        variant  = GameButtonVariant.Primary,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }

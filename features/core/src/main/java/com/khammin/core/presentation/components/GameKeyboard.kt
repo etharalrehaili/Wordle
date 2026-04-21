@@ -39,7 +39,8 @@ import com.khammin.core.presentation.theme.LocalWordleColors
 // ─── Arabic layout ────────────────────────────────────────────────────────────
 private val AR_ROW_1 = listOf('ج', 'ح', 'خ', 'ه', 'ع', 'غ', 'ف', 'ق', 'ث', 'ص', 'ض')
 private val AR_ROW_2 = listOf('ط', 'ك', 'م', 'ن', 'ت', 'ا', 'ل', 'ب', 'ي', 'س', 'ش')
-private val AR_ROW_3 = listOf('د', 'ظ', 'ز', 'و', 'ة', 'ى', 'ر', 'ؤ', 'ء', 'ذ')
+private val AR_ROW_3 = listOf('د', 'ظ', 'ز', 'و', 'ة', 'ى', 'ر', 'ؤ', 'ء', 'ذ', 'ئ')
+
 
 // ─── English layout ───────────────────────────────────────────────────────────
 private val EN_ROW_1 = listOf('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P')

@@ -107,9 +107,6 @@ fun NoInternetBottomSheet(
 
                 GameButton(
                     label           = stringResource(R.string.no_internet_try_again),
-                    backgroundColor = colors.buttonPink,
-                    contentColor    = colors.title,
-                    showBorder      = false,
                     onClick         = onRetry,
                     modifier        = Modifier.fillMaxWidth()
                 )
@@ -118,10 +115,6 @@ fun NoInternetBottomSheet(
 
                 GameButton(
                     label           = stringResource(R.string.no_internet_cancel),
-                    backgroundColor = Color.Transparent,
-                    contentColor    = colors.title,
-                    showBorder      = true,
-                    borderColor     = colors.border,
                     onClick         = onDismiss,
                     modifier        = Modifier.fillMaxWidth()
                 )

@@ -9,8 +9,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -18,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -27,19 +24,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.alias.Action
+import com.khammin.core.presentation.theme.GameDesignTheme
+import com.khammin.core.presentation.theme.GameDesignTheme.colors
+
+enum class GameButtonVariant {
+    Primary,  // Quick Play — blue fill
+    Muted,    // Challenge — gray fill
+    Ghost     // Leaderboard — outlined
+}
 
 @Composable
 fun GameButton(
     modifier: Modifier = Modifier,
     label: String,
     icon: ImageVector? = null,
-    backgroundColor: Color? = null,
-    backgroundBrush: Brush? = null,
-    contentColor: Color = Color.White,
-    showBorder: Boolean = true,
-    borderColor: Color? = null,
+    variant: GameButtonVariant = GameButtonVariant.Primary,
     onClick: Action,
 ) {
+
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -49,31 +51,19 @@ fun GameButton(
         label = "buttonScale"
     )
 
-    val bgModifier = when {
-        backgroundBrush != null ->
-            Modifier.background(brush = backgroundBrush, shape = RoundedCornerShape(16.dp))
-        backgroundColor != null ->
-            Modifier.background(backgroundColor, RoundedCornerShape(16.dp))
-        else ->
-            Modifier.background(
-                brush = Brush.linearGradient(
-                    colors = listOf(Color(0xFF1A2535), Color(0xFF0F1923))
-                ),
-                shape = RoundedCornerShape(16.dp)
-            )
+    val backgroundColor = when (variant) {
+        GameButtonVariant.Primary -> colors.buttonPrimaryBg
+        GameButtonVariant.Muted   -> colors.buttonMutedBg
+        GameButtonVariant.Ghost   -> Color.Transparent
     }
 
-    val resolvedBorderColor = borderColor
-        ?: if (isPressed) Color(0xFF4A6080) else Color(0xFF2A3A50)
+    val contentColor = when (variant) {
+        GameButtonVariant.Primary -> colors.buttonPrimaryContent
+        GameButtonVariant.Muted   -> colors.buttonMutedContent
+        GameButtonVariant.Ghost   -> colors.buttonGhostContent
+    }
 
-    val borderModifier = if (showBorder)
-        Modifier.border(
-            width = 1.dp,
-            color = resolvedBorderColor,
-            shape = RoundedCornerShape(28.dp)
-        )
-    else
-        Modifier
+    val showBorder = variant == GameButtonVariant.Ghost
 
     Box(
         modifier = modifier
@@ -81,8 +71,14 @@ fun GameButton(
             .widthIn(min = 280.dp)
             .height(64.dp)
             .clip(RoundedCornerShape(28.dp))
-            .then(bgModifier)
-            .then(borderModifier)
+            .background(backgroundColor, RoundedCornerShape(28.dp))
+            .then(
+                if (showBorder) Modifier.border(
+                    width = 1.5.dp,
+                    color = colors.buttonGhostBorder,
+                    shape = RoundedCornerShape(28.dp)
+                ) else Modifier
+            )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -114,16 +110,28 @@ fun GameButton(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0A1520)
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
 @Composable
-fun GameButtonPreview() {
-    Box(modifier = Modifier.padding(24.dp)) {
-        GameButton(
-            label = "Leaderboard",
-            icon = Icons.Default.BarChart,
-            contentColor = Color.White,
-            backgroundColor = Color(0xFF2A3A50),
-            onClick = {}
-        )
+fun GameButtonPreviewDark() {
+    Column(
+        modifier = Modifier.padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        GameButton(label = "Quick Play", variant = GameButtonVariant.Primary, onClick = {})
+        GameButton(label = "Challenge", variant = GameButtonVariant.Muted, onClick = {})
+        GameButton(label = "Leaderboard", variant = GameButtonVariant.Ghost, onClick = {})
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFF5F0E8)
+@Composable
+fun GameButtonPreviewLight() {
+    Column(
+        modifier = Modifier.padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        GameButton(label = "Quick Play", variant = GameButtonVariant.Primary, onClick = {})
+        GameButton(label = "Challenge", variant = GameButtonVariant.Muted, onClick = {})
+        GameButton(label = "Leaderboard", variant = GameButtonVariant.Ghost, onClick = {})
     }
 }
