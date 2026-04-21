@@ -1,6 +1,9 @@
 package com.khammin.game.presentation.home.vm
 
+import android.content.Context
+import android.content.res.Configuration
 import android.util.Log
+import java.util.Locale
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.authentication.domain.usecase.GetAuthStateUseCase
@@ -21,13 +24,16 @@ import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.presentation.home.contract.HomeEffect
 import com.khammin.game.presentation.home.contract.HomeIntent
 import com.khammin.game.presentation.home.contract.HomeUiState
+import com.khammin.game.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     getAuthState : GetAuthStateUseCase,
     getChallengeSolvedState: GetChallengeSolvedStateUseCase,
     getGameProgressUseCase: GetGameProgressUseCase,
@@ -171,12 +177,21 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun joinRoom(code: String, onJoined: (String, String, Boolean, Boolean) -> Unit) {
+    private fun localizedContext(language: String): Context {
+        val locale = Locale(language)
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+        return context.createConfigurationContext(config)
+    }
+
+    fun joinRoom(code: String, language: String = "ar", onJoined: (String, String, Boolean, Boolean) -> Unit) {
         viewModelScope.launch {
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
                 return@launch
             }
+
+            setState { copy(joinRoomLoading = true, joinRoomError = null) }
 
             val auth = FirebaseAuth.getInstance()
             if (auth.currentUser == null) {
@@ -188,7 +203,7 @@ class HomeViewModel @Inject constructor(
 
             val fullRoomId = findRoomByCodeUseCase(code.trim())
             if (fullRoomId == null) {
-                setState { copy(joinRoomLoading = false, joinRoomError = "Room not found. Check the code and try again.") }
+                setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_not_found_hint)) }
                 return@launch
             }
 
@@ -196,27 +211,27 @@ class HomeViewModel @Inject constructor(
             val room = getRoomUseCase(fullRoomId)
             when {
                 room == null -> {
-                    setState { copy(joinRoomLoading = false, joinRoomError = "Room not found.") }
+                    setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_not_found)) }
                     return@launch
                 }
                 room.status == "finished" -> {
-                    setState { copy(joinRoomLoading = false, joinRoomError = "This game has already ended.") }
+                    setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_game_ended)) }
                     return@launch
                 }
                 room.status == "playing" -> {
-                    setState { copy(joinRoomLoading = false, joinRoomError = "This game has already started.") }
+                    setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_game_started)) }
                     return@launch
                 }
                 room.isCustomWord && room.guestIds.size >= 3 -> {
-                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 4 players).") }
+                    setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_room_full_max4)) }
                     return@launch
                 }
                 room.isLobbyMode && room.guestIds.size >= 2 -> {
-                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is full (maximum 3 players).") }
+                    setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_room_full_max3)) }
                     return@launch
                 }
                 !room.isCustomWord && !room.isLobbyMode && room.guestId.isNotEmpty() -> {
-                    setState { copy(joinRoomLoading = false, joinRoomError = "This room is already full.") }
+                    setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_room_full)) }
                     return@launch
                 }
             }

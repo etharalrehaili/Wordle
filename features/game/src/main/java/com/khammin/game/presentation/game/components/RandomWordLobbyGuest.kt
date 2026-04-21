@@ -14,11 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 
 @Composable
@@ -35,7 +37,7 @@ fun RandomWordLobbyGuest(
     otherPlayers: List<WaitingPlayer>,
     onUpdateProfile: (name: String, color: Long?, emoji: String?) -> Unit,
 ) {
-    val totalPlayers = 1 + 1 + otherPlayers.size // host + me + others
+    val totalPlayers = 1 + 1 + otherPlayers.size
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
@@ -45,7 +47,7 @@ fun RandomWordLobbyGuest(
     ) {
         item {
             Text(
-                text       = "Waiting for host to start…",
+                text       = stringResource(R.string.multiplayer_waiting_for_host),
                 color      = colors.title,
                 fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -65,7 +67,7 @@ fun RandomWordLobbyGuest(
 
         item {
             Text(
-                text          = "Players ($totalPlayers/3)",
+                text = stringResource(R.string.multiplayer_players_count, totalPlayers),
                 color         = colors.body.copy(alpha = 0.6f),
                 fontSize      = 12.sp,
                 fontWeight    = FontWeight.Medium,
@@ -83,17 +85,17 @@ fun RandomWordLobbyGuest(
                     .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
             ) {
                 LobbyPlayerRow(
-                    name        = hostName.ifBlank { "Host" },
-                    badge       = "HOST",
-                    badgeColor  = colors.buttonTeal,
+                    name       = hostName.ifBlank { stringResource(R.string.lobby_badge_host) },
+                    badge      = stringResource(R.string.lobby_badge_host),
+                    badgeColor  = colors.logoGreen,
                     avatarColor = hostAvatarColor,
                     avatarEmoji = hostAvatarEmoji,
                     avatarUrl   = hostAvatarUrl,
                 )
                 LobbyPlayerRow(
-                    name        = myName.ifBlank { "You" },
-                    badge       = "You",
-                    badgeColor  = colors.buttonPink,
+                    name       = myName.ifBlank { stringResource(R.string.lobby_you) },
+                    badge      = stringResource(R.string.lobby_you),
+                    badgeColor  = colors.logoPink,
                     avatarColor = avatarColor,
                     avatarEmoji = avatarEmoji,
                     avatarUrl   = avatarUrl,

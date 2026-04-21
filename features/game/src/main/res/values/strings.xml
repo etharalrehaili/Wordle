@@ -65,12 +65,34 @@
     <string name="spectator_waiting_guess">Waiting…</string>
     <string name="spectator_guess_progress">%1$d/%2$d</string>
     <string name="spectator_total_points">Total: %1$d pts</string>
+    <string name="multiplayer_waiting_for_players">Waiting for players to join…</string>
+    <string name="multiplayer_waiting_for_host">Waiting for host to start…</string>
+    <string name="multiplayer_players_count">Players (%1$d/3)</string>
+    <string name="lobby_start_game">Start Game</string>
+    <string name="lobby_you">You</string>
+    <string name="lobby_badge_host">HOST</string>
+    <string name="profile_edit">Edit</string>
+    <string name="profile_display_name">Display name</string>
+    <string name="profile_avatar_color">Pick a color</string>
+    <string name="profile_avatar_emoji">Pick an emoji</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_close">Close</string>
+    <string name="profile_you">You</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>
     <string name="result_play_again">Play Again</string>
     <string name="result_close">Close</string>
     <string name="hint_message">Hint: the letter \'%1$c\' is at position %2$d</string>
+
+    <!-- Join Room Error Messages -->
+    <string name="join_error_not_found_hint">Room not found. Check the code and try again.</string>
+    <string name="join_error_not_found">Room not found.</string>
+    <string name="join_error_game_ended">This game has already ended.</string>
+    <string name="join_error_game_started">This game has already started.</string>
+    <string name="join_error_room_full_max4">This room is full (maximum 4 players).</string>
+    <string name="join_error_room_full_max3">This room is full (maximum 3 players).</string>
+    <string name="join_error_room_full">This room is already full.</string>
 
     <!-- Error Messages -->
     <string name="error_name_empty">Name cannot be empty</string>

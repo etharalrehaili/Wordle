@@ -97,10 +97,10 @@
     <string name="join_room_join">انضمام</string>
 
     <!-- Leave Game Bottom Sheet -->
-    <string name="leave_game_title">مغادرة المباراة</string>
+    <string name="leave_game_title">مغادرة الغرفة</string>
     <string name="leave_game_subtitle">هل أنت متأكد أنك تريد المغادرة؟</string>
     <string name="leave_game_confirm">نعم، غادر</string>
-    <string name="leave_game_stay">ابقَ</string>
+    <string name="leave_game_stay">تراجع</string>
 
     <!-- No Internet Bottom Sheet -->
     <string name="no_internet_title">لا يوجد اتصال بالإنترنت</string>

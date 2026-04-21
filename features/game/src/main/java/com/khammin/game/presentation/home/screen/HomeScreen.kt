@@ -104,7 +104,7 @@ fun HomeScreen(
             )
         },
         onJoinRoom = { code, callback ->
-            homeViewModel.joinRoom(code) { roomId, myId, isCustomWord, isLobbyMode ->
+            homeViewModel.joinRoom(code, preferencesUiState.selectedLanguage.code) { roomId, myId, isCustomWord, isLobbyMode ->
                 callback(roomId, myId, isCustomWord, isLobbyMode)
             }
         },
