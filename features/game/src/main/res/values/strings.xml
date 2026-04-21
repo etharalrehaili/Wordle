@@ -78,6 +78,11 @@
     <string name="profile_save">Save</string>
     <string name="profile_close">Close</string>
     <string name="profile_you">You</string>
+    <string name="all_players_left_title">The room is empty</string>
+    <string name="all_players_left_subtitle">Looks like everyone left. Head back home and start a new game!</string>
+    <string name="host_left_title">Host left the room</string>
+    <string name="host_left_subtitle">The host ended the session. Head back and start a new game!</string>
+    <string name="host_left_go_home">Back to Home</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>

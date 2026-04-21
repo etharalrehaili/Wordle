@@ -516,6 +516,7 @@ private fun CustomWordGameContent(
                                         TileState.CORRECT   -> Types.CORRECT
                                         TileState.MISPLACED -> Types.PRESENT
                                         TileState.WRONG     -> Types.ABSENT
+                                        TileState.SIMILAR   -> Types.SIMILAR
                                         else                -> Types.DEFAULT
                                     }
                                 },

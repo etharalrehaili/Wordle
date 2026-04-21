@@ -81,6 +81,11 @@
     <string name="profile_save">حفظ</string>
     <string name="profile_close">إغلاق</string>
     <string name="profile_you">أنت</string>
+    <string name="all_players_left_title">الغرفة فارغة</string>
+    <string name="all_players_left_subtitle">يبدو أن الجميع غادر. عُد للرئيسية وابدأ لعبة جديدة!</string>
+    <string name="host_left_title">المضيف غادر الغرفة</string>
+    <string name="host_left_subtitle">أنهى المضيف الجلسة. عُد للرئيسية وابدأ لعبة جديدة!</string>
+    <string name="host_left_go_home">العودة للرئيسية</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>

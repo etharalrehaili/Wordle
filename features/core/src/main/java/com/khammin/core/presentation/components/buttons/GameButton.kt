@@ -24,7 +24,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.alias.Action
-import com.khammin.core.presentation.theme.GameDesignTheme
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 enum class GameButtonVariant {
@@ -39,6 +38,7 @@ fun GameButton(
     label: String,
     icon: ImageVector? = null,
     variant: GameButtonVariant = GameButtonVariant.Primary,
+    enabled: Boolean = true,
     onClick: Action,
 ) {
 
@@ -46,7 +46,7 @@ fun GameButton(
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
+        targetValue = if (isPressed && enabled) 0.97f else 1f,
         animationSpec = tween(durationMillis = 100),
         label = "buttonScale"
     )
@@ -71,17 +71,21 @@ fun GameButton(
             .widthIn(min = 280.dp)
             .height(64.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(backgroundColor, RoundedCornerShape(28.dp))
+            .background(
+                if (enabled) backgroundColor else backgroundColor.copy(alpha = 0.38f),
+                RoundedCornerShape(28.dp)
+            )
             .then(
                 if (showBorder) Modifier.border(
                     width = 1.5.dp,
-                    color = colors.buttonGhostBorder,
+                    color = if (enabled) colors.buttonGhostBorder else colors.buttonGhostBorder.copy(alpha = 0.38f),
                     shape = RoundedCornerShape(28.dp)
                 ) else Modifier
             )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
+                enabled = enabled,
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center
@@ -90,17 +94,18 @@ fun GameButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            val alphaColor = if (enabled) contentColor else contentColor.copy(alpha = 0.38f)
             icon?.let {
                 Icon(
                     imageVector = it,
                     contentDescription = null,
-                    tint = contentColor,
+                    tint = alphaColor,
                     modifier = Modifier.size(22.dp)
                 )
             }
             Text(
                 text = label,
-                color = contentColor,
+                color = alphaColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
