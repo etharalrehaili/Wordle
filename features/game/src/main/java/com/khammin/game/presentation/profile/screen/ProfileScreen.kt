@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.CustomSnackbarHost
-import com.khammin.core.presentation.components.GradientBackground
 import com.khammin.core.presentation.components.PlayerAvatar
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.enums.SnackbarType
@@ -83,7 +82,6 @@ fun ProfileScreen(
     onNameChanged: (String) -> Unit,
     onAvatarChanged: (Uri?) -> Unit,
 ) {
-
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
     val profileSavedMessage = stringResource(R.string.profile_updated_successfully)
 
@@ -134,10 +132,8 @@ fun ProfileContent(
             .fillMaxSize()
             .background(colors.background)
     ) {
-
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Topbar Section
             GameTopBar(
                 startIcon          = Icons.AutoMirrored.Filled.ArrowBack,
                 onStartIconClicked = onBack,
@@ -150,7 +146,6 @@ fun ProfileContent(
                     .statusBarsPadding(),
             )
 
-            // Avatar + Name Centered
             Column(
                 modifier            = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -168,7 +163,6 @@ fun ProfileContent(
                         onCancel         = onCancelEditClick,
                     )
                 } else {
-                    // Avatar
                     Box(contentAlignment = Alignment.BottomEnd) {
                         Box(
                             modifier = Modifier
@@ -212,14 +206,13 @@ fun ProfileContent(
 
                     Spacer(modifier = Modifier.height(spacing.sm))
 
-                    // Edit button
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(spacing.roundFull))
-                            .background(colors.buttonPink.copy(alpha = 0.12f))
+                            .background(colors.logoPink.copy(alpha = 0.12f))
                             .border(
                                 1.dp,
-                                colors.buttonPink.copy(alpha = 0.35f),
+                                colors.logoPink.copy(alpha = 0.35f),
                                 RoundedCornerShape(spacing.roundFull)
                             )
                             .clickable { onEditProfileClick() }
@@ -233,12 +226,12 @@ fun ProfileContent(
                             Icon(
                                 imageVector        = Icons.Filled.Edit,
                                 contentDescription = null,
-                                tint               = colors.buttonPink,
+                                tint               = colors.logoPink,
                                 modifier           = Modifier.size(spacing.sm)
                             )
                             WordleText(
                                 text       = stringResource(R.string.profile_edit_button),
-                                color      = colors.buttonPink,
+                                color      = colors.logoPink,
                                 fontSize   = typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -246,11 +239,9 @@ fun ProfileContent(
                     }
 
                     Spacer(modifier = Modifier.height(spacing.md))
-
                 }
             }
 
-            // Stats Section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -271,23 +262,23 @@ fun ProfileContent(
                         .padding(horizontal = spacing.md, vertical = spacing.md)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier              = Modifier.fillMaxWidth(),
+                        verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
                             WordleText(
-                                text = stringResource(R.string.profile_total_points),
-                                color = colors.body.copy(alpha = 0.55f),
-                                fontSize = typography.labelSmall,
-                                fontWeight = FontWeight.Medium,
+                                text          = stringResource(R.string.profile_total_points),
+                                color         = colors.body.copy(alpha = 0.55f),
+                                fontSize      = typography.labelSmall,
+                                fontWeight    = FontWeight.Medium,
                                 letterSpacing = 0.5.sp,
                             )
                             Spacer(modifier = Modifier.height(spacing.xxs))
                             WordleText(
-                                text = "%,d".format(uiState.enCurrentPoints + uiState.arCurrentPoints),
-                                color = colors.title,
-                                fontSize = typography.displaySmall,
+                                text       = "%,d".format(uiState.enCurrentPoints + uiState.arCurrentPoints),
+                                color      = colors.title,
+                                fontSize   = typography.displaySmall,
                                 fontWeight = FontWeight.ExtraBold,
                             )
                         }
@@ -295,49 +286,47 @@ fun ProfileContent(
                             modifier = Modifier
                                 .size(spacing.avatarSm)
                                 .clip(CircleShape)
-                                .background(colors.buttonPink.copy(alpha = 0.15f)),
+                                .background(colors.logoOrange.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Star,
+                                imageVector        = Icons.Filled.Star,
                                 contentDescription = null,
-                                tint = colors.buttonPink,
-                                modifier = Modifier.size(spacing.lg)
+                                tint               = colors.logoOrange,
+                                modifier           = Modifier.size(spacing.lg)
                             )
                         }
                     }
                 }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(spacing.xs)
                 ) {
-                    // Stats cards — sum both languages
                     MiniStatCard(
-                        icon = Icons.Filled.Games,
-                        label = stringResource(R.string.profile_stat_played),
-                        value = (uiState.enGamesPlayed + uiState.arGamesPlayed).toString(),
-                        accent = colors.logoGreen,
+                        icon     = Icons.Filled.Games,
+                        label    = stringResource(R.string.profile_stat_played),
+                        value    = (uiState.enGamesPlayed + uiState.arGamesPlayed).toString(),
+                        accent   = colors.logoGreen,
                         modifier = Modifier.weight(1f),
                     )
                     MiniStatCard(
-                        icon = Icons.Filled.Check,
-                        label = stringResource(R.string.profile_stat_solved),
-                        value = (uiState.enWordsSolved + uiState.arWordsSolved).toString(),
-                        accent = colors.logoTeal,
+                        icon     = Icons.Filled.Check,
+                        label    = stringResource(R.string.profile_stat_solved),
+                        value    = (uiState.enWordsSolved + uiState.arWordsSolved).toString(),
+                        accent   = colors.logoTeal,
                         modifier = Modifier.weight(1f),
                     )
                     MiniStatCard(
-                        icon = Icons.Outlined.EmojiEvents,
-                        label = stringResource(R.string.profile_stat_win_rate),
-                        value = run {
-                            val totalGames = uiState.enGamesPlayed + uiState.arGamesPlayed
+                        icon     = Icons.Outlined.EmojiEvents,
+                        label    = stringResource(R.string.profile_stat_win_rate),
+                        value    = run {
+                            val totalGames  = uiState.enGamesPlayed + uiState.arGamesPlayed
                             val totalSolved = uiState.enWordsSolved + uiState.arWordsSolved
-                            val rate =
-                                if (totalGames > 0) (totalSolved * 100 / totalGames) else 0
+                            val rate        = if (totalGames > 0) (totalSolved * 100 / totalGames) else 0
                             "$rate%"
                         },
-                        accent = colors.logoPink,
+                        accent   = colors.logoPink,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -396,7 +385,6 @@ private fun MiniStatCard(
             fontSize = typography.labelSmall,
         )
 
-        // Per-language breakdown
         if (subtitles.isNotEmpty()) {
             Row(
                 modifier              = Modifier
@@ -429,7 +417,6 @@ private fun MiniStatCard(
                             fontWeight = FontWeight.Bold,
                         )
                     }
-                    // Divider between items
                     if (index < subtitles.lastIndex) {
                         Box(
                             modifier = Modifier
@@ -455,7 +442,6 @@ private fun EditProfileSection(
     onSave: Action,
     onCancel: Action,
 ) {
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing.md)
@@ -464,7 +450,6 @@ private fun EditProfileSection(
             contract = ActivityResultContracts.GetContent()
         ) { uri: Uri? -> uri?.let { onAvatarChanged(it) } }
 
-        // Avatar with edit icon
         Box(contentAlignment = Alignment.BottomEnd) {
             val displayModel: Any? = pendingAvatarUri ?: avatarUrl
             if (displayModel != null) {
@@ -472,12 +457,13 @@ private fun EditProfileSection(
                     model              = displayModel,
                     contentDescription = null,
                     contentScale       = ContentScale.Crop,
-                    modifier           = Modifier.size(spacing.avatarMd)
+                    modifier           = Modifier
+                        .size(spacing.avatarMd)
                         .clip(CircleShape)
                         .border(
                             width = 2.dp,
                             brush = Brush.linearGradient(
-                                colors = listOf(colors.buttonPink, colors.buttonTeal)
+                                colors = listOf(colors.logoPink, colors.logoBlue)
                             ),
                             shape = CircleShape
                         )
@@ -486,16 +472,16 @@ private fun EditProfileSection(
                         .clickable { imagePickerLauncher.launch("image/*") }
                 )
             } else {
-                // Show initials if no avatar is set
                 PlayerAvatar(
                     name      = editName.ifBlank { "" },
                     avatarUrl = null,
-                    modifier  = Modifier.size(spacing.avatarMd)
+                    modifier  = Modifier
+                        .size(spacing.avatarMd)
                         .clip(CircleShape)
                         .border(
                             width = 2.dp,
                             brush = Brush.linearGradient(
-                                colors = listOf(colors.buttonPink, colors.buttonTeal)
+                                colors = listOf(colors.logoPink, colors.logoBlue)
                             ),
                             shape = CircleShape
                         )
@@ -506,9 +492,10 @@ private fun EditProfileSection(
                 )
             }
             Box(
-                modifier = Modifier.size(spacing.lg)
+                modifier = Modifier
+                    .size(spacing.lg)
                     .clip(CircleShape)
-                    .background(colors.buttonPink)
+                    .background(colors.logoPink)
                     .border(1.5.dp, colors.background, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -528,18 +515,17 @@ private fun EditProfileSection(
             singleLine    = true,
             modifier      = Modifier.fillMaxWidth(0.78f),
             colors        = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor   = colors.buttonTeal,
+                focusedBorderColor   = colors.logoBlue,
                 unfocusedBorderColor = colors.border,
                 focusedTextColor     = colors.title,
                 unfocusedTextColor   = colors.title,
-                cursorColor          = colors.buttonTeal,
-                focusedLabelColor    = colors.buttonTeal,
+                cursorColor          = colors.logoBlue,
+                focusedLabelColor    = colors.logoBlue,
                 unfocusedLabelColor  = colors.body.copy(alpha = 0.5f),
             ),
             shape = RoundedCornerShape(spacing.md)
         )
 
-        // Action buttons
         Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
             Box(
                 modifier = Modifier
@@ -560,14 +546,14 @@ private fun EditProfileSection(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(spacing.roundFull))
-                    .background(colors.buttonPink)
+                    .background(colors.logoBlue)
                     .clickable { onSave() }
                     .padding(horizontal = spacing.lg, vertical = spacing.sm),
                 contentAlignment = Alignment.Center
             ) {
                 WordleText(
                     text       = stringResource(R.string.profile_save_button),
-                    color      = colors.title,
+                    color      = Color.White,
                     fontSize   = typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                 )

@@ -2,7 +2,6 @@ package com.khammin.game.presentation.challenge.screen
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,15 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -37,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
@@ -63,7 +60,6 @@ import com.khammin.game.presentation.challenge.contract.ChallengeEffect
 import com.khammin.game.presentation.challenge.contract.ChallengeIntent
 import com.khammin.game.presentation.challenge.contract.ChallengeUiState
 import com.khammin.game.presentation.challenge.vm.ChallengeViewModel
-import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.toTypes
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -156,18 +152,18 @@ fun ChallengeContent(
                     .statusBarsPadding(),
             )
         },
-        bottomBar = {
-            GameKeyboard(
-                keyStates = keyStates,
-                onKey = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
-                onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
-                language = AppLanguage.ARABIC,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(bottom = 8.dp)
-            )
-        }
+//        bottomBar = {
+//            GameKeyboard(
+//                keyStates = keyStates,
+//                onKey = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
+//                onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
+//                language = AppLanguage.ARABIC,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .navigationBarsPadding()
+//                    .padding(bottom = 8.dp)
+//            )
+//        }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -184,7 +180,7 @@ fun ChallengeContent(
                                 .fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            CircularProgressIndicator(color = colors.logoBlue)
                         }
                     }
 
@@ -197,7 +193,7 @@ fun ChallengeContent(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = uiState.error ?: "No challenge for today",
+                                text = uiState.error ?: stringResource(R.string.challenge_no_challenge_today),
                                 color = colors.body,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
@@ -217,17 +213,17 @@ fun ChallengeContent(
                                 .weight(1f)
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        HorizontalDivider(
-                            modifier = Modifier
+                        // ── Keyboard only shown when there's a challenge ──
+                        GameKeyboard(
+                            keyStates  = keyStates,
+                            onKey      = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
+                            onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
+                            language   = AppLanguage.ARABIC,
+                            modifier   = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            thickness = 1.dp,
-                            color = colors.body.copy(alpha = 0f)
+                                .navigationBarsPadding()
+                                .padding(bottom = 8.dp)
                         )
-
-                        Spacer(modifier = Modifier.height(140.dp))
                     }
                 }
             }

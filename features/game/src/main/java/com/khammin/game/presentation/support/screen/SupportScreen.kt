@@ -83,12 +83,6 @@ fun SupportContent(onBack: Action) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(colors.logoBlue.copy(alpha = 0.08f))
-                        .border(
-                            width = 1.dp,
-                            color = colors.logoBlue.copy(alpha = 0.20f),
-                            shape = RoundedCornerShape(20.dp)
-                        )
                         .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -111,10 +105,10 @@ fun SupportContent(onBack: Action) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(colors.logoGreen.copy(alpha = 0.10f))
+                        .background(colors.logoBlue.copy(alpha = 0.10f))
                         .border(
                             width = 1.dp,
-                            color = colors.logoGreen.copy(alpha = 0.15f),
+                            color = colors.logoBlue.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(16.dp)
                         )
                         .clickable {

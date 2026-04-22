@@ -12,6 +12,9 @@
     <string name="home_subtitle">Each guess brings you closer to the word</string>
     <string name="wordle_letters">Play</string>
 
+    <!-- Challenge Screen -->
+    <string name="challenge_no_challenge_today">No challenge for today</string>
+
     <!-- Countdown -->
     <string name="countdown_next_word">Next word available in</string>
     <string name="not_in_word_list">Not in word list</string>
@@ -23,6 +26,9 @@
     <string name="leaderboard_rankings">Rankings</string>
     <string name="leaderboard_your_position">Your position</string>
     <string name="leaderboard_no_winners">No winners yet, try to be the first one!</string>
+    <string name="leaderboard_no_internet_title">No Internet Connection</string>
+    <string name="leaderboard_no_internet_subtitle">Please check your connection and try again</string>
+    <string name="leaderboard_try_again">Try Again</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
