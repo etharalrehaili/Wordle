@@ -94,6 +94,17 @@
     <string name="lobby_leave">Leave</string>
     <string name="lobby_pts">%1$d pts</string>
     <string name="lobby_badge_you_label">You</string>
+    <string name="lobby_voted_play_again">Voted to play again!</string>
+    <string name="lobby_cancel_vote">Cancel vote</string>
+    <string name="lobby_play_again_question">Play Again?</string>
+    <string name="lobby_player_voted">%1$d player voted</string>
+    <string name="lobby_players_voted">%1$d players voted</string>
+    <string name="custom_word_hint">Your secret word (4–6 letters)</string>
+    <string name="custom_word_players_count">Players (%1$d/4)</string>
+    <string name="custom_word_players_count_4">Players (%1$d/4)</string>
+    <string name="spectator_play_again_question">Play again?</string>
+    <string name="spectator_no_votes">No votes yet</string>
+    <string name="spectator_vote_count">%1$d / %2$d</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>

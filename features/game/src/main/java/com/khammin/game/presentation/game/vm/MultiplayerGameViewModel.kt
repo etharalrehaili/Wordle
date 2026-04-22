@@ -554,6 +554,12 @@ class MultiplayerGameViewModel @Inject constructor(
                 setState { copy(isGameOver = true, isMyWin = false, lobbyWinnerName = updated.name) }
             }
 
+            // Host in lobby mode: safety net — set isGameOver as soon as the host has used all
+            // their guesses, without waiting for other players to finish
+            if (s.isHost && s.isLobbyMode && !s.isGameOver && s.currentRow >= s.board.size) {
+                setState { copy(isGameOver = true) }
+            }
+
             // Custom-word host: show result sheet as soon as someone wins, or when all have finished
             if (s.isHost && !s.isGameOver && s.guestIds.isNotEmpty() && !s.isLobbyMode) {
                 val anyoneSolved = updatedProgress.values.any { it.solved }

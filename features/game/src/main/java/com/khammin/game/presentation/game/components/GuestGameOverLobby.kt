@@ -45,17 +45,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.R as CoreRes
+import com.khammin.core.presentation.components.ConfettiLayer
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.OpponentProgress
 import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.sin
-
-private val confettiPalette = listOf(
-    Color(0xFFFF6B6B), Color(0xFFFFE66D), Color(0xFF4ECDC4),
-    Color(0xFF45B7D1), Color(0xFF96CEB4), Color(0xFFFF9FF3),
-    Color(0xFF54A0FF), Color(0xFFFFA502), Color(0xFF2ED573), Color(0xFFFF4757),
-)
 
 private data class LeaderboardPlayer(
     val name: String,
@@ -84,11 +80,10 @@ fun GuestGameOverLobby(
     hasVotedPlayAgain: Boolean,
     onVotePlayAgain: () -> Unit,
 ) {
-    val accentColor = if (isWin) colors.buttonTeal else colors.buttonPink
+    val accentColor = if (isWin) colors.logoGreen else colors.logoPink
 
-    // Build ranked leaderboard
     val meEntry = LeaderboardPlayer(
-        name          = myName.ifBlank { "You" },
+        name          = myName.ifBlank { stringResource(R.string.lobby_you) },
         avatarColor   = myAvatarColor,
         avatarEmoji   = myAvatarEmoji,
         sessionPoints = myTotalPoints,
@@ -105,7 +100,6 @@ fun GuestGameOverLobby(
     }
     val ranked = (listOf(meEntry) + opponentEntries).sortedByDescending { it.sessionPoints }
 
-    // Voter info map: userId → (name, avatarColor, avatarEmoji)
     val voterInfo: Map<String, Triple<String, Long?, String?>> = buildMap {
         put(myUserId, Triple(myName.ifBlank { "You" }, myAvatarColor, myAvatarEmoji))
         opponentsProgress.forEach { (id, p) ->
@@ -113,172 +107,209 @@ fun GuestGameOverLobby(
         }
     }
 
-    LazyColumn(
-        modifier            = modifier
-            .padding(horizontal = 16.dp)
-            .padding(top = 24.dp, bottom = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // ── Result header ─────────────────────────────────────────────────────
-        item {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text          = "Round $roundNumber",
-                    color         = colors.buttonTeal,
-                    fontSize      = 12.sp,
-                    fontWeight    = FontWeight.Bold,
-                    letterSpacing = 0.5.sp,
-                )
+    Box(modifier = modifier) {
+        if (isWin) {
+            ConfettiLayer(modifier = Modifier.matchParentSize())
+        }
 
-                Text(
-                    text       = if (isWin) stringResource(CoreRes.string.spectator_result_you_guessed)
-                    else       stringResource(CoreRes.string.result_lose_title),
-                    color      = accentColor,
-                    fontSize   = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign  = TextAlign.Center,
-                )
-                if (targetWord.isNotEmpty()) {
-                    Spacer(Modifier.height(4.dp))
+        LazyColumn(
+            modifier            = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 24.dp, bottom = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            // ── Result header ─────────────────────────────────────────────────
+            item {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     Text(
-                        text      = stringResource(CoreRes.string.result_the_word_was),
-                        color     = colors.body.copy(alpha = 0.55f),
-                        fontSize  = 12.sp,
-                        textAlign = TextAlign.Center,
+                        text          = stringResource(R.string.lobby_round, roundNumber),
+                        color         = colors.logoBlue,
+                        fontSize      = 12.sp,
+                        fontWeight    = FontWeight.Bold,
+                        letterSpacing = 0.5.sp,
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        targetWord.forEach { letter ->
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(accentColor.copy(alpha = 0.15f))
-                                    .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center,
+                    Text(
+                        text       = if (isWin) stringResource(CoreRes.string.spectator_result_you_guessed)
+                        else stringResource(CoreRes.string.result_lose_title),
+                        color      = accentColor,
+                        fontSize   = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign  = TextAlign.Center,
+                    )
+                    if (targetWord.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text      = stringResource(CoreRes.string.result_the_word_was),
+                            color     = colors.body.copy(alpha = 0.55f),
+                            fontSize  = 12.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            targetWord.forEach { letter ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(accentColor.copy(alpha = 0.15f))
+                                        .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text       = letter.toString(),
+                                        color      = accentColor,
+                                        fontSize   = 14.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Leaderboard label ─────────────────────────────────────────────
+            item {
+                Text(
+                    text          = stringResource(R.string.lobby_leaderboard),
+                    color         = colors.body.copy(alpha = 0.5f),
+                    fontSize      = 11.sp,
+                    fontWeight    = FontWeight.Medium,
+                    letterSpacing = 0.5.sp,
+                    modifier      = Modifier.fillMaxWidth(),
+                )
+            }
+
+            // ── Leaderboard rows ──────────────────────────────────────────────
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.surface)
+                        .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
+                ) {
+                    ranked.forEachIndexed { index, player ->
+                        val rank      = index + 1
+                        val rankLabel = when (rank) { 1 -> "🥇"; 2 -> "🥈"; 3 -> "🥉"; else -> "$rank." }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (player.isMe) Modifier.background(colors.logoBlue.copy(alpha = 0.07f))
+                                    else Modifier
+                                )
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Row(
+                                verticalAlignment     = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Text(
-                                    text       = letter.toString(),
-                                    color      = accentColor,
+                                    text      = rankLabel,
+                                    fontSize  = if (rank <= 3) 20.sp else 13.sp,
+                                    modifier  = Modifier.width(28.dp),
+                                    textAlign = TextAlign.Center,
+                                )
+                                when {
+                                    player.avatarColor != null && player.avatarEmoji != null ->
+                                        EmojiAvatar(color = player.avatarColor, emoji = player.avatarEmoji, size = 32)
+                                    player.avatarColor != null -> {
+                                        val c = Color(player.avatarColor)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(c.copy(alpha = 0.20f))
+                                                .border(1.dp, c.copy(alpha = 0.5f), CircleShape),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Text(
+                                                text       = player.name.take(1).uppercase(),
+                                                color      = c,
+                                                fontSize   = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
+                                    else -> Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(colors.logoBlue.copy(alpha = 0.15f))
+                                            .border(1.dp, colors.logoBlue.copy(alpha = 0.3f), CircleShape),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text       = player.name.take(1).uppercase(),
+                                            color      = colors.logoBlue,
+                                            fontSize   = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text       = player.name,
+                                    color      = colors.title,
                                     fontSize   = 14.sp,
-                                    fontWeight = FontWeight.ExtraBold,
+                                    fontWeight = if (player.isMe) FontWeight.Bold else FontWeight.Medium,
+                                )
+                            }
+                            Row(
+                                verticalAlignment     = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                if (player.isMe) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(colors.logoPink.copy(alpha = 0.12f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                                    ) {
+                                        Text(
+                                            text       = stringResource(R.string.lobby_badge_you_label),
+                                            color      = colors.logoPink,
+                                            fontSize   = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text       = stringResource(R.string.lobby_pts, player.sessionPoints),
+                                    color      = colors.title,
+                                    fontSize   = 13.sp,
+                                    fontWeight = FontWeight.Bold,
                                 )
                             }
                         }
                     }
                 }
             }
-        }
 
-        // ── Session leaderboard ───────────────────────────────────────────────
-        item {
-            Text(
-                text          = "Leaderboard",
-                color         = colors.body.copy(alpha = 0.5f),
-                fontSize      = 11.sp,
-                fontWeight    = FontWeight.Medium,
-                letterSpacing = 0.5.sp,
-                modifier      = Modifier.fillMaxWidth(),
-            )
-        }
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.surface)
-                    .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
-            ) {
-                ranked.forEachIndexed { index, player ->
-                    val rank = index + 1
-                    val rankLabel = when (rank) { 1 -> "🥇"; 2 -> "🥈"; 3 -> "🥉"; else -> "$rank." }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .then(if (player.isMe) Modifier.background(colors.buttonTeal.copy(alpha = 0.07f)) else Modifier)
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text      = rankLabel,
-                                fontSize  = if (rank <= 3) 20.sp else 13.sp,
-                                modifier  = Modifier.width(28.dp),
-                                textAlign = TextAlign.Center,
-                            )
-                            when {
-                                player.avatarColor != null && player.avatarEmoji != null ->
-                                    EmojiAvatar(color = player.avatarColor, emoji = player.avatarEmoji, size = 32)
-                                player.avatarColor != null -> {
-                                    val c = Color(player.avatarColor)
-                                    Box(
-                                        modifier = Modifier.size(32.dp).clip(CircleShape)
-                                            .background(c.copy(alpha = 0.20f))
-                                            .border(1.dp, c.copy(alpha = 0.5f), CircleShape),
-                                        contentAlignment = Alignment.Center,
-                                    ) { Text(player.name.take(1).uppercase(), color = c, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
-                                }
-                                else -> Box(
-                                    modifier = Modifier.size(32.dp).clip(CircleShape)
-                                        .background(colors.buttonTeal.copy(alpha = 0.15f))
-                                        .border(1.dp, colors.buttonTeal.copy(alpha = 0.3f), CircleShape),
-                                    contentAlignment = Alignment.Center,
-                                ) { Text(player.name.take(1).uppercase(), color = colors.buttonTeal, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
-                            }
-                            Text(
-                                text       = player.name,
-                                color      = colors.title,
-                                fontSize   = 14.sp,
-                                fontWeight = if (player.isMe) FontWeight.Bold else FontWeight.Medium,
-                            )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (player.isMe) {
-                                Box(
-                                    modifier = Modifier.clip(RoundedCornerShape(6.dp))
-                                        .background(colors.buttonPink.copy(alpha = 0.12f))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                                ) { Text("You", color = colors.buttonPink, fontSize = 9.sp, fontWeight = FontWeight.Bold) }
-                            }
-                            Text("${player.sessionPoints} pts", color = colors.title, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+            // ── Play again vote section ───────────────────────────────────────
+            item {
+                PlayAgainVoteSection(
+                    hasVotedPlayAgain = hasVotedPlayAgain,
+                    playAgainVotes    = playAgainVotes,
+                    voterInfo         = voterInfo,
+                    myUserId          = myUserId,
+                    onVotePlayAgain   = onVotePlayAgain,
+                )
             }
-        }
 
-        // ── Play again vote section ───────────────────────────────────────────
-        item {
-            PlayAgainVoteSection(
-                hasVotedPlayAgain = hasVotedPlayAgain,
-                playAgainVotes    = playAgainVotes,
-                voterInfo         = voterInfo,
-                myUserId          = myUserId,
-                onVotePlayAgain   = onVotePlayAgain,
-            )
-        }
-
-        // ── Waiting indicator ─────────────────────────────────────────────────
-        item {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.padding(top = 4.dp),
-            ) {
-
+            // ── Waiting indicator ─────────────────────────────────────────────
+            item {
                 Text(
-                    text      = "Waiting for host to start the next round…",
+                    text      = stringResource(R.string.lobby_waiting_next_round),
                     color     = colors.body.copy(alpha = 0.45f),
                     fontSize  = 12.sp,
                     textAlign = TextAlign.Center,
+                    modifier  = Modifier.padding(top = 4.dp),
                 )
             }
         }
@@ -293,9 +324,8 @@ private fun PlayAgainVoteSection(
     myUserId: String,
     onVotePlayAgain: () -> Unit,
 ) {
-    // Confetti state
-    val confettiFired = remember { mutableStateOf(false) }
-    val confettiAngles = remember { List(10) { (0..359).random().toFloat() } }
+    val confettiFired     = remember { mutableStateOf(false) }
+    val confettiAngles    = remember { List(10) { (0..359).random().toFloat() } }
     val confettiAnimations = remember { List(10) { Animatable(0f) } }
 
     LaunchedEffect(hasVotedPlayAgain) {
@@ -310,7 +340,6 @@ private fun PlayAgainVoteSection(
         }
     }
 
-    // Pulsing animation (only active when not voted)
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue  = 1f,
@@ -331,23 +360,30 @@ private fun PlayAgainVoteSection(
         label = "glowAlpha",
     )
 
+    val confettiColors = listOf(
+        colors.logoBlue,
+        colors.logoGreen,
+        colors.logoPink,
+        colors.logoOrange,
+        colors.logoTeal,
+        colors.logoPurple,
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Vote button / voted state
         Box(contentAlignment = Alignment.Center) {
-            // Confetti canvas
             if (confettiFired.value) {
                 Canvas(modifier = Modifier.size(220.dp)) {
                     confettiAnimations.forEachIndexed { i, anim ->
-                        val p = anim.value
+                        val p        = anim.value
                         val angleRad = Math.toRadians(confettiAngles[i].toDouble())
-                        val radius = 90.dp.toPx() * p
-                        val x = center.x + cos(angleRad).toFloat() * radius
-                        val y = center.y + sin(angleRad).toFloat() * radius
+                        val radius   = 90.dp.toPx() * p
+                        val x        = center.x + cos(angleRad).toFloat() * radius
+                        val y        = center.y + sin(angleRad).toFloat() * radius
                         drawCircle(
-                            color  = confettiPalette[i % confettiPalette.size].copy(alpha = (1f - p).coerceIn(0f, 1f)),
+                            color  = confettiColors[i % confettiColors.size].copy(alpha = (1f - p).coerceIn(0f, 1f)),
                             radius = 5.dp.toPx() * (1f - p * 0.4f),
                             center = Offset(x, y),
                         )
@@ -364,20 +400,25 @@ private fun PlayAgainVoteSection(
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .background(colors.buttonTeal.copy(alpha = 0.15f))
-                            .border(2.dp, colors.buttonTeal, CircleShape),
+                            .background(colors.logoGreen.copy(alpha = 0.15f))
+                            .border(2.dp, colors.logoGreen, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("✓", color = colors.buttonTeal, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                        Text(
+                            text       = "✓",
+                            color      = colors.logoGreen,
+                            fontSize   = 26.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
                     }
                     Text(
-                        text       = "Voted to play again!",
-                        color      = colors.buttonTeal,
+                        text       = stringResource(R.string.lobby_voted_play_again),
+                        color      = colors.logoGreen,
                         fontSize   = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text     = "Cancel vote",
+                        text     = stringResource(R.string.lobby_cancel_vote),
                         color    = colors.body.copy(alpha = 0.45f),
                         fontSize = 11.sp,
                         modifier = Modifier
@@ -395,27 +436,29 @@ private fun PlayAgainVoteSection(
                         .graphicsLayer { scaleX = pulseScale; scaleY = pulseScale },
                     shape  = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.buttonTeal.copy(alpha = glowAlpha),
+                        containerColor = colors.logoGreen.copy(alpha = glowAlpha),
                     ),
                 ) {
                     Text(
-                        text       = "Play Again?",
+                        text       = stringResource(R.string.lobby_play_again_question),
                         fontSize   = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color      = colors.background,
+                        color      = Color.White,
                     )
                 }
             }
         }
 
-        // Voter avatars row
         if (playAgainVotes.isNotEmpty()) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
-                    text     = if (playAgainVotes.size == 1) "1 player voted" else "${playAgainVotes.size} players voted",
+                    text     = if (playAgainVotes.size == 1)
+                        stringResource(R.string.lobby_player_voted)
+                    else
+                        stringResource(R.string.lobby_players_voted, playAgainVotes.size),
                     color    = colors.body.copy(alpha = 0.55f),
                     fontSize = 11.sp,
                 )

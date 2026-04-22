@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,11 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 
 @Composable
@@ -35,17 +37,17 @@ fun CustomWordLobbyGuest(
     otherPlayers: List<WaitingPlayer>,
     onUpdateProfile: (name: String, color: Long?, emoji: String?) -> Unit,
 ) {
-    val totalPlayers = 1 + 1 + otherPlayers.size // host + me + others
+    val totalPlayers = 1 + 1 + otherPlayers.size
 
     LazyColumn(
-        modifier = modifier.padding(horizontal = 16.dp),
+        modifier            = modifier.padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 24.dp, bottom = 32.dp),
+        contentPadding      = PaddingValues(top = 24.dp, bottom = 32.dp),
     ) {
         item {
             Text(
-                text       = "Waiting for host to start…",
+                text       = stringResource(R.string.multiplayer_waiting_for_host),
                 color      = colors.title,
                 fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -53,7 +55,6 @@ fun CustomWordLobbyGuest(
             )
         }
 
-        // My profile card
         item {
             ProfileEditCard(
                 myName      = myName,
@@ -64,10 +65,9 @@ fun CustomWordLobbyGuest(
             )
         }
 
-        // Players header
         item {
             Text(
-                text          = "Players ($totalPlayers/4)",
+                text          = stringResource(R.string.custom_word_players_count_4, totalPlayers),
                 color         = colors.body.copy(alpha = 0.6f),
                 fontSize      = 12.sp,
                 fontWeight    = FontWeight.Medium,
@@ -76,7 +76,6 @@ fun CustomWordLobbyGuest(
             )
         }
 
-        // Players list
         item {
             Column(
                 modifier = Modifier
@@ -85,25 +84,22 @@ fun CustomWordLobbyGuest(
                     .background(colors.surface)
                     .border(1.dp, colors.border, RoundedCornerShape(12.dp)),
             ) {
-                // Host row
                 LobbyPlayerRow(
-                    name        = hostName.ifBlank { "Host" },
-                    badge       = "HOST",
-                    badgeColor  = colors.buttonTeal,
+                    name        = hostName.ifBlank { stringResource(R.string.lobby_badge_host) },
+                    badge       = stringResource(R.string.lobby_badge_host),
+                    badgeColor  = colors.logoGreen,
                     avatarColor = hostAvatarColor,
                     avatarEmoji = hostAvatarEmoji,
                     avatarUrl   = hostAvatarUrl,
                 )
-                // Me
                 LobbyPlayerRow(
-                    name        = myName.ifBlank { "You" },
-                    badge       = "You",
-                    badgeColor  = colors.buttonPink,
+                    name        = myName.ifBlank { stringResource(R.string.lobby_you) },
+                    badge       = stringResource(R.string.lobby_badge_you_label),
+                    badgeColor  = colors.logoPink,
                     avatarColor = avatarColor,
                     avatarEmoji = avatarEmoji,
                     avatarUrl   = avatarUrl,
                 )
-                // Other guests
                 otherPlayers.forEach { player ->
                     LobbyPlayerRow(
                         name        = player.name,
