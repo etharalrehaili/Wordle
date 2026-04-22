@@ -52,6 +52,7 @@ import com.khammin.core.presentation.components.CustomSnackbarHost
 import com.khammin.core.presentation.components.DotsLoadingIndicator
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.navigation.GameTopBar
 import com.khammin.core.presentation.components.text.FieldError
@@ -170,7 +171,7 @@ fun LoginContent(
                     Icon(
                         Icons.Filled.Email,
                         null,
-                        tint     = if (email.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
+                        tint     = if (email.isNotEmpty()) colors.logoBlue else colors.body.copy(alpha = 0.4f),
                         modifier = Modifier.size(20.dp)
                     )
                 },
@@ -197,7 +198,7 @@ fun LoginContent(
                     Icon(
                         Icons.Filled.Lock,
                         null,
-                        tint     = if (password.isNotEmpty()) colors.buttonTeal else colors.body.copy(alpha = 0.4f),
+                        tint     = if (password.isNotEmpty()) colors.logoBlue else colors.body.copy(alpha = 0.4f),
                         modifier = Modifier.size(20.dp)
                     )
                 },
@@ -229,7 +230,7 @@ fun LoginContent(
             ) {
                 WordleText(
                     text       = stringResource(R.string.login_forgot_password),
-                    color      = colors.buttonPink,
+                    color      = colors.logoPink,
                     fontSize   = GameDesignTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable { onForgotPasswordClick() }
@@ -253,6 +254,7 @@ fun LoginContent(
                         focusManager.clearFocus()
                         onLoginClick()
                     },
+                    variant  = GameButtonVariant.Primary,
                     modifier        = Modifier.fillMaxWidth()
                 )
             }
@@ -273,7 +275,7 @@ fun LoginContent(
                 Spacer(modifier = Modifier.width(4.dp))
                 WordleText(
                     text       = stringResource(R.string.login_sign_up_link),
-                    color      = colors.buttonTeal,
+                    color      = colors.logoBlue,
                     fontSize   = GameDesignTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier   = Modifier.clickable { onNavigateToSignUp() }

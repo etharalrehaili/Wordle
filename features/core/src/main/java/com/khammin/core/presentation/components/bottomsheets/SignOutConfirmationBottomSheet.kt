@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.khammin.core.R
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,14 +61,7 @@ fun SignOutConfirmationBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                colors.buttonPink,
-                                colors.buttonTeal,
-                            )
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -128,17 +121,19 @@ fun SignOutConfirmationBottomSheet(
 
                 // ── Buttons ───────────────────────────────────────────
                 GameButton(
-                    label           = stringResource(R.string.sign_out_button_confirm),
-                    onClick         = onConfirm,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.sign_out_button_confirm),
+                    onClick  = onConfirm,
+                    variant  = GameButtonVariant.Ghost,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(10.dp))
 
                 GameButton(
-                    label           = stringResource(R.string.sign_out_button_cancel),
-                    onClick         = onDismiss,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.sign_out_button_cancel),
+                    onClick  = onDismiss,
+                    variant  = GameButtonVariant.Primary,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

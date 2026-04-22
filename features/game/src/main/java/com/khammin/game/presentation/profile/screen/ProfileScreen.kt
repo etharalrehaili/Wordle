@@ -135,8 +135,6 @@ fun ProfileContent(
             .background(colors.background)
     ) {
 
-        GradientBackground()
-
         Column(modifier = Modifier.fillMaxSize()) {
 
             // Topbar Section
@@ -179,7 +177,7 @@ fun ProfileContent(
                                 .border(
                                     width = 2.dp,
                                     brush = Brush.linearGradient(
-                                        colors = listOf(colors.buttonPink, colors.buttonTeal)
+                                        colors = listOf(colors.logoPink, colors.logoBlue)
                                     ),
                                     shape = CircleShape
                                 )
@@ -319,14 +317,14 @@ fun ProfileContent(
                         icon = Icons.Filled.Games,
                         label = stringResource(R.string.profile_stat_played),
                         value = (uiState.enGamesPlayed + uiState.arGamesPlayed).toString(),
-                        accent = colors.buttonTaupe,
+                        accent = colors.logoGreen,
                         modifier = Modifier.weight(1f),
                     )
                     MiniStatCard(
                         icon = Icons.Filled.Check,
                         label = stringResource(R.string.profile_stat_solved),
                         value = (uiState.enWordsSolved + uiState.arWordsSolved).toString(),
-                        accent = colors.buttonTeal,
+                        accent = colors.logoTeal,
                         modifier = Modifier.weight(1f),
                     )
                     MiniStatCard(
@@ -339,7 +337,7 @@ fun ProfileContent(
                                 if (totalGames > 0) (totalSolved * 100 / totalGames) else 0
                             "$rate%"
                         },
-                        accent = colors.buttonPink,
+                        accent = colors.logoPink,
                         modifier = Modifier.weight(1f),
                     )
                 }

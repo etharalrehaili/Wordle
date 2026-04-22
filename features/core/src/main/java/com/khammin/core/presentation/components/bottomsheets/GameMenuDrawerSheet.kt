@@ -140,7 +140,7 @@ private fun MenuScreen(
                 icon        = Icons.Filled.Person,
                 label       = stringResource(R.string.drawer_profile),
                 description = stringResource(R.string.drawer_profile_desc),
-                accent      = colors.buttonTeal,
+                accent      = colors.logoBlue,
                 action      = onProfile
             ))
         } else {
@@ -148,12 +148,24 @@ private fun MenuScreen(
                 icon        = Icons.Filled.Person,
                 label       = stringResource(R.string.drawer_login),
                 description = stringResource(R.string.drawer_login_desc),
-                accent      = colors.buttonTeal,
+                accent      = colors.logoBlue,
                 action      = onLoginClick
             ))
         }
-        add(Entry(Icons.Filled.Language, stringResource(R.string.drawer_language), stringResource(R.string.drawer_language_desc), colors.buttonTaupe, onLanguage))
-        add(Entry(Icons.AutoMirrored.Outlined.HelpOutline, stringResource(R.string.drawer_support), stringResource(R.string.drawer_support_desc), colors.buttonTaupe, onSupport))
+        add(Entry(
+            icon        = Icons.Filled.Language,
+            label       = stringResource(R.string.drawer_language),
+            description = stringResource(R.string.drawer_language_desc),
+            accent      = colors.logoGreen,
+            action      = onLanguage
+        ))
+        add(Entry(
+            icon        = Icons.AutoMirrored.Outlined.HelpOutline,
+            label       = stringResource(R.string.drawer_support),
+            description = stringResource(R.string.drawer_support_desc),
+            accent      = colors.logoPurple,
+            action      = onSupport
+        ))
     }
 
     DrawerColumn {
@@ -247,7 +259,7 @@ private fun LanguageScreen(
                     }
                 ),
                 isSelected = lang == selectedLanguage,
-                accent     = colors.buttonTeal,
+                accent     = colors.logoGreen,
                 onClick    = { onSelect(lang) }
             )
         }

@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +38,7 @@ import com.khammin.core.presentation.components.buttons.GameButton
 import com.khammin.core.presentation.preview.GameDarkBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.core.R
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,14 +68,7 @@ fun AuthBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                colors.buttonPink,
-                                colors.buttonTeal,
-                            )
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -86,7 +79,7 @@ fun AuthBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // ── Icon ─────────────────────────────────────────────
+                // Icon
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -94,8 +87,8 @@ fun AuthBottomSheet(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    colors.buttonPink.copy(alpha = 0.25f),
-                                    colors.buttonTeal.copy(alpha = 0.10f),
+                                    colors.logoPink.copy(alpha = 0.25f),
+                                    colors.logoBlue.copy(alpha = 0.10f),
                                 )
                             )
                         ),
@@ -104,7 +97,7 @@ fun AuthBottomSheet(
                     Icon(
                         imageVector        = Icons.Outlined.EmojiEvents,
                         contentDescription = null,
-                        tint               = colors.buttonPink,
+                        tint               = colors.logoPink,
                         modifier           = Modifier.size(36.dp)
                     )
                 }
@@ -161,17 +154,19 @@ fun AuthBottomSheet(
 
                 // ── Buttons ───────────────────────────────────────────
                 GameButton(
-                    label       = stringResource(R.string.auth_login_email),
-                    onClick         = onLoginWithEmail,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.auth_login_email),
+                    onClick  = onLoginWithEmail,
+                    variant  = GameButtonVariant.Primary,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(10.dp))
 
                 GameButton(
-                    label       = stringResource(R.string.auth_create_account),
-                    onClick         = onSignUpClick,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.auth_create_account),
+                    onClick  = onSignUpClick,
+                    variant  = GameButtonVariant.Muted,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
