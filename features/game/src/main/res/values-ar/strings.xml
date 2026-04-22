@@ -86,6 +86,17 @@
     <string name="host_left_title">المضيف غادر الغرفة</string>
     <string name="host_left_subtitle">أنهى المضيف الجلسة. عُد للرئيسية وابدأ لعبة جديدة!</string>
     <string name="host_left_go_home">العودة للرئيسية</string>
+    <string name="lobby_round">الجولة %1$d</string>
+    <string name="lobby_you_won">فزت! 🎉</string>
+    <string name="lobby_you_lost">خسرت!</string>
+    <string name="lobby_winner_won">%1$s فاز بهذه الجولة</string>
+    <string name="lobby_the_word_was">كانت الكلمة</string>
+    <string name="lobby_leaderboard">لوحة المتصدرين</string>
+    <string name="lobby_play_again">العب مجدداً</string>
+    <string name="lobby_waiting_next_round">في انتظار المضيف لبدء الجولة التالية…</string>
+    <string name="lobby_leave">مغادرة</string>
+    <string name="lobby_pts">%1$d نقطة</string>
+    <string name="lobby_badge_you_label">أنت</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>
