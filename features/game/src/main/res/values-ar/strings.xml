@@ -18,6 +18,7 @@
     <!-- Challenge Screen -->
     <string name="challenge_next_word_label">الكلمة الجديدة ستكون متاحة خلال</string>
     <string name="not_in_word_list">ليست في قائمة الكلمات</string>
+    <string name="challenge_no_challenge_today">لا يوجد تحدي اليوم</string>
 
     <!-- Leaderboard Screen -->
     <string name="filter_all_time">كل الأوقات</string>
@@ -26,6 +27,9 @@
     <string name="leaderboard_rankings">الترتيب</string>
     <string name="leaderboard_your_position">مرتبتك</string>
     <string name="leaderboard_no_winners">لا يوجد فائزون بعد، كن أول من يفوز!</string>
+    <string name="leaderboard_no_internet_title">لا يوجد اتصال بالإنترنت</string>
+    <string name="leaderboard_no_internet_subtitle">تحقق من اتصالك وحاول مجدداً</string>
+    <string name="leaderboard_try_again">حاول مجدداً</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">الإعدادات</string>

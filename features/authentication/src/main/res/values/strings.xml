@@ -41,8 +41,8 @@
 
     <!-- Support Screen -->
     <string name="support_title">Support</string>
-    <string name="support_header_title">I\'d love to hear from you!</string>
-    <string name="support_header_body">Have a suggestion, found a bug, or just want to say hi? Reach out on LinkedIn and I\'ll get back to you as soon as possible.</string>
+    <string name="support_header_title">Share Your Thoughts!</string>
+    <string name="support_header_body">I\'d love to hear your thoughts, your feedback helps improve the app! Reach out to me on my LinkedIn profile.</string>
     <string name="support_linkedin_name">Ethar Alrehaili</string>
     <string name="support_linkedin_handle">linkedin.com/in/ethar-alrehaili</string>
     <string name="support_cta_button">Connect on LinkedIn</string>
