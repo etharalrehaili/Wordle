@@ -97,6 +97,17 @@
     <string name="lobby_leave">مغادرة</string>
     <string name="lobby_pts">%1$d نقطة</string>
     <string name="lobby_badge_you_label">أنت</string>
+    <string name="lobby_voted_play_again">صوّتَ للعب مجدداً!</string>
+    <string name="lobby_cancel_vote">إلغاء التصويت</string>
+    <string name="lobby_play_again_question">العب مجدداً؟</string>
+    <string name="lobby_player_voted">لاعب واحد صوّت</string>
+    <string name="lobby_players_voted">%1$d لاعبين صوّتوا</string>
+    <string name="custom_word_hint">كلمتك السرية (4–6 أحرف)</string>
+    <string name="custom_word_players_count">اللاعبون (%1$d/4)</string>
+    <string name="custom_word_players_count_4">اللاعبون (%1$d/4)</string>
+    <string name="spectator_play_again_question">العب مجدداً؟</string>
+    <string name="spectator_no_votes">لا أصوات بعد</string>
+    <string name="spectator_vote_count">%1$d / %2$d</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>

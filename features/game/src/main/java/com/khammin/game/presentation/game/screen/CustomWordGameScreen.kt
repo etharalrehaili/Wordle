@@ -60,9 +60,7 @@ import com.khammin.core.presentation.components.GameBoard
 import com.khammin.core.presentation.components.GameKeyboard
 import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.SnackbarState
-//import com.khammin.core.presentation.components.bottomsheets.CustomWordResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
-import com.khammin.core.presentation.components.bottomsheets.SessionLeaderboardEntry
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.TileState
@@ -102,11 +100,6 @@ fun CustomWordGameScreen(
     var showResultSheet by remember { mutableStateOf(false) }
     var showResultButton by remember { mutableStateOf(false) }
     var resultIsWin by remember { mutableStateOf(false) }
-    var resultWord by remember { mutableStateOf("") }
-    var resultOpponentFailed by remember { mutableStateOf(false) }
-    var resultOpponentLeft by remember { mutableStateOf(false) }
-    var resultWinnerName by remember { mutableStateOf("") }
-    var resultTotalPoints by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     val defaultMyName = stringResource(CoreRes.string.multiplayer_default_my_name)
     val defaultGuestName = stringResource(CoreRes.string.multiplayer_default_guest_name)
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
@@ -123,21 +116,11 @@ fun CustomWordGameScreen(
             when (effect) {
                 is MultiplayerGameEffect.ShowGameDialog -> {
                     resultIsWin = effect.isWin
-                    resultWord = effect.targetWord
-                    resultOpponentFailed = effect.opponentFailed
-                    resultOpponentLeft = effect.opponentLeft
-                    resultWinnerName = effect.winnerName
-                    resultTotalPoints = effect.totalPoints
                     showResultSheet = true
                     showResultButton = true
                 }
                 is MultiplayerGameEffect.DismissResultDialog -> {
                     showResultSheet = false
-                    resultWord = ""
-                    resultOpponentFailed = false
-                    resultOpponentLeft = false
-                    resultWinnerName = ""
-                    resultTotalPoints = emptyMap()
                 }
                 is MultiplayerGameEffect.NotInWordList -> snackbarState = SnackbarState(
                     context.getString(R.string.not_in_word_list),
@@ -290,45 +273,6 @@ fun CustomWordGameScreen(
             }
         }
     }
-
-//    if (showResultSheet) {
-//        CustomWordResultBottomSheet(
-//            opponentName             = resultWinnerName.takeIf { it.isNotBlank() } ?: state.opponentName,
-//            targetWord               = resultWord,
-//            opponentGuessedCorrectly = if (state.isHost) {
-//                !resultOpponentFailed && !resultOpponentLeft
-//            } else {
-//                false
-//            },
-//            opponentLeft             = resultOpponentLeft,
-//            isOwnWin                 = if (state.isHost) false else resultIsWin,
-//            onPlayAgain              = if (state.isHost) {
-//                {
-//                    showResultSheet = false
-//                    resultWord = ""
-//                    showNewWordSheet = true
-//                }
-//            } else null,
-//            playAgainVoteCount = state.playAgainVotes.size,
-//            totalGuests        = state.guestIds.size,
-//            leaderboard        = run {
-//                val pts = resultTotalPoints.ifEmpty { state.sessionPoints }
-//                state.opponentsProgress.entries.map { (guestId, p) ->
-//                    SessionLeaderboardEntry(
-//                        name          = p.name,
-//                        avatarColor   = p.avatarColor,
-//                        avatarEmoji   = p.avatarEmoji,
-//                        sessionPoints = pts[guestId] ?: 0,
-//                    )
-//                }
-//            },
-//            onDismiss  = { showResultSheet = false },
-//            onBackHome = {
-//                showResultSheet = false
-//                viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
-//            }
-//        )
-//    }
 
     CustomWordGameContent(
         onClose          = { showLeaveSheet = true },
