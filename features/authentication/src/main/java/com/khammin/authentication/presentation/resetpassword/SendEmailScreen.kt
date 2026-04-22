@@ -41,6 +41,7 @@ import com.khammin.core.presentation.components.CustomSnackbarHost
 import com.khammin.core.presentation.components.DotsLoadingIndicator
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.navigation.GameTopBar
 import com.khammin.core.presentation.components.text.FieldError
@@ -150,7 +151,7 @@ fun ResetPasswordContent(
                             Icons.Filled.Email,
                             null,
                             tint     = if (!isEmailEditable) colors.body.copy(alpha = 0.35f)
-                            else if (email.isNotEmpty()) colors.buttonTeal
+                            else if (email.isNotEmpty()) colors.logoBlue
                             else colors.body.copy(alpha = 0.4f),
                             modifier = Modifier.size(20.dp)
                         )
@@ -189,6 +190,7 @@ fun ResetPasswordContent(
                             focusManager.clearFocus()
                             onResetPasswordClick()
                         },
+                        variant  = GameButtonVariant.Primary,
                         modifier        = Modifier.fillMaxWidth()
                     )
                 }

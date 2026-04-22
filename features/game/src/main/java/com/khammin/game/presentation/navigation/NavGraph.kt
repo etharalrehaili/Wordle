@@ -29,7 +29,7 @@ import com.khammin.game.presentation.settings.vm.SettingsViewModel
 import com.khammin.game.presentation.profile.contract.ProfileIntent
 import com.khammin.game.presentation.profile.vm.ProfileViewModel
 import com.khammin.game.presentation.settings.contract.SettingsIntent
-import com.khammin.game.presentation.settings.screen.SupportScreen
+import com.khammin.game.presentation.support.screen.SupportScreen
 import kotlinx.serialization.Serializable
 
 @RequiresApi(Build.VERSION_CODES.O)

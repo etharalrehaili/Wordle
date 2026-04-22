@@ -195,12 +195,14 @@ fun SpectatorView(
             }
         }
 
-        GameButton(
-            label    = stringResource(R.string.lobby_play_again),
-            onClick  = onPlayAgain,
-            variant  = if (roundOver) GameButtonVariant.Primary else GameButtonVariant.Muted,
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (roundOver) {
+            GameButton(
+                label    = stringResource(R.string.lobby_play_again),
+                onClick  = onPlayAgain,
+                variant  = GameButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

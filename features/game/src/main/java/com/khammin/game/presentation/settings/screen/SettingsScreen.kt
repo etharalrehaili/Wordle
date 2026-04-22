@@ -120,7 +120,7 @@ fun SettingsContent(
             SettingsItem(
                 label   = stringResource(R.string.settings_change_password),
                 icon    = Icons.Filled.Lock,
-                accent  = colors.buttonTaupe,
+                accent  = colors.logoBlue,
                 onClick = onChangePasswordClick,
             )
 
@@ -180,7 +180,7 @@ private fun SettingsItem(
             .background(
                 when {
                     isDestructive -> accent.copy(alpha = 0.12f)
-                    else          -> colors.buttonTaupe.copy(alpha = 0.10f)
+                    else          -> colors.surface
                 }
             )
             .clickable(onClick = onClick)

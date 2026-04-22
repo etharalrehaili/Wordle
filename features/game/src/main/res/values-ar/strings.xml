@@ -62,9 +62,9 @@
     <string name="room_code_copied_label">رمز الغرفة</string>
     <string name="multiplayer_result_title">النتائج</string>
     <string name="spectator_round">الجولة %1$d</string>
-    <string name="spectator_votes">👋  أصوات اللعب مجدداً: %1$d / %2$d</string>
-    <string name="spectator_solved">تم الحل في %1$d ✓  ·  %2$d نقطة</string>
-    <string name="spectator_failed">فشل ✗</string>
+    <string name="spectator_votes"> أصوات اللعب مجدداً: %1$d / %2$d</string>
+    <string name="spectator_solved">تم الحل في %1$d  ·  %2$d نقطة</string>
+    <string name="spectator_failed">فشل</string>
     <string name="spectator_waiting_guess">في الانتظار…</string>
     <string name="spectator_guess_progress">%1$d/%2$d</string>
     <string name="spectator_total_points">المجموع: %1$d نقطة</string>
