@@ -60,7 +60,7 @@ import com.khammin.core.presentation.components.GameBoard
 import com.khammin.core.presentation.components.GameKeyboard
 import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.SnackbarState
-import com.khammin.core.presentation.components.bottomsheets.CustomWordResultBottomSheet
+//import com.khammin.core.presentation.components.bottomsheets.CustomWordResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.SessionLeaderboardEntry
 import com.khammin.core.presentation.components.enums.AppLanguage
@@ -291,44 +291,44 @@ fun CustomWordGameScreen(
         }
     }
 
-    if (showResultSheet) {
-        CustomWordResultBottomSheet(
-            opponentName             = resultWinnerName.takeIf { it.isNotBlank() } ?: state.opponentName,
-            targetWord               = resultWord,
-            opponentGuessedCorrectly = if (state.isHost) {
-                !resultOpponentFailed && !resultOpponentLeft
-            } else {
-                false
-            },
-            opponentLeft             = resultOpponentLeft,
-            isOwnWin                 = if (state.isHost) false else resultIsWin,
-            onPlayAgain              = if (state.isHost) {
-                {
-                    showResultSheet = false
-                    resultWord = ""
-                    showNewWordSheet = true
-                }
-            } else null,
-            playAgainVoteCount = state.playAgainVotes.size,
-            totalGuests        = state.guestIds.size,
-            leaderboard        = run {
-                val pts = resultTotalPoints.ifEmpty { state.sessionPoints }
-                state.opponentsProgress.entries.map { (guestId, p) ->
-                    SessionLeaderboardEntry(
-                        name          = p.name,
-                        avatarColor   = p.avatarColor,
-                        avatarEmoji   = p.avatarEmoji,
-                        sessionPoints = pts[guestId] ?: 0,
-                    )
-                }
-            },
-            onDismiss  = { showResultSheet = false },
-            onBackHome = {
-                showResultSheet = false
-                viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
-            }
-        )
-    }
+//    if (showResultSheet) {
+//        CustomWordResultBottomSheet(
+//            opponentName             = resultWinnerName.takeIf { it.isNotBlank() } ?: state.opponentName,
+//            targetWord               = resultWord,
+//            opponentGuessedCorrectly = if (state.isHost) {
+//                !resultOpponentFailed && !resultOpponentLeft
+//            } else {
+//                false
+//            },
+//            opponentLeft             = resultOpponentLeft,
+//            isOwnWin                 = if (state.isHost) false else resultIsWin,
+//            onPlayAgain              = if (state.isHost) {
+//                {
+//                    showResultSheet = false
+//                    resultWord = ""
+//                    showNewWordSheet = true
+//                }
+//            } else null,
+//            playAgainVoteCount = state.playAgainVotes.size,
+//            totalGuests        = state.guestIds.size,
+//            leaderboard        = run {
+//                val pts = resultTotalPoints.ifEmpty { state.sessionPoints }
+//                state.opponentsProgress.entries.map { (guestId, p) ->
+//                    SessionLeaderboardEntry(
+//                        name          = p.name,
+//                        avatarColor   = p.avatarColor,
+//                        avatarEmoji   = p.avatarEmoji,
+//                        sessionPoints = pts[guestId] ?: 0,
+//                    )
+//                }
+//            },
+//            onDismiss  = { showResultSheet = false },
+//            onBackHome = {
+//                showResultSheet = false
+//                viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
+//            }
+//        )
+//    }
 
     CustomWordGameContent(
         onClose          = { showLeaveSheet = true },

@@ -133,7 +133,7 @@ fun GuestGameOverLobby(
                     fontWeight    = FontWeight.Bold,
                     letterSpacing = 0.5.sp,
                 )
-                Text(text = if (isWin) "🎉" else "🤔", fontSize = 48.sp)
+
                 Text(
                     text       = if (isWin) stringResource(CoreRes.string.spectator_result_you_guessed)
                     else       stringResource(CoreRes.string.result_lose_title),
@@ -273,7 +273,7 @@ fun GuestGameOverLobby(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.padding(top = 4.dp),
             ) {
-                Text(text = "⏳", fontSize = 22.sp)
+
                 Text(
                     text      = "Waiting for host to start the next round…",
                     color     = colors.body.copy(alpha = 0.45f),
@@ -399,7 +399,7 @@ private fun PlayAgainVoteSection(
                     ),
                 ) {
                     Text(
-                        text       = "👋  Play Again?",
+                        text       = "Play Again?",
                         fontSize   = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color      = colors.background,
