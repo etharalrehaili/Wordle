@@ -51,4 +51,5 @@
     <!-- Validation Errors -->
     <string name="error_empty_password">كلمة المرور لا يمكن أن تكون فارغة</string>
     <string name="error_passwords_not_match">كلمتا المرور غير متطابقتين</string>
+    <string name="error_weak_password">يجب أن تكون كلمة المرور 8 أحرف على الأقل وتحتوي على حرف كبير وحرف صغير ورقم</string>
 </resources>

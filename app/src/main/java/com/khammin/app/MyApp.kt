@@ -27,14 +27,12 @@ class MyApp : Application(), Configuration.Provider {
         super.onCreate()
         FirebaseApp.initializeApp(this)
 
-        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-            try {
-                val clazz = Class.forName("com.google.firebase.appcheck.debug.FirebaseAppCheckDebugProviderFactory")
-                clazz.getDeclaredConstructor().newInstance() as com.google.firebase.appcheck.AppCheckProviderFactory
-            } catch (e: Exception) {
-                PlayIntegrityAppCheckProviderFactory.getInstance()
-            }
-        )
+        val appCheckFactory = if (BuildConfig.DEBUG) {
+            com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
+        } else {
+            PlayIntegrityAppCheckProviderFactory.getInstance()
+        }
+        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(appCheckFactory)
 
         OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID)
         CoroutineScope(Dispatchers.IO).launch {

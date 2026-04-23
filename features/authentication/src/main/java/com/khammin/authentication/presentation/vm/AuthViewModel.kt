@@ -24,7 +24,7 @@ class AuthViewModel @Inject constructor(
     private val signUpUseCase: SignUpUseCase,
     private val sendEmailUseCase: SendEmailUseCase,
     private val reAuthenticateUseCase: ReAuthenticateUseCase
-    ) : BaseMviViewModel<AuthIntent, AuthUiState, AuthEffect>(
+) : BaseMviViewModel<AuthIntent, AuthUiState, AuthEffect>(
     initialState = AuthUiState()
 ) {
 
@@ -163,16 +163,27 @@ class AuthViewModel @Inject constructor(
         if (state.password.isBlank()) {
             setState { copy(passwordError = UiText.StringRes(R.string.error_empty_password)) }
             valid = false
+        } else if (!isPasswordStrong(state.password)) {
+            setState { copy(passwordError = UiText.StringRes(R.string.error_weak_password)) }
+            valid = false
         }
         if (state.password != state.confirmPassword) {
             setState {
                 copy(
-                    passwordError         = UiText.StringRes(R.string.error_passwords_not_match),
-                    confirmPasswordError  = UiText.StringRes(R.string.error_passwords_not_match),
+                    passwordError        = UiText.StringRes(R.string.error_passwords_not_match),
+                    confirmPasswordError = UiText.StringRes(R.string.error_passwords_not_match),
                 )
             }
             valid = false
         }
         return valid
+    }
+
+    private fun isPasswordStrong(password: String): Boolean {
+        if (password.length < 8) return false
+        if (!password.any { it.isUpperCase() }) return false
+        if (!password.any { it.isLowerCase() }) return false
+        if (!password.any { it.isDigit() }) return false
+        return true
     }
 }

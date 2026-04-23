@@ -25,9 +25,14 @@ class MultiplayerDataSourceImpl @Inject constructor(
     private val rooms = firestore.collection("rooms")
 
     override suspend fun createRoom(room: GameRoom): String {
+        val start = System.currentTimeMillis()
         val doc = rooms.document()
+        Log.d("RoomPerf", "[DataSource] createRoom → doc ID generated: ${doc.id} | step=${System.currentTimeMillis() - start}ms")
         val roomWithId = room.copy(roomId = doc.id)
+        val setStart = System.currentTimeMillis()
+        Log.d("RoomPerf", "[DataSource] createRoom → Firestore set() dispatched | roomId=${doc.id}")
         doc.set(roomWithId).await()
+        Log.d("RoomPerf", "[DataSource] createRoom → Firestore set() ack | step=${System.currentTimeMillis() - setStart}ms | total=${System.currentTimeMillis() - start}ms | roomId=${doc.id}")
         return doc.id
     }
 

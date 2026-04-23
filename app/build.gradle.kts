@@ -90,4 +90,7 @@ dependencies {
     // Hilt WorkManager integration
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Firebase App Check Debug Provider (for testing purposes only)
+    debugImplementation("com.google.firebase:firebase-appcheck-debug:19.0.2")
 }
