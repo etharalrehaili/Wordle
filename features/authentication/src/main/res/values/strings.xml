@@ -50,4 +50,5 @@
     <!-- Validation Errors -->
     <string name="error_empty_password">Password cannot be empty</string>
     <string name="error_passwords_not_match">Passwords do not match</string>
+    <string name="error_weak_password">Password must be at least 8 characters and contain uppercase, lowercase, and a number</string>
 </resources>

@@ -80,6 +80,23 @@ class HomeViewModel @Inject constructor(
                 setState { copy(hasSolvedChallenge = solved) }
             }
         }
+        viewModelScope.launch {
+            // Prefetch anonymous auth so Firebase is ready before the user taps "Create Room".
+            // Without this, sign-in happens at room creation time and adds ~5 s of latency.
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) {
+                Log.d("RoomPerf", "[prefetch] No user — warming up anonymous sign-in")
+                val start = System.currentTimeMillis()
+                try {
+                    auth.signInAnonymously().await()
+                    Log.d("RoomPerf", "[prefetch] Anonymous sign-in complete | step=${System.currentTimeMillis() - start}ms")
+                } catch (e: Exception) {
+                    Log.d("RoomPerf", "[prefetch] Anonymous sign-in failed: ${e.message}")
+                }
+            } else {
+                Log.d("RoomPerf", "[prefetch] User already authenticated (uid=${auth.currentUser?.uid}) — skipping")
+            }
+        }
     }
 
     private val cachedWords = mutableMapOf<String, List<String>>()
@@ -125,10 +142,16 @@ class HomeViewModel @Inject constructor(
         onRoomCreated: (String, String) -> Unit,
     ) {
         viewModelScope.launch {
+            val perfStart = System.currentTimeMillis()
+            val roomType  = if (customWord != null) "custom" else "random"
+            Log.d("RoomPerf", "[$roomType] ── START ── language=$language")
+
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
+                Log.d("RoomPerf", "[$roomType] Aborted: no internet | elapsed=${System.currentTimeMillis() - perfStart}ms")
                 return@launch
             }
+            Log.d("RoomPerf", "[$roomType] Network check passed | elapsed=${System.currentTimeMillis() - perfStart}ms")
 
             setState { copy(createRoomLoading = true) }
 
@@ -138,7 +161,12 @@ class HomeViewModel @Inject constructor(
             // rooms and have a consistent identity across sessions until they choose to log out or create an account.
             val auth = FirebaseAuth.getInstance()
             if (auth.currentUser == null) {
+                val authStart = System.currentTimeMillis()
+                Log.d("RoomPerf", "[$roomType] No authenticated user — starting anonymous sign-in | elapsed=${System.currentTimeMillis() - perfStart}ms")
                 try { auth.signInAnonymously().await() } catch (_: Exception) { /* proceed as guest */ }
+                Log.d("RoomPerf", "[$roomType] Anonymous sign-in done | step=${System.currentTimeMillis() - authStart}ms | elapsed=${System.currentTimeMillis() - perfStart}ms")
+            } else {
+                Log.d("RoomPerf", "[$roomType] User already authenticated (uid=${auth.currentUser?.uid}) | elapsed=${System.currentTimeMillis() - perfStart}ms")
             }
 
             val myId = auth.currentUser?.uid
@@ -147,6 +175,7 @@ class HomeViewModel @Inject constructor(
             val isCustomWordRoom = customWord != null
             val isWordProvided   = !customWord.isNullOrEmpty()
 
+            val wordStart = System.currentTimeMillis()
             val (word, wordLength) = when {
                 isWordProvided -> {
                     Log.d("WordleRoom", "customWord (raw)='$customWord'  stored='${customWord!!.uppercase()}'  length=${customWord.length}")
@@ -161,6 +190,7 @@ class HomeViewModel @Inject constructor(
                     "" to 0
                 }
             }
+            Log.d("RoomPerf", "[$roomType] Word resolved: word='$word' wordLength=$wordLength | step=${System.currentTimeMillis() - wordStart}ms | elapsed=${System.currentTimeMillis() - perfStart}ms")
 
             val room = GameRoom(
                 hostId       = myId,
@@ -170,9 +200,15 @@ class HomeViewModel @Inject constructor(
                 isCustomWord = isCustomWordRoom,
                 isLobbyMode  = !isCustomWordRoom,   // true for random word path
             )
+            Log.d("RoomPerf", "[$roomType] GameRoom object built (isCustomWord=$isCustomWordRoom isLobbyMode=${!isCustomWordRoom}) | elapsed=${System.currentTimeMillis() - perfStart}ms")
 
+            val firestoreStart = System.currentTimeMillis()
+            Log.d("RoomPerf", "[$roomType] Calling createRoomUseCase → Firestore write starting | elapsed=${System.currentTimeMillis() - perfStart}ms")
             val roomId = createRoomUseCase(room)
+            Log.d("RoomPerf", "[$roomType] Firestore write ack received | step=${System.currentTimeMillis() - firestoreStart}ms | elapsed=${System.currentTimeMillis() - perfStart}ms | roomId=$roomId")
+
             setState { copy(createRoomLoading = false) }
+            Log.d("RoomPerf", "[$roomType] ── DONE — navigating to room | total=${System.currentTimeMillis() - perfStart}ms")
             onRoomCreated(roomId, myId)
         }
     }

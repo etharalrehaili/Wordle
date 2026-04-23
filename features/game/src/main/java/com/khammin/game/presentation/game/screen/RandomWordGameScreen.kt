@@ -55,6 +55,7 @@ import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.bottomsheets.GameMultiplayerResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomSheet
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.TileState
@@ -97,8 +98,6 @@ fun RandomWordGameScreen(
     var showResultButton by remember { mutableStateOf(false) }
     var resultIsWin by remember { mutableStateOf(false) }
     var resultWord by remember { mutableStateOf("") }
-    var resultOpponentFailed by remember { mutableStateOf(false) }
-    var resultOpponentLeft by remember { mutableStateOf(false) }
     val defaultMyName = stringResource(CoreRes.string.multiplayer_default_my_name)
     val defaultGuestName = stringResource(CoreRes.string.multiplayer_default_guest_name)
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
@@ -124,16 +123,12 @@ fun RandomWordGameScreen(
                 is MultiplayerGameEffect.ShowGameDialog -> {
                     resultIsWin = effect.isWin
                     resultWord = effect.targetWord
-                    resultOpponentFailed = effect.opponentFailed
-                    resultOpponentLeft = effect.opponentLeft
                     showResultSheet = true
                     showResultButton = true
                 }
                 is MultiplayerGameEffect.DismissResultDialog -> {
                     showResultSheet = false
                     resultWord = ""
-                    resultOpponentFailed = false
-                    resultOpponentLeft = false
                 }
                 is MultiplayerGameEffect.NotInWordList -> snackbarState = SnackbarState(
                     context.getString(R.string.not_in_word_list),
@@ -204,6 +199,13 @@ fun RandomWordGameScreen(
                 showRejoinSheet = false
                 viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
             },
+        )
+    }
+
+    if (state.isNoInternet) {
+        NoInternetBottomSheet(
+            onRetry   = { viewModel.onEvent(MultiplayerGameIntent.RetryConnectivity) },
+            onDismiss = { viewModel.onEvent(MultiplayerGameIntent.RetryConnectivity) },
         )
     }
 
@@ -397,7 +399,6 @@ private fun RandomWordGameContent(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Text(text = "⏳", fontSize = 28.sp)
                                         Text(
                                             text       = stringResource(CoreRes.string.multiplayer_waiting_opponent),
                                             color      = colors.title,

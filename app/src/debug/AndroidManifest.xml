@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <meta-data
+            android:name="com.google.firebase.appcheck.debug.DEBUG_TOKEN"
+            android:value="6089532B-DBDD-40B2-BF13-490EF02A9783" />
+    </application>
+</manifest>

@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,10 +51,27 @@ fun NoInternetBottomSheet(
         Column(
             modifier            = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.5f)
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Icon box
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(brush = colors.logoStripBrush)
+            )
+
+            Column(
+                modifier            = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp)
+                    .padding(top = 36.dp, bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+            // Icon
             Box(
                 modifier = Modifier
                     .size(72.dp)
@@ -108,4 +127,5 @@ fun NoInternetBottomSheet(
             )
         }
     }
+}
 }

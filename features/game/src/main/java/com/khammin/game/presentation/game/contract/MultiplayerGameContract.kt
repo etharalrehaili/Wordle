@@ -76,6 +76,7 @@ data class MultiplayerGameUiState(
     val sessionPoints: Map<String, Int> = emptyMap(),
     // Name of the player who won the current lobby-mode round (empty if current user won)
     val lobbyWinnerName: String = "",
+    val isNoInternet: Boolean = false,
 ) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {
@@ -119,4 +120,5 @@ sealed class MultiplayerGameIntent : UiIntent {
         val avatarColor: Long?,
         val avatarEmoji: String?,
     ) : MultiplayerGameIntent()
+    data object RetryConnectivity : MultiplayerGameIntent()
 }

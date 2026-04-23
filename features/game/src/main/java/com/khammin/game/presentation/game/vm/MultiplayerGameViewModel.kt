@@ -1,5 +1,10 @@
 package com.khammin.game.presentation.game.vm
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -45,6 +50,7 @@ import com.khammin.game.presentation.game.contract.OpponentProgress
 import com.khammin.game.presentation.game.contract.Tile
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +63,7 @@ import javax.inject.Inject
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class MultiplayerGameViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val addGuestToRoomUseCase: AddGuestToRoomUseCase,
     private val observeRoomUseCase: ObserveRoomUseCase,
     private val observeOpponentUseCase: ObserveOpponentUseCase,
@@ -143,6 +150,7 @@ class MultiplayerGameViewModel @Inject constructor(
             MultiplayerGameIntent.PlayAgainLobbyMode     -> playAgainLobbyMode()
             MultiplayerGameIntent.RejoinRoom             -> rejoinRoom()
             is MultiplayerGameIntent.UpdateGuestProfile  -> updateGuestProfile(intent.name, intent.avatarColor, intent.avatarEmoji)
+            MultiplayerGameIntent.RetryConnectivity      -> retryConnectivity()
         }
     }
 
@@ -157,6 +165,49 @@ class MultiplayerGameViewModel @Inject constructor(
     private var opponentPresenceDropJob: Job? = null
     private val guestPresenceDropJobs = mutableMapOf<String, Job>()
 
+    // ── Network connectivity monitoring ───────────────────────────────────────
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var networkCallbackRegistered = false
+
+    private fun registerNetworkCallback() {
+        if (networkCallbackRegistered) return
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                android.util.Log.d("RoomPerf", "[Network] Connection restored")
+                setState { copy(isNoInternet = false) }
+            }
+            override fun onLost(network: Network) {
+                android.util.Log.d("RoomPerf", "[Network] Connection lost")
+                setState { copy(isNoInternet = true) }
+            }
+        }
+        cm.registerNetworkCallback(request, networkCallback!!)
+        networkCallbackRegistered = true
+    }
+
+    private fun retryConnectivity() {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork
+        val caps = network?.let { cm.getNetworkCapabilities(it) }
+        val isConnected = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+                          caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        if (isConnected) setState { copy(isNoInternet = false) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        networkCallback?.let { cb ->
+            runCatching {
+                val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                cm.unregisterNetworkCallback(cb)
+            }
+        }
+    }
+
     private fun loadGame(
         roomId: String,
         language: String,
@@ -167,6 +218,8 @@ class MultiplayerGameViewModel @Inject constructor(
         defaultMyName: String,
         defaultGuestName: String,
     ) {
+        registerNetworkCallback()
+
         val myId = myUserId.takeIf { it.isNotEmpty() }
             ?: auth.currentUser?.uid
             ?: uiState.value.myUserId.takeIf { it.isNotEmpty() }
@@ -818,23 +871,22 @@ class MultiplayerGameViewModel @Inject constructor(
     // ── Leave match ───────────────────────────────────────────────────────────
     private fun leaveMatch() {
         val s = uiState.value
-        if (s.roomId.isEmpty() || s.myUserId.isEmpty()) {
-            sendEffect { MultiplayerGameEffect.NavigateBack }
-            return
-        }
+        // Navigate back immediately so the button always works, even when offline.
+        // Firebase cleanup runs as best-effort in the background.
+        sendEffect { MultiplayerGameEffect.NavigateBack }
+        if (s.roomId.isEmpty() || s.myUserId.isEmpty()) return
         viewModelScope.launch {
             if (s.isCustomWord || s.isLobbyMode) {
                 if (s.isHost) {
                     // Host ends the session for everyone
-                    leaveRoomUseCase(s.roomId, s.myUserId)
+                    runCatching { leaveRoomUseCase(s.roomId, s.myUserId) }
                 } else {
                     // Guest leaving at any point: remove from guestIds and clear their vote
-                    removeGuestFromRoomUseCase(s.roomId, s.myUserId)
+                    runCatching { removeGuestFromRoomUseCase(s.roomId, s.myUserId) }
                 }
             } else {
-                leaveRoomUseCase(s.roomId, s.myUserId)
+                runCatching { leaveRoomUseCase(s.roomId, s.myUserId) }
             }
-            sendEffect { MultiplayerGameEffect.NavigateBack }
         }
     }
 

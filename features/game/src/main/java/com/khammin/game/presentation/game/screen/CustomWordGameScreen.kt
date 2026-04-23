@@ -63,6 +63,7 @@ import com.khammin.core.presentation.components.SnackbarState
 import com.khammin.core.presentation.components.bottomsheets.CustomWordResultBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.CustomWordResultScreen
 import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomSheet
+import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomSheet
 import com.khammin.core.presentation.components.bottomsheets.SessionLeaderboardEntry
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
@@ -203,6 +204,13 @@ fun CustomWordGameScreen(
                 showRejoinSheet = false
                 viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
             },
+        )
+    }
+
+    if (state.isNoInternet) {
+        NoInternetBottomSheet(
+            onRetry   = { viewModel.onEvent(MultiplayerGameIntent.RetryConnectivity) },
+            onDismiss = { viewModel.onEvent(MultiplayerGameIntent.RetryConnectivity) },
         )
     }
 
