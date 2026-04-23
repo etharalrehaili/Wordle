@@ -13,7 +13,7 @@ class GetDailyChallengeUseCase @Inject constructor(
     suspend operator fun invoke(date: String, language: String): Resource<String> {
         return try {
             val word = repo.getDailyChallenge(date, language)
-            if (word == null) Resource.Error("No challenge for today")
+            if (word == null) Resource.Error(ChallengeError.NoChallenge.KEY)
             else Resource.Success(word)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Unknown error")

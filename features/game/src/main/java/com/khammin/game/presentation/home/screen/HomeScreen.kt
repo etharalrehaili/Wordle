@@ -462,7 +462,7 @@ private fun NextWordCountdownRow(countdownSeconds: Long) {
         Icon(
             imageVector        = Icons.Outlined.Schedule,
             contentDescription = null,
-            tint               = colors.buttonTeal,
+            tint               = colors.logoBlue,
             modifier           = Modifier.size(24.dp)
         )
         WordleText(
