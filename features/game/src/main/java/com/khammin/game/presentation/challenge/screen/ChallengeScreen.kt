@@ -4,11 +4,9 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -17,7 +15,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -152,18 +149,6 @@ fun ChallengeContent(
                     .statusBarsPadding(),
             )
         },
-//        bottomBar = {
-//            GameKeyboard(
-//                keyStates = keyStates,
-//                onKey = { char -> onIntent(ChallengeIntent.EnterLetter(char)) },
-//                onBackspace = { onIntent(ChallengeIntent.DeleteLetter) },
-//                language = AppLanguage.ARABIC,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .navigationBarsPadding()
-//                    .padding(bottom = 8.dp)
-//            )
-//        }
     ) { innerPadding ->
         Box(
             modifier = Modifier

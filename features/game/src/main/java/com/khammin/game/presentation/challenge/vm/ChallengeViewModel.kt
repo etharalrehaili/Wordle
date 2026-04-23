@@ -1,5 +1,6 @@
 package com.khammin.game.presentation.challenge.vm
 
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,7 @@ import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
+import com.khammin.game.domain.usecases.challenge.ChallengeError
 import com.khammin.game.domain.usecases.challenge.GetDailyChallengeUseCase
 import com.khammin.game.domain.usecases.challenge.LoadTodayChallengeUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
@@ -21,12 +23,14 @@ import com.khammin.game.presentation.challenge.contract.ChallengeIntent
 import com.khammin.game.presentation.challenge.contract.ChallengeUiState
 import com.khammin.game.presentation.game.contract.Tile
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class ChallengeViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getDailyChallengeUseCase: GetDailyChallengeUseCase,
     private val getWordsUseCase: GetWordsUseCase,
     private val loadTodayChallengeUseCase: LoadTodayChallengeUseCase,
@@ -114,7 +118,19 @@ class ChallengeViewModel @Inject constructor(
                             is Resource.Loading -> Unit
                         }
                     }
-                    is Resource.Error   -> setState { copy(isLoading = false, error = challengeResult.message) }
+                    is Resource.Error -> {
+                        val localizedContext = if (language == "ar") {
+                            val config = context.resources.configuration
+                            config.setLocale(java.util.Locale("ar"))
+                            context.createConfigurationContext(config)
+                        } else context
+
+                        val msg = if (challengeResult.message == ChallengeError.NoChallenge.KEY)
+                            localizedContext.getString(com.khammin.game.R.string.challenge_no_challenge_today)
+                        else challengeResult.message
+
+                        setState { copy(isLoading = false, error = msg) }
+                    }
                     is Resource.Loading -> Unit
                 }
             }
