@@ -333,6 +333,8 @@ private fun RandomWordGameContent(
                             otherPlayers    = state.waitingPlayers.filter {
                                 it.userId != state.myUserId && it.userId != state.opponentId
                             },
+                            isReady         = state.waitingPlayers.firstOrNull { it.userId == state.myUserId }?.isReady == true,
+                            onSetReady      = { onIntent(MultiplayerGameIntent.SetReady) },
                             onUpdateProfile = { name, color, emoji ->
                                 onIntent(MultiplayerGameIntent.UpdateGuestProfile(name, color, emoji))
                             },

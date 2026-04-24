@@ -134,6 +134,8 @@ fun CustomWordLobbyHost(
                     waitingPlayers.forEach { player ->
                         LobbyPlayerRow(
                             name        = player.name,
+                            badge       = if (player.isReady) stringResource(R.string.lobby_badge_ready) else null,
+                            badgeColor  = colors.logoGreen,
                             avatarColor = player.avatarColor,
                             avatarEmoji = player.avatarEmoji,
                             avatarUrl   = player.avatarUrl,
@@ -143,14 +145,26 @@ fun CustomWordLobbyHost(
             }
         }
 
+        val allReady = waitingPlayers.isNotEmpty() && waitingPlayers.all { it.isReady }
+        val canStart = allReady && customWord.length in 4..6
+
+        if (waitingPlayers.isNotEmpty() && !allReady) {
+            item {
+                Text(
+                    text     = stringResource(R.string.lobby_waiting_ready),
+                    color    = colors.body.copy(alpha = 0.45f),
+                    fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                )
+            }
+        }
+
         item {
             GameButton(
                 label    = stringResource(R.string.lobby_start_game),
                 onClick  = { onStart(customWord) },
-                variant  = if (waitingPlayers.isNotEmpty() && customWord.length in 4..6)
-                    GameButtonVariant.Primary
-                else
-                    GameButtonVariant.Muted,
+                enabled  = canStart,
+                variant  = if (canStart) GameButtonVariant.Primary else GameButtonVariant.Muted,
                 modifier = Modifier.fillMaxWidth()
             )
         }

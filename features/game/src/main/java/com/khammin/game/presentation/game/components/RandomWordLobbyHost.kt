@@ -90,6 +90,8 @@ fun RandomWordLobbyHost(
                     waitingPlayers.forEach { player ->
                         LobbyPlayerRow(
                             name        = player.name,
+                            badge       = if (player.isReady) stringResource(R.string.lobby_badge_ready) else null,
+                            badgeColor  = colors.logoGreen,
                             avatarColor = player.avatarColor,
                             avatarEmoji = player.avatarEmoji,
                             avatarUrl   = player.avatarUrl,
@@ -99,15 +101,27 @@ fun RandomWordLobbyHost(
             }
         }
 
+        val allReady = waitingPlayers.isNotEmpty() && waitingPlayers.all { it.isReady }
+
+        if (waitingPlayers.isNotEmpty() && !allReady) {
+            item {
+                Text(
+                    text     = stringResource(R.string.lobby_waiting_ready),
+                    color    = colors.body.copy(alpha = 0.45f),
+                    fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                )
+            }
+        }
+
         item {
             GameButton(
-                label = stringResource(R.string.lobby_start_game),
+                label    = stringResource(R.string.lobby_start_game),
                 onClick  = onStart,
-                variant  = if (waitingPlayers.isNotEmpty()) GameButtonVariant.Primary
-                else GameButtonVariant.Muted,
+                enabled  = allReady,
+                variant  = if (allReady) GameButtonVariant.Primary else GameButtonVariant.Muted,
                 modifier = Modifier.fillMaxWidth()
             )
-
         }
     }
 }

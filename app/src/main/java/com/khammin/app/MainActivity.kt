@@ -7,8 +7,12 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +23,7 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.khammin.core.domain.model.DARK_MODEL
@@ -44,6 +49,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         window.setBackgroundDrawableResource(R.color.transparent)
 
         handleInitialSelectedLanguage()
@@ -70,30 +76,36 @@ class MainActivity : ComponentActivity() {
 
             WordleTheme(appColorTheme = appColorTheme) {
                 CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-                    val navController = rememberNavController()
-                    NavHost(
-                        navController = navController,
-                        startDestination = Route.HomeScreen
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .safeDrawingPadding()
                     ) {
-                        navGraph(
-                            navController,
-                            onThemeChanged = { theme ->
-                                appColorTheme = theme
-                                val themeModel =
-                                    if (theme == AppColorTheme.DARK) DARK_MODEL else LIGHT_MODEL
-                                preferenceViewModel.setTheme(themeModel)
-                            },
-                            onLanguageChanged = { language ->
-                                val code = if (language == AppLanguage.ARABIC) "ar" else "en"
-                                val selected = preferenceViewModel.getLanguages()
-                                    .firstOrNull { it.code == code } ?: ENGLISH_MODEL
-                                preferenceViewModel.setLanguage(selected)
-                                LocaleHelper.setLocale(this@MainActivity, code)
-                                recreate()
-                            },
-                            currentLanguage = { appLanguage },
-                            currentTheme = { appColorTheme }
-                        )
+                        val navController = rememberNavController()
+                        NavHost(
+                            navController = navController,
+                            startDestination = Route.HomeScreen
+                        ) {
+                            navGraph(
+                                navController,
+                                onThemeChanged = { theme ->
+                                    appColorTheme = theme
+                                    val themeModel =
+                                        if (theme == AppColorTheme.DARK) DARK_MODEL else LIGHT_MODEL
+                                    preferenceViewModel.setTheme(themeModel)
+                                },
+                                onLanguageChanged = { language ->
+                                    val code = if (language == AppLanguage.ARABIC) "ar" else "en"
+                                    val selected = preferenceViewModel.getLanguages()
+                                        .firstOrNull { it.code == code } ?: ENGLISH_MODEL
+                                    preferenceViewModel.setLanguage(selected)
+                                    LocaleHelper.setLocale(this@MainActivity, code)
+                                    recreate()
+                                },
+                                currentLanguage = { appLanguage },
+                                currentTheme = { appColorTheme }
+                            )
+                        }
                     }
                 }
             }
