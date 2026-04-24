@@ -120,7 +120,7 @@ class MainActivity : ComponentActivity() {
             if (deviceLang == Languages.AR.code || deviceLang == Languages.EN.code) {
                 deviceLang
             } else {
-                Languages.EN.code
+                Languages.AR.code
             }
         }
 
