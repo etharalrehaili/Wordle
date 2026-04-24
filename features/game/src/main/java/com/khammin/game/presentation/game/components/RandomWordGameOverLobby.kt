@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import java.util.Locale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -250,7 +251,7 @@ fun RandomWordGameOverLobby(
                                 }
                             }
                             Text(
-                                text = stringResource(R.string.lobby_pts, player.sessionPoints),
+                                text = String.format(Locale.US, stringResource(R.string.lobby_pts), player.sessionPoints),
                                 color = colors.title,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
@@ -262,13 +263,28 @@ fun RandomWordGameOverLobby(
 
             // ── Action ───────────────────────────────────────────────────────────
             item {
+                val allPlayersFinished = opponentsProgress.values.all { it.solved || it.failed }
                 if (isHost) {
-                    GameButton(
-                        label = stringResource(R.string.lobby_play_again),
-                        onClick = onPlayAgain,
-                        variant = GameButtonVariant.Primary,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        GameButton(
+                            label = stringResource(R.string.lobby_play_again),
+                            onClick = onPlayAgain,
+                            enabled = allPlayersFinished,
+                            variant = if (allPlayersFinished) GameButtonVariant.Primary else GameButtonVariant.Muted,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (!allPlayersFinished) {
+                            Text(
+                                text = stringResource(R.string.lobby_waiting_for_players),
+                                color = colors.body.copy(alpha = 0.45f),
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
                 } else {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,

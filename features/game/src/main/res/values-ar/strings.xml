@@ -76,6 +76,10 @@
     <string name="multiplayer_waiting_for_host">في انتظار المضيف لبدء اللعبة…</string>
     <string name="multiplayer_players_count">اللاعبون (%1$d/3)</string>
     <string name="lobby_start_game">ابدأ اللعبة</string>
+    <string name="lobby_ready">جاهز</string>
+    <string name="lobby_ready_done">جاهز!</string>
+    <string name="lobby_badge_ready">جاهز</string>
+    <string name="lobby_waiting_ready">في انتظار أن يكون جميع اللاعبين جاهزين…</string>
     <string name="lobby_you">أنت</string>
     <string name="lobby_badge_host">مضيف</string>
     <string name="profile_edit">تعديل</string>

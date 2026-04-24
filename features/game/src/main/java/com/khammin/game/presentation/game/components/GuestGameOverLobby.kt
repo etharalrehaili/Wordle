@@ -40,6 +40,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import java.util.Locale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -280,7 +281,7 @@ fun GuestGameOverLobby(
                                     }
                                 }
                                 Text(
-                                    text       = stringResource(R.string.lobby_pts, player.sessionPoints),
+                                    text       = String.format(Locale.US, stringResource(R.string.lobby_pts), player.sessionPoints),
                                     color      = colors.title,
                                     fontSize   = 13.sp,
                                     fontWeight = FontWeight.Bold,
@@ -458,7 +459,7 @@ private fun PlayAgainVoteSection(
                     text     = if (playAgainVotes.size == 1)
                         stringResource(R.string.lobby_player_voted)
                     else
-                        stringResource(R.string.lobby_players_voted, playAgainVotes.size),
+                        String.format(Locale.US, stringResource(R.string.lobby_players_voted), playAgainVotes.size),
                     color    = colors.body.copy(alpha = 0.55f),
                     fontSize = 11.sp,
                 )

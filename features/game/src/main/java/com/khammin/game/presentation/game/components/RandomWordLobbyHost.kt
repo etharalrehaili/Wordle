@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import java.util.Locale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +53,7 @@ fun RandomWordLobbyHost(
 
         item {
             Text(
-                text          = stringResource(R.string.multiplayer_players_count, waitingPlayers.size + 1),
+                text          = String.format(Locale.US, stringResource(R.string.multiplayer_players_count), waitingPlayers.size + 1),
                 color         = colors.body.copy(alpha = 0.6f),
                 fontSize      = 12.sp,
                 fontWeight    = FontWeight.Medium,

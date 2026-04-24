@@ -101,6 +101,7 @@
     <string name="lobby_leaderboard">Leaderboard</string>
     <string name="lobby_play_again">Play Again</string>
     <string name="lobby_waiting_next_round">Waiting for host to start the next round…</string>
+    <string name="lobby_waiting_for_players">Waiting for all players to finish…</string>
     <string name="lobby_leave">Leave</string>
     <string name="lobby_pts">%1$d pts</string>
     <string name="lobby_badge_you_label">You</string>
