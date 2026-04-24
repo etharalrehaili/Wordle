@@ -209,12 +209,18 @@ class MultiplayerDataSourceImpl @Inject constructor(
 
     override suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?, avatarUrl: String?) {
         rooms.document(roomId)
-            .update("guestProfiles.$userId", mapOf(
-                "name"        to name,
-                "avatarColor" to (avatarColor?.toString() ?: ""),
-                "avatarEmoji" to (avatarEmoji ?: ""),
-                "avatarUrl"   to (avatarUrl ?: ""),
+            .update(mapOf(
+                "guestProfiles.$userId.name"        to name,
+                "guestProfiles.$userId.avatarColor" to (avatarColor?.toString() ?: ""),
+                "guestProfiles.$userId.avatarEmoji" to (avatarEmoji ?: ""),
+                "guestProfiles.$userId.avatarUrl"   to (avatarUrl ?: ""),
             ))
+            .await()
+    }
+
+    override suspend fun setPlayerReady(roomId: String, userId: String, isReady: Boolean) {
+        rooms.document(roomId)
+            .update("guestProfiles.$userId.ready", if (isReady) "true" else "false")
             .await()
     }
 

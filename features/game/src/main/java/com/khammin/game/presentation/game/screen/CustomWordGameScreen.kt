@@ -428,6 +428,8 @@ private fun CustomWordGameContent(
                             avatarEmoji     = state.avatarEmoji,
                             avatarUrl       = state.avatarUrl,
                             otherPlayers    = state.waitingPlayers.filter { it.userId != state.myUserId },
+                            isReady         = state.waitingPlayers.firstOrNull { it.userId == state.myUserId }?.isReady == true,
+                            onSetReady      = { onIntent(MultiplayerGameIntent.SetReady) },
                             onUpdateProfile = { name, color, emoji ->
                                 onIntent(MultiplayerGameIntent.UpdateGuestProfile(name, color, emoji))
                             },

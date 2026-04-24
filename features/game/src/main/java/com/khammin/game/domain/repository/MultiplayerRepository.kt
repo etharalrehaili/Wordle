@@ -28,4 +28,5 @@ interface MultiplayerRepository {
     suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?, avatarUrl: String? = null)
     suspend fun updateSessionPoints(roomId: String, sessionPoints: Map<String, Int>)
     suspend fun setLobbyWinner(roomId: String, winnerId: String)
+    suspend fun setPlayerReady(roomId: String, userId: String, isReady: Boolean)
 }

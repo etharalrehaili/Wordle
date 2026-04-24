@@ -14,6 +14,7 @@ data class WaitingPlayer(
     val avatarUrl: String? = null,
     val avatarColor: Long? = null,
     val avatarEmoji: String? = null,
+    val isReady: Boolean = false,
 )
 
 data class OpponentProgress(
@@ -121,4 +122,5 @@ sealed class MultiplayerGameIntent : UiIntent {
         val avatarEmoji: String?,
     ) : MultiplayerGameIntent()
     data object RetryConnectivity : MultiplayerGameIntent()
+    data object SetReady : MultiplayerGameIntent()
 }

@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.WaitingPlayer
@@ -35,6 +37,8 @@ fun CustomWordLobbyGuest(
     avatarEmoji: String?,
     avatarUrl: String? = null,
     otherPlayers: List<WaitingPlayer>,
+    isReady: Boolean = false,
+    onSetReady: () -> Unit = {},
     onUpdateProfile: (name: String, color: Long?, emoji: String?) -> Unit,
 ) {
     val totalPlayers = 1 + 1 + otherPlayers.size
@@ -94,8 +98,8 @@ fun CustomWordLobbyGuest(
                 )
                 LobbyPlayerRow(
                     name        = myName.ifBlank { stringResource(R.string.lobby_you) },
-                    badge       = stringResource(R.string.lobby_badge_you_label),
-                    badgeColor  = colors.logoPink,
+                    badge       = if (isReady) stringResource(R.string.lobby_badge_ready) else stringResource(R.string.lobby_badge_you_label),
+                    badgeColor  = if (isReady) colors.logoGreen else colors.logoPink,
                     avatarColor = avatarColor,
                     avatarEmoji = avatarEmoji,
                     avatarUrl   = avatarUrl,
@@ -103,12 +107,23 @@ fun CustomWordLobbyGuest(
                 otherPlayers.forEach { player ->
                     LobbyPlayerRow(
                         name        = player.name,
+                        badge       = if (player.isReady) stringResource(R.string.lobby_badge_ready) else null,
+                        badgeColor  = colors.logoGreen,
                         avatarColor = player.avatarColor,
                         avatarEmoji = player.avatarEmoji,
                         avatarUrl   = player.avatarUrl,
                     )
                 }
             }
+        }
+
+        item {
+            GameButton(
+                label    = if (isReady) stringResource(R.string.lobby_ready_done) else stringResource(R.string.lobby_ready),
+                onClick  = onSetReady,
+                variant  = if (isReady) GameButtonVariant.Muted else GameButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

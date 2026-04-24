@@ -75,6 +75,10 @@
     <string name="multiplayer_waiting_for_host">Waiting for host to start…</string>
     <string name="multiplayer_players_count">Players (%1$d/3)</string>
     <string name="lobby_start_game">Start Game</string>
+    <string name="lobby_ready">Ready</string>
+    <string name="lobby_ready_done">Ready!</string>
+    <string name="lobby_badge_ready">READY</string>
+    <string name="lobby_waiting_ready">Waiting for all players to be ready…</string>
     <string name="lobby_you">You</string>
     <string name="lobby_badge_host">HOST</string>
     <string name="profile_edit">Edit</string>

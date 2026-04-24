@@ -38,6 +38,7 @@ import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
 import com.khammin.game.domain.usecases.game.UpdatePresenceStateUseCase
 import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
 import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
+import com.khammin.game.domain.usecases.game.SetPlayerReadyUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import com.khammin.game.domain.usecases.profile.GetGuestProfileUseCase
@@ -87,6 +88,7 @@ class MultiplayerGameViewModel @Inject constructor(
     private val updateSessionPointsUseCase: UpdateSessionPointsUseCase,
     private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
     private val setLobbyWinnerUseCase: SetLobbyWinnerUseCase,
+    private val setPlayerReadyUseCase: SetPlayerReadyUseCase,
     private val auth: FirebaseAuth
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
@@ -151,6 +153,7 @@ class MultiplayerGameViewModel @Inject constructor(
             MultiplayerGameIntent.RejoinRoom             -> rejoinRoom()
             is MultiplayerGameIntent.UpdateGuestProfile  -> updateGuestProfile(intent.name, intent.avatarColor, intent.avatarEmoji)
             MultiplayerGameIntent.RetryConnectivity      -> retryConnectivity()
+            MultiplayerGameIntent.SetReady               -> setReady()
         }
     }
 
@@ -187,6 +190,16 @@ class MultiplayerGameViewModel @Inject constructor(
         }
         cm.registerNetworkCallback(request, networkCallback!!)
         networkCallbackRegistered = true
+    }
+
+    private fun setReady() {
+        val s = uiState.value
+        if (s.roomId.isEmpty() || s.myUserId.isEmpty()) return
+        val currentlyReady = s.waitingPlayers.firstOrNull { it.userId == s.myUserId }?.isReady == true
+        val newReady = !currentlyReady
+        viewModelScope.launch {
+            runCatching { setPlayerReadyUseCase(s.roomId, s.myUserId, newReady) }
+        }
     }
 
     private fun retryConnectivity() {
@@ -334,6 +347,7 @@ class MultiplayerGameViewModel @Inject constructor(
                             avatarColor = profile["avatarColor"]?.toLongOrNull() ?: existing?.avatarColor,
                             avatarEmoji = profile["avatarEmoji"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarEmoji,
                             avatarUrl   = profile["avatarUrl"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarUrl,
+                            isReady     = profile["ready"] == "true",
                         )
                         existing != null -> existing
                         else -> WaitingPlayer(guestId, guestNameFromId(guestId)) // placeholder until fetchGuestInfo fills it in
@@ -691,7 +705,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     avatarEmoji = resolvedEmoji,
                 )),
                 waitingPlayers    = waitingPlayers.filter { it.userId != guestId } +
-                    WaitingPlayer(guestId, resolvedName, avatarUrl, resolvedColor, resolvedEmoji),
+                    WaitingPlayer(guestId, resolvedName, avatarUrl, resolvedColor, resolvedEmoji, existing?.isReady ?: false),
             )
         }
     }
