@@ -38,6 +38,9 @@ class GameViewModel @Inject constructor(
     }
 
     private fun loadWords(language: String, wordLength: Int) {
+        val current = uiState.value
+        if (current.wordList.isNotEmpty() && current.wordLength == wordLength && current.targetWord.isNotEmpty()) return
+
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
             when (val result = getWordsUseCase(language, wordLength)) {
