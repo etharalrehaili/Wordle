@@ -55,22 +55,20 @@ import com.khammin.core.presentation.theme.GameDesignTheme.colors
 fun JoinRoomBottomSheet(
     onJoin: (String) -> Unit,
     onDismiss: () -> Unit,
-    roomCode: String = "",
-    onRoomCodeChange: (String) -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
+    var roomCode by remember { mutableStateOf("") }
 
+    // Local validation (instant, no network)
     val containsArabic = roomCode.any { it in '\u0600'..'\u06FF' }
     val isValid = roomCode.trim().length == 6 && !containsArabic
 
-    var hasAttempted by remember { mutableStateOf(false) }
-
+    // Combined error: local takes priority over server error
     val displayError = when {
         containsArabic -> stringResource(R.string.join_room_error_arabic)
-        hasAttempted && roomCode.trim().length < 6 -> stringResource(R.string.join_room_error_length)
-        else -> errorMessage
+        else           -> errorMessage  // from ViewModel (not found / already used)
     }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -157,7 +155,7 @@ fun JoinRoomBottomSheet(
 
                 OutlinedTextField(
                     value         = roomCode,
-                    onValueChange = { if (it.length <= 6) onRoomCodeChange(it.uppercase()) },
+                    onValueChange = { if (it.length <= 6) roomCode = it.uppercase() },
                     placeholder   = {
                         Text(
                             text  = "ABC123",
@@ -226,9 +224,10 @@ fun JoinRoomBottomSheet(
                     GameButton(
                         label    = stringResource(R.string.join_room_join),
                         enabled  = roomCode.isNotEmpty(),
-                        onClick = {
-                            hasAttempted = true
-                            if (isValid) onJoin(roomCode.trim())
+                        onClick  = {
+                            if (isValid) {
+                                onJoin(roomCode.trim())
+                            }
                         },
                         variant  = GameButtonVariant.Primary,
                         modifier = Modifier.fillMaxWidth()

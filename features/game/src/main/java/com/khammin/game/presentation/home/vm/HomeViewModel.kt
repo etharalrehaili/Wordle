@@ -2,13 +2,10 @@ package com.khammin.game.presentation.home.vm
 
 import android.content.Context
 import android.content.res.Configuration
+import android.util.Log
 import java.util.Locale
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.UserProfileChangeRequest
 import com.khammin.authentication.domain.usecase.GetAuthStateUseCase
 import com.khammin.core.domain.model.GameRoom
 import com.khammin.core.mvi.BaseMviViewModel
@@ -16,7 +13,6 @@ import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
 import kotlinx.coroutines.tasks.await
 import com.khammin.game.domain.usecases.challenge.GetChallengeSolvedStateUseCase
-import com.khammin.game.domain.usecases.challenges.InitializeChallengeProgressUseCase
 import com.khammin.game.domain.usecases.game.CreateRoomUseCase
 import com.khammin.game.domain.usecases.game.FindRoomByCodeUseCase
 import com.khammin.game.domain.usecases.game.GetRoomUseCase
@@ -25,8 +21,6 @@ import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.JoinRoomUseCase
 import com.khammin.game.domain.usecases.profile.CreateProfileUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
-import com.khammin.game.domain.usecases.profile.ObserveProfileUseCase
-import com.khammin.game.domain.usecases.stats.MigrateLocalStatsUseCase
 import com.khammin.game.presentation.home.contract.HomeEffect
 import com.khammin.game.presentation.home.contract.HomeIntent
 import com.khammin.game.presentation.home.contract.HomeUiState
@@ -34,8 +28,6 @@ import com.khammin.game.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -45,10 +37,8 @@ class HomeViewModel @Inject constructor(
     getAuthState : GetAuthStateUseCase,
     getChallengeSolvedState: GetChallengeSolvedStateUseCase,
     getGameProgressUseCase: GetGameProgressUseCase,
-    private val getProfileUseCase         : GetProfileUseCase,
-    private val observeProfileUseCase     : ObserveProfileUseCase,
-    private val createProfileUseCase      : CreateProfileUseCase,
-    private val migrateLocalStatsUseCase  : MigrateLocalStatsUseCase,
+    private val getProfileUseCase   : GetProfileUseCase,
+    private val createProfileUseCase: CreateProfileUseCase,
     private val createRoomUseCase: CreateRoomUseCase,
     private val joinRoomUseCase: JoinRoomUseCase,
     private val addGuestToRoomUseCase: com.khammin.game.domain.usecases.game.AddGuestToRoomUseCase,
@@ -56,18 +46,11 @@ class HomeViewModel @Inject constructor(
     private val getRoomUseCase       : GetRoomUseCase,
     private val getWordsUseCase: GetWordsUseCase,
     private val networkUtils: NetworkUtils,
-    private val initializeChallengeProgressUseCase: InitializeChallengeProgressUseCase,
 ) : BaseMviViewModel<HomeIntent, HomeUiState, HomeEffect>(
     initialState = HomeUiState()
 ) {
 
-    private val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-
     init {
-        viewModelScope.launch {
-            ensureAnonymousAuth()
-        }
-
         viewModelScope.launch {
             getAuthState().collect {
                 val user = FirebaseAuth.getInstance().currentUser
@@ -77,40 +60,18 @@ class HomeViewModel @Inject constructor(
                 if (isRealUser) ensureProfileExists()
             }
         }
-
         viewModelScope.launch {
             getGameProgressUseCase().collect { progress ->
                 setState {
-                    val user = FirebaseAuth.getInstance().currentUser
-                    val isGuest = user == null || user.isAnonymous
                     copy(
-                        easyWordsSolved    = if (isGuest) progress.easyWordsSolved else easyWordsSolved,
+                        easyWordsSolved    = progress.easyWordsSolved,
                         classicWordsSolved = progress.classicWordsSolved,
                     )
                 }
             }
         }
-
         viewModelScope.launch {
-            getAuthState()
-                .flatMapLatest { _ ->
-                    val user = FirebaseAuth.getInstance().currentUser
-                    if (user != null && !user.isAnonymous) {
-                        observeProfileUseCase(user.uid)
-                    } else {
-                        flowOf(null)
-                    }
-                }
-                .collect { profile ->
-                    if (profile != null) {
-                        setState {
-                            copy(easyWordsSolved = profile.enWordsSolved + profile.arWordsSolved)
-                        }
-                    }
-                }
-        }
-
-        viewModelScope.launch {
+            // check both languages, show countdown if either is solved
             getChallengeSolvedState("en").combine(
                 getChallengeSolvedState("ar")
             ) { enSolved, arSolved ->
@@ -119,36 +80,23 @@ class HomeViewModel @Inject constructor(
                 setState { copy(hasSolvedChallenge = solved) }
             }
         }
-    }
-
-    private suspend fun ensureAnonymousAuth() {
-        val auth = FirebaseAuth.getInstance()
-        if (auth.currentUser == null) {
-            try {
-                auth.signInAnonymously().await()
-                auth.currentUser?.let { setGuestDisplayName(it) }
-            } catch (e: Exception) {
-                return
+        viewModelScope.launch {
+            // Prefetch anonymous auth so Firebase is ready before the user taps "Create Room".
+            // Without this, sign-in happens at room creation time and adds ~5 s of latency.
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) {
+                Log.d("RoomPerf", "[prefetch] No user — warming up anonymous sign-in")
+                val start = System.currentTimeMillis()
+                try {
+                    auth.signInAnonymously().await()
+                    Log.d("RoomPerf", "[prefetch] Anonymous sign-in complete | step=${System.currentTimeMillis() - start}ms")
+                } catch (e: Exception) {
+                    Log.d("RoomPerf", "[prefetch] Anonymous sign-in failed: ${e.message}")
+                }
+            } else {
+                Log.d("RoomPerf", "[prefetch] User already authenticated (uid=${auth.currentUser?.uid}) — skipping")
             }
         }
-        auth.currentUser?.uid?.let { uid ->
-            if (auth.currentUser?.isAnonymous == true) {
-                runCatching { initializeChallengeProgressUseCase(uid) }
-            }
-        }
-        val hasShown = prefs.getBoolean("hasShownWelcomeSheet", false)
-        if (!hasShown) {
-            setState { copy(showWelcomeSheet = true) }
-        }
-    }
-
-    private suspend fun setGuestDisplayName(user: FirebaseUser) {
-        if (!user.displayName.isNullOrEmpty()) return
-        val guestName = "GUEST-${user.uid.take(5).uppercase()}"
-        val request = UserProfileChangeRequest.Builder()
-            .setDisplayName(guestName)
-            .build()
-        try { user.updateProfile(request).await() } catch (_: Exception) {}
     }
 
     private val cachedWords = mutableMapOf<String, List<String>>()
@@ -168,16 +116,20 @@ class HomeViewModel @Inject constructor(
     private fun ensureProfileExists() {
         viewModelScope.launch {
             val user  = FirebaseAuth.getInstance().currentUser ?: return@launch
+
             if (user.isAnonymous) return@launch
+
             val uid   = user.uid
             val email = user.email ?: uid
+
             when (val result = getProfileUseCase(uid)) {
                 is Resource.Success -> {
+                    // Only create a profile when the server definitively says none exists.
+                    // Resource.Error means a network/server failure — the profile may well
+                    // exist on the server, so creating here would produce a duplicate.
                     if (result.data == null) {
                         createProfileUseCase(uid, email.substringBefore("@"))
                     }
-                    runCatching { initializeChallengeProgressUseCase(uid) }
-                    runCatching { migrateLocalStatsUseCase() }
                 }
                 else -> Unit
             }
@@ -190,16 +142,31 @@ class HomeViewModel @Inject constructor(
         onRoomCreated: (String, String) -> Unit,
     ) {
         viewModelScope.launch {
+            val perfStart = System.currentTimeMillis()
+            val roomType  = if (customWord != null) "custom" else "random"
+            Log.d("RoomPerf", "[$roomType] ── START ── language=$language")
+
             if (!networkUtils.isConnected()) {
                 setState { copy(noInternetError = true) }
+                Log.d("RoomPerf", "[$roomType] Aborted: no internet | elapsed=${System.currentTimeMillis() - perfStart}ms")
                 return@launch
             }
+            Log.d("RoomPerf", "[$roomType] Network check passed | elapsed=${System.currentTimeMillis() - perfStart}ms")
 
             setState { copy(createRoomLoading = true) }
 
+            // Anonymous auth is required to associate the room with a host ID,
+            // but we don't want to force users to create an account just to play with friends.
+            // If they're not logged in, sign them in anonymously. This way they can still create/join
+            // rooms and have a consistent identity across sessions until they choose to log out or create an account.
             val auth = FirebaseAuth.getInstance()
             if (auth.currentUser == null) {
+                val authStart = System.currentTimeMillis()
+                Log.d("RoomPerf", "[$roomType] No authenticated user — starting anonymous sign-in | elapsed=${System.currentTimeMillis() - perfStart}ms")
                 try { auth.signInAnonymously().await() } catch (_: Exception) { /* proceed as guest */ }
+                Log.d("RoomPerf", "[$roomType] Anonymous sign-in done | step=${System.currentTimeMillis() - authStart}ms | elapsed=${System.currentTimeMillis() - perfStart}ms")
+            } else {
+                Log.d("RoomPerf", "[$roomType] User already authenticated (uid=${auth.currentUser?.uid}) | elapsed=${System.currentTimeMillis() - perfStart}ms")
             }
 
             val myId = auth.currentUser?.uid
@@ -208,11 +175,22 @@ class HomeViewModel @Inject constructor(
             val isCustomWordRoom = customWord != null
             val isWordProvided   = !customWord.isNullOrEmpty()
 
+            val wordStart = System.currentTimeMillis()
             val (word, wordLength) = when {
-                isWordProvided -> customWord!!.uppercase() to customWord.length
-                isCustomWordRoom -> "" to 0
-                else -> "" to 0
+                isWordProvided -> {
+                    Log.d("WordleRoom", "customWord (raw)='$customWord'  stored='${customWord!!.uppercase()}'  length=${customWord.length}")
+                    customWord.uppercase() to customWord.length
+                }
+                isCustomWordRoom -> {
+                    // Host will set the word in the lobby — create room with empty word in waiting status
+                    "" to 0
+                }
+                else -> {
+                    // Random word lobby — host picks word at start time
+                    "" to 0
+                }
             }
+            Log.d("RoomPerf", "[$roomType] Word resolved: word='$word' wordLength=$wordLength | step=${System.currentTimeMillis() - wordStart}ms | elapsed=${System.currentTimeMillis() - perfStart}ms")
 
             val room = GameRoom(
                 hostId       = myId,
@@ -220,11 +198,17 @@ class HomeViewModel @Inject constructor(
                 language     = language,
                 wordLength   = wordLength,
                 isCustomWord = isCustomWordRoom,
-                isLobbyMode  = !isCustomWordRoom,
+                isLobbyMode  = !isCustomWordRoom,   // true for random word path
             )
+            Log.d("RoomPerf", "[$roomType] GameRoom object built (isCustomWord=$isCustomWordRoom isLobbyMode=${!isCustomWordRoom}) | elapsed=${System.currentTimeMillis() - perfStart}ms")
 
+            val firestoreStart = System.currentTimeMillis()
+            Log.d("RoomPerf", "[$roomType] Calling createRoomUseCase → Firestore write starting | elapsed=${System.currentTimeMillis() - perfStart}ms")
             val roomId = createRoomUseCase(room)
+            Log.d("RoomPerf", "[$roomType] Firestore write ack received | step=${System.currentTimeMillis() - firestoreStart}ms | elapsed=${System.currentTimeMillis() - perfStart}ms | roomId=$roomId")
+
             setState { copy(createRoomLoading = false) }
+            Log.d("RoomPerf", "[$roomType] ── DONE — navigating to room | total=${System.currentTimeMillis() - perfStart}ms")
             onRoomCreated(roomId, myId)
         }
     }
@@ -259,6 +243,7 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
 
+            // ← Check if room is still joinable
             val room = getRoomUseCase(fullRoomId)
             when {
                 room == null -> {
@@ -305,51 +290,5 @@ class HomeViewModel @Inject constructor(
         setState { copy(noInternetError = false) }
     }
 
-    fun markWelcomeSheetShown() {
-        prefs.edit().putBoolean("hasShownWelcomeSheet", true).apply()
-        setState { copy(showWelcomeSheet = false) }
-    }
-
-    fun signInWithGoogle(idToken: String) {
-        viewModelScope.launch {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val auth = FirebaseAuth.getInstance()
-            val currentUser = auth.currentUser
-            try {
-                if (currentUser != null && currentUser.isAnonymous) {
-                    try {
-                        currentUser.linkWithCredential(credential).await()
-                    } catch (e: FirebaseAuthUserCollisionException) {
-                        auth.signInWithCredential(credential).await()
-                    }
-                } else {
-                    auth.signInWithCredential(credential).await()
-                }
-            } catch (e: Exception) {
-                // Sign-in failed silently
-            }
-        }
-    }
-
-    override fun onEvent(intent: HomeIntent) {
-        when (intent) {
-            is HomeIntent.ShowGameModeSheet    -> setState { copy(showGameModeSheet = intent.show) }
-            is HomeIntent.ShowLengthSheet      -> setState { copy(showLengthSheet = intent.show) }
-            is HomeIntent.ShowMultiplayerSheet -> setState { copy(showMultiplayerSheet = intent.show) }
-            is HomeIntent.ShowWordPickerSheet  -> setState {
-                copy(
-                    showWordPickerSheet = intent.show,
-                    createRoomType = if (!intent.show) null else createRoomType,
-                )
-            }
-            is HomeIntent.ShowJoinRoomSheet    -> setState {
-                copy(
-                    showJoinRoomSheet = intent.show,
-                    joinRoomCode = if (!intent.show) "" else joinRoomCode,
-                )
-            }
-            is HomeIntent.SetCreateRoomType    -> setState { copy(createRoomType = intent.type) }
-            is HomeIntent.SetJoinRoomCode      -> setState { copy(joinRoomCode = intent.code) }
-        }
-    }
+    override fun onEvent(intent: HomeIntent) = Unit
 }
