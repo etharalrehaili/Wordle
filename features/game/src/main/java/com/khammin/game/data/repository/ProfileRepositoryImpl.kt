@@ -14,7 +14,6 @@ import com.khammin.game.data.mappers.toEntity
 import com.khammin.game.data.remote.datasource.profile.ProfileRemoteDataSource
 import com.khammin.game.domain.model.Profile
 import com.khammin.game.domain.repository.ProfileRepository
-import java.io.IOException
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
@@ -44,7 +43,7 @@ class ProfileRepositoryImpl @Inject constructor(
             val remoteProfile = remote.getProfile(firebaseUid) ?: return null
             db.profileDao().insertProfile(remoteProfile.toEntity())
             remoteProfile.toDomain()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             null
         }
     }
@@ -78,9 +77,18 @@ class ProfileRepositoryImpl @Inject constructor(
                 documentId, firebaseUid, name, avatarUrl,
                 language, gamesPlayed, wordsSolved, winPercentage, currentPoints
             )
-            db.profileDao().insertProfile(profile.toEntity())
-            profile.toDomain()
-        } catch (e: IOException) {
+            // Fix: Strapi's PUT response may omit or blank-out firebaseUid depending on
+            // JSON field mapping. Always use the caller-supplied uid as the cache key so
+            // the existing Room row is replaced rather than a new empty-uid row inserted.
+            val entity = profile.toEntity().let {
+                if (it.firebaseUid.isBlank()) it.copy(firebaseUid = firebaseUid) else it
+            }
+            db.profileDao().insertProfile(entity)
+            entity.toDomain()
+        } catch (e: Exception) {
+            // Catch ALL exceptions (IOException for no-connectivity, HttpException for
+            // server errors, plain Exception from remote.updateProfile's internal
+            // getProfile call) so the update is never silently dropped.
             // Build the updated profile from the cached record so that the
             // opposite language's stats are preserved intact.
             val cached = db.profileDao().getProfile(firebaseUid)
@@ -157,24 +165,31 @@ class ProfileRepositoryImpl @Inject constructor(
     override suspend fun syncPendingUpdates() {
         val pending = db.profileDao().getPendingSyncProfiles()
         for (entity in pending) {
-            val language     = entity.pendingSyncLanguage ?: "en"
-            val gamesPlayed  = if (language == "ar") entity.arGamesPlayed  else entity.enGamesPlayed
-            val wordsSolved  = if (language == "ar") entity.arWordsSolved  else entity.enWordsSolved
-            val winPct       = if (language == "ar") entity.arWinPercentage else entity.enWinPercentage
-            val points       = if (language == "ar") entity.arCurrentPoints else entity.enCurrentPoints
-
-            val synced = remote.updateProfile(
-                documentId    = entity.documentId,
-                firebaseUid   = entity.firebaseUid,
-                name          = entity.name,
-                avatarUrl     = entity.avatarUrl,
-                language      = language,
-                gamesPlayed   = gamesPlayed,
-                wordsSolved   = wordsSolved,
-                winPercentage = winPct,
-                currentPoints = points,
+            // Use syncProfile instead of updateProfile: the pending entity already has
+            // both languages' stats fully merged (done at offline-save time), so we
+            // don't need a round-trip getProfile call to fetch the "other language" stats.
+            val synced = remote.syncProfile(
+                documentId      = entity.documentId,
+                firebaseUid     = entity.firebaseUid,
+                name            = entity.name,
+                avatarUrl       = entity.avatarUrl,
+                enGamesPlayed   = entity.enGamesPlayed,
+                enWordsSolved   = entity.enWordsSolved,
+                enWinPercentage = entity.enWinPercentage,
+                enCurrentPoints = entity.enCurrentPoints,
+                enLastPlayedAt  = entity.enLastPlayedAt,
+                arGamesPlayed   = entity.arGamesPlayed,
+                arWordsSolved   = entity.arWordsSolved,
+                arWinPercentage = entity.arWinPercentage,
+                arCurrentPoints = entity.arCurrentPoints,
+                arLastPlayedAt  = entity.arLastPlayedAt,
             )
-            db.profileDao().insertProfile(synced.toEntity()) // clears pendingSync
+            // Always use known firebaseUid as cache key (same safety as updateProfile above)
+            db.profileDao().insertProfile(
+                synced.toEntity().let {
+                    if (it.firebaseUid.isBlank()) it.copy(firebaseUid = entity.firebaseUid) else it
+                }
+            )
         }
     }
 

@@ -1,10 +1,7 @@
 package com.khammin.core.presentation.components.bottomsheets
 
-import android.content.Context
-import android.view.inputmethod.InputMethodManager
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -38,11 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -75,15 +70,8 @@ fun JoinRoomBottomSheet(
         containsArabic -> stringResource(R.string.join_room_error_arabic)
         else           -> errorMessage  // from ViewModel (not found / already used)
     }
-
+    val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val view         = LocalView.current
-    val imm          = LocalContext.current.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-
-    fun hideKeyboard() {
-        focusManager.clearFocus()
-        imm.hideSoftInputFromWindow(view.windowToken, 0)
-    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -97,10 +85,10 @@ fun JoinRoomBottomSheet(
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .pointerInput(Unit) {
-                    awaitEachGesture {
-                        awaitFirstDown(pass = PointerEventPass.Initial)
-                        hideKeyboard()
-                    }
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                    })
                 },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -188,10 +176,8 @@ fun JoinRoomBottomSheet(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            if (isValid) {
-                                hideKeyboard()
-                                onJoin(roomCode.trim())
-                            }
+                            focusManager.clearFocus()
+                            if (isValid) onJoin(roomCode.trim())
                         }
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -240,7 +226,6 @@ fun JoinRoomBottomSheet(
                         enabled  = roomCode.isNotEmpty(),
                         onClick  = {
                             if (isValid) {
-                                hideKeyboard()
                                 onJoin(roomCode.trim())
                             }
                         },

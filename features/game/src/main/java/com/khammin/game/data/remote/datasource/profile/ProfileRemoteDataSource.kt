@@ -34,6 +34,28 @@ interface ProfileRemoteDataSource {
      */
     suspend fun uploadAvatar(imageUri: Uri, context: Context): String
 
+    /**
+     * Pushes a complete, already-merged profile to Strapi without first fetching current
+     * server state. Used by [ProfileSyncWorker] so the pending-sync record (which already
+     * contains both languages' stats) is written atomically in one round-trip.
+     */
+    suspend fun syncProfile(
+        documentId: String,
+        firebaseUid: String,
+        name: String,
+        avatarUrl: String?,
+        enGamesPlayed: Int,
+        enWordsSolved: Int,
+        enWinPercentage: Double,
+        enCurrentPoints: Int,
+        enLastPlayedAt: String?,
+        arGamesPlayed: Int,
+        arWordsSolved: Int,
+        arWinPercentage: Double,
+        arCurrentPoints: Int,
+        arLastPlayedAt: String?,
+    ): ProfileItem
+
     /** Fetches the top [limit] profiles sorted by points descending. */
     suspend fun getLeaderboard(limit: Int, language: String): List<ProfileItem>
 }

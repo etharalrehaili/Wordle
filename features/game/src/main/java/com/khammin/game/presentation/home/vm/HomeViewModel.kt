@@ -124,12 +124,12 @@ class HomeViewModel @Inject constructor(
 
             when (val result = getProfileUseCase(uid)) {
                 is Resource.Success -> {
+                    // Only create a profile when the server definitively says none exists.
+                    // Resource.Error means a network/server failure — the profile may well
+                    // exist on the server, so creating here would produce a duplicate.
                     if (result.data == null) {
                         createProfileUseCase(uid, email.substringBefore("@"))
                     }
-                }
-                is Resource.Error -> {
-                    createProfileUseCase(uid, email.substringBefore("@"))
                 }
                 else -> Unit
             }
