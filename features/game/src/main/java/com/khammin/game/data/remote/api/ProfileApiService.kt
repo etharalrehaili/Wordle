@@ -18,7 +18,8 @@ import retrofit2.http.Query
 interface ProfileApiService {
     @GET("profiles")
     suspend fun getProfile(
-        @Query("filters[firebaseUid][\$eq]") firebaseUid: String
+        @Query("filters[firebaseUid][\$eq]") firebaseUid: String,
+        @Query("sort[0]") sort: String = "createdAt:asc",
     ): ProfileResponse
 
     @POST("profiles")

@@ -112,6 +112,39 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
         return "https://khammin.com$relativePath"
     }
 
+    override suspend fun syncProfile(
+        documentId: String,
+        firebaseUid: String,
+        name: String,
+        avatarUrl: String?,
+        enGamesPlayed: Int,
+        enWordsSolved: Int,
+        enWinPercentage: Double,
+        enCurrentPoints: Int,
+        enLastPlayedAt: String?,
+        arGamesPlayed: Int,
+        arWordsSolved: Int,
+        arWinPercentage: Double,
+        arCurrentPoints: Int,
+        arLastPlayedAt: String?,
+    ): ProfileItem {
+        val data = UpdateProfileData(
+            name            = name,
+            avatarUrl       = avatarUrl,
+            enGamesPlayed   = enGamesPlayed,
+            enWordsSolved   = enWordsSolved,
+            enWinPercentage = enWinPercentage,
+            enCurrentPoints = enCurrentPoints,
+            enLastPlayedAt  = enLastPlayedAt,
+            arGamesPlayed   = arGamesPlayed,
+            arWordsSolved   = arWordsSolved,
+            arWinPercentage = arWinPercentage,
+            arCurrentPoints = arCurrentPoints,
+            arLastPlayedAt  = arLastPlayedAt,
+        )
+        return api.updateProfile(documentId, UpdateProfileRequest(data)).data
+    }
+
     /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */
     override suspend fun getLeaderboard(limit: Int, language: String): List<ProfileItem> {
         val sort = if (language == "ar") "arCurrentPoints:desc" else "enCurrentPoints:desc"
