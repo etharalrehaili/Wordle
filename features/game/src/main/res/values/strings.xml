@@ -14,6 +14,30 @@
 
     <!-- Challenge Screen -->
     <string name="challenge_no_challenge_today">No challenge for today</string>
+    <string name="challenge_status_play">PLAY</string>
+    <string name="challenge_status_in_progress">IN PROGRESS</string>
+    <string name="challenge_status_completed">COMPLETED</string>
+    <string name="difficulty_beginner">Easy</string>
+    <string name="difficulty_intermediate">Medium</string>
+    <string name="difficulty_expert">Hard</string>
+    <string name="difficulty_badge_beginner">BEGINNER</string>
+    <string name="difficulty_badge_intermediate">INTERMEDIATE</string>
+    <string name="difficulty_badge_expert">EXPERT</string>
+    <string name="challenge_guess_4">Guess the word in less than 4 guesses</string>
+    <string name="challenge_guess_6">Guess the word in 6 tries</string>
+    <string name="challenge_guess_2min">Guess in less than 2 minutes</string>
+    <string name="challenge_guess_streak">3 correct guesses in a row</string>
+    <string name="challenge_guess_expert">Guess without any hints</string>
+    <string name="challenge_first_guess">Guess the word on the first try</string>
+    <string name="challenge_play_3_games">Play 3 games in a row</string>
+    <string name="challenge_win_multiplayer">Win a multiplayer match</string>
+    <string name="challenge_5_letter_word">Guess a 5-letter word</string>
+    <string name="challenge_guess_1min">Guess the word in under 1 minute</string>
+    <string name="challenge_guess_2_tries">Guess the word in 2 tries</string>
+    <string name="challenge_win_5_multiplayer">Win 5 multiplayer matches</string>
+    <string name="challenge_perfect_week">Play every day for a week</string>
+    <string name="challenge_30s">Guess the word in 30 seconds</string>
+    <string name="challenges_title">Challenges</string>
 
     <!-- Countdown -->
     <string name="countdown_next_word">Next word available in</string>
@@ -32,6 +56,8 @@
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
+    <string name="settings_preferences_section">Preferences</string>
+    <string name="settings_language">Language</string>
     <string name="settings_account_section">Account Settings</string>
     <string name="settings_app_section">App Settings</string>
     <string name="settings_support_section">Support</string>
@@ -54,6 +80,10 @@
     <string name="profile_stat_solved">Solved</string>
     <string name="profile_stat_win_rate">Win Rate</string>
     <string name="profile_updated_successfully">Profile Updated Successfully</string>
+    <string name="signed_in_successfully">Signed in successfully</string>
+    <string name="profile_guest_banner_title">Don\'t lose your progress!</string>
+    <string name="profile_guest_banner_subtitle">Sign in to save your points and appear on the leaderboard</string>
+    <string name="profile_sign_in_google">Sign in with Google</string>
     <string name="profile_stat_arabic">ar</string>
     <string name="profile_stat_english">en</string>
     <string name="error_name_too_long">Name must not exceed 25 characters</string>

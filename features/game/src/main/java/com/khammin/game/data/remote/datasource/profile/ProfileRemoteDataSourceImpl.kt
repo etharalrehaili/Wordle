@@ -14,6 +14,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import android.util.Log
 import javax.inject.Inject
 
 /**
@@ -26,7 +27,14 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
 
     /** Queries Strapi for a profile with matching firebaseUid. Returns first result or null. */
     override suspend fun getProfile(firebaseUid: String): ProfileItem? {
-        return api.getProfile(firebaseUid).data.firstOrNull()
+        Log.d("ProfilePerf", "getProfile query → GET /profiles?filters[firebaseUid][\$eq]=$firebaseUid")
+        val response = api.getProfile(firebaseUid)
+        Log.d("ProfilePerf", "getProfile raw response → count=${response.data.size} items=${
+            response.data.map { "id=${it.id} docId=${it.documentId} uid=${it.firebaseUid} name=${it.name}" }
+        }")
+        val result = response.data.firstOrNull()
+        if (result == null) Log.d("ProfilePerf", "getProfile → returned null (empty data list)")
+        return result
     }
 
     /** Creates a new profile in Strapi with the user's Firebase UID and display name. */

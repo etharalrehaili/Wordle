@@ -35,7 +35,7 @@ fun SegmentedButton(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = colors.buttonTaupe.copy(alpha = 0.25f),
+                color = colors.surface,
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(4.dp)
@@ -47,17 +47,17 @@ fun SegmentedButton(
             options.forEach { option ->
                 val isSelected = option == selectedOption
                 val backgroundColor by animateColorAsState(
-                    targetValue   = if (isSelected) colors.buttonPink.copy(alpha = 0.20f) else Color.Transparent,
+                    targetValue   = if (isSelected) colors.logoBlue.copy(alpha = 0.15f) else Color.Transparent,
                     animationSpec = tween(durationMillis = 250),
                     label         = "segmentBg"
                 )
                 val textColor by animateColorAsState(
-                    targetValue   = if (isSelected) colors.buttonPink else colors.body.copy(alpha = 0.45f),
+                    targetValue   = if (isSelected) colors.logoBlue else colors.body.copy(alpha = 0.45f),
                     animationSpec = tween(durationMillis = 250),
                     label         = "segmentText"
                 )
                 val borderColor by animateColorAsState(
-                    targetValue   = if (isSelected) colors.buttonPink.copy(alpha = 0.40f) else Color.Transparent,
+                    targetValue   = if (isSelected) colors.logoBlue.copy(alpha = 0.40f) else Color.Transparent,
                     animationSpec = tween(durationMillis = 250),
                     label         = "segmentBorder"
                 )

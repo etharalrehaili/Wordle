@@ -13,6 +13,7 @@ data class GuestProfileData(
     val name: String,
     val avatarColor: Long?,
     val avatarEmoji: String?,
+    val avatarUri: String?,
 )
 
 class GuestProfileDataStore @Inject constructor(
@@ -20,9 +21,10 @@ class GuestProfileDataStore @Inject constructor(
 ) {
     companion object {
         val KEY_HAS_PROFILE  = booleanPreferencesKey("guest_has_profile")
-        val KEY_NAME         = stringPreferencesKey("guest_name")
+        val KEY_NAME         = stringPreferencesKey("guest_display_name")
         val KEY_AVATAR_COLOR = longPreferencesKey("guest_avatar_color")
         val KEY_AVATAR_EMOJI = stringPreferencesKey("guest_avatar_emoji")
+        val KEY_AVATAR_URI   = stringPreferencesKey("guest_avatar_uri")
     }
 
     suspend fun getProfile(): GuestProfileData? {
@@ -32,10 +34,16 @@ class GuestProfileDataStore @Inject constructor(
             name        = prefs[KEY_NAME] ?: return null,
             avatarColor = prefs[KEY_AVATAR_COLOR],
             avatarEmoji = prefs[KEY_AVATAR_EMOJI],
+            avatarUri   = prefs[KEY_AVATAR_URI],
         )
     }
 
-    suspend fun saveProfile(name: String, avatarColor: Long?, avatarEmoji: String?) {
+    suspend fun saveProfile(
+        name: String,
+        avatarColor: Long?,
+        avatarEmoji: String?,
+        avatarUri: String? = null,
+    ) {
         dataStore.edit { prefs ->
             prefs[KEY_HAS_PROFILE] = true
             prefs[KEY_NAME]        = name
@@ -43,6 +51,12 @@ class GuestProfileDataStore @Inject constructor(
             else prefs.remove(KEY_AVATAR_COLOR)
             if (avatarEmoji != null) prefs[KEY_AVATAR_EMOJI] = avatarEmoji
             else prefs.remove(KEY_AVATAR_EMOJI)
+            if (avatarUri != null) prefs[KEY_AVATAR_URI] = avatarUri
+            else prefs.remove(KEY_AVATAR_URI)
         }
+    }
+
+    suspend fun clearProfile() {
+        dataStore.edit { it.clear() }
     }
 }

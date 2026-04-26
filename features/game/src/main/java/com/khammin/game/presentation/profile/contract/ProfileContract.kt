@@ -14,7 +14,11 @@ data class ProfileUiState(
     val pendingAvatarUri: Uri? = null,
     val isEditMode: Boolean   = false,
     val editName: String      = "",
-    val isLoading: Boolean    = false,
+    val isLoading: Boolean     = false,
+    val isRefreshing: Boolean  = false,
+    val isSaving: Boolean      = false,
+    val isGuest: Boolean      = false,
+    val totalPoints: Int      = 0,
     val enGamesPlayed: Int = 0,
     val enWordsSolved: Int = 0,
     val enWinPercentage: Int = 0,
@@ -27,6 +31,7 @@ data class ProfileUiState(
 
 sealed interface ProfileEffect : UiEffect {
     data object ProfileSaved : ProfileEffect
+    data object SignedInWithGoogle : ProfileEffect
     data class ShowError(val message: String) : ProfileEffect
 }
 

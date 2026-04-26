@@ -19,6 +19,30 @@
     <string name="challenge_next_word_label">الكلمة الجديدة ستكون متاحة خلال</string>
     <string name="not_in_word_list">ليست في قائمة الكلمات</string>
     <string name="challenge_no_challenge_today">لا يوجد تحدي اليوم</string>
+    <string name="challenge_status_play">العب</string>
+    <string name="challenge_status_in_progress">جارٍ</string>
+    <string name="challenge_status_completed">مكتمل</string>
+    <string name="difficulty_beginner">سهل</string>
+    <string name="difficulty_intermediate">متوسط</string>
+    <string name="difficulty_expert">صعب</string>
+    <string name="difficulty_badge_beginner">مبتدئ</string>
+    <string name="difficulty_badge_intermediate">متوسط</string>
+    <string name="difficulty_badge_expert">خبير</string>
+    <string name="challenge_guess_4">خمّن الكلمة في اقل من ٤ محاولات</string>
+    <string name="challenge_guess_6">خمّن الكلمة في ٦ محاولات</string>
+    <string name="challenge_guess_2min">خمّن في أقل من دقيقتين</string>
+    <string name="challenge_guess_streak">٣ إجابات صحيحة متتالية</string>
+    <string name="challenge_guess_expert">خمّن بدون أي تلميحات</string>
+    <string name="challenge_first_guess">خمّن الكلمة من المحاولة الأولى</string>
+    <string name="challenge_play_3_games">العب ٣ مباريات متتالية</string>
+    <string name="challenge_win_multiplayer">اربح مباراة متعددة اللاعبين</string>
+    <string name="challenge_5_letter_word">خمّن كلمة من ٥ حروف</string>
+    <string name="challenge_guess_1min">خمّن الكلمة في أقل من دقيقة</string>
+    <string name="challenge_guess_2_tries">خمّن الكلمة في محاولتين</string>
+    <string name="challenge_win_5_multiplayer">اربح ٥ مباريات متعددة اللاعبين</string>
+    <string name="challenge_perfect_week">العب كل يوم لمدة أسبوع</string>
+    <string name="challenge_30s">خمّن الكلمة في ٣٠ ثانية</string>
+    <string name="challenges_title">التحديات</string>
 
     <!-- Leaderboard Screen -->
     <string name="filter_all_time">كل الأوقات</string>
@@ -33,6 +57,8 @@
 
     <!-- Settings Screen -->
     <string name="settings_title">الإعدادات</string>
+    <string name="settings_preferences_section">التفضيلات</string>
+    <string name="settings_language">اللغة</string>
     <string name="settings_account_section">إعدادات الحساب</string>
     <string name="settings_app_section">إعدادات التطبيق</string>
     <string name="settings_support_section">الدعم</string>
@@ -55,6 +81,10 @@
     <string name="profile_stat_solved">عدد مرات الفوز</string>
     <string name="profile_stat_win_rate">نسبة الفوز</string>
     <string name="profile_updated_successfully">تم تحديث الملف الشخصي بنجاح</string>
+    <string name="signed_in_successfully">تم تسجيل الدخول بنجاح</string>
+    <string name="profile_guest_banner_title">لا تفقد تقدمك!</string>
+    <string name="profile_guest_banner_subtitle">سجّل دخولك لحفظ نقاطك وظهورك في قائمة المتصدرين</string>
+    <string name="profile_sign_in_google">الدخول بحساب Google</string>
     <string name="profile_stat_arabic">عربي</string>
     <string name="profile_stat_english">إنجليزي</string>
     <string name="error_name_too_long">الاسم يجب أن لا يتجاوز 25 حرفاً</string>

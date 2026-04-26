@@ -26,8 +26,10 @@ class SettingsViewModel @Inject constructor(
      * and stores it in the UI state for display in the settings screen.
      */
     private fun loadEmail() {
-        val email = FirebaseAuth.getInstance().currentUser?.email ?: ""
-        setState { copy(email = email) }
+        val user    = FirebaseAuth.getInstance().currentUser
+        val email   = user?.email ?: ""
+        val isGuest = user == null || user.isAnonymous
+        setState { copy(email = email, isGuest = isGuest) }
     }
 
     override fun onEvent(intent: SettingsIntent) {

@@ -6,6 +6,10 @@ import android.util.Log
 import java.util.Locale
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.khammin.authentication.domain.usecase.GetAuthStateUseCase
 import com.khammin.core.domain.model.GameRoom
 import com.khammin.core.mvi.BaseMviViewModel
@@ -13,6 +17,7 @@ import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
 import kotlinx.coroutines.tasks.await
 import com.khammin.game.domain.usecases.challenge.GetChallengeSolvedStateUseCase
+import com.khammin.game.domain.usecases.challenges.InitializeChallengeProgressUseCase
 import com.khammin.game.domain.usecases.game.CreateRoomUseCase
 import com.khammin.game.domain.usecases.game.FindRoomByCodeUseCase
 import com.khammin.game.domain.usecases.game.GetRoomUseCase
@@ -21,6 +26,7 @@ import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.JoinRoomUseCase
 import com.khammin.game.domain.usecases.profile.CreateProfileUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
+import com.khammin.game.domain.usecases.stats.MigrateLocalStatsUseCase
 import com.khammin.game.presentation.home.contract.HomeEffect
 import com.khammin.game.presentation.home.contract.HomeIntent
 import com.khammin.game.presentation.home.contract.HomeUiState
@@ -37,8 +43,9 @@ class HomeViewModel @Inject constructor(
     getAuthState : GetAuthStateUseCase,
     getChallengeSolvedState: GetChallengeSolvedStateUseCase,
     getGameProgressUseCase: GetGameProgressUseCase,
-    private val getProfileUseCase   : GetProfileUseCase,
-    private val createProfileUseCase: CreateProfileUseCase,
+    private val getProfileUseCase         : GetProfileUseCase,
+    private val createProfileUseCase      : CreateProfileUseCase,
+    private val migrateLocalStatsUseCase  : MigrateLocalStatsUseCase,
     private val createRoomUseCase: CreateRoomUseCase,
     private val joinRoomUseCase: JoinRoomUseCase,
     private val addGuestToRoomUseCase: com.khammin.game.domain.usecases.game.AddGuestToRoomUseCase,
@@ -46,11 +53,21 @@ class HomeViewModel @Inject constructor(
     private val getRoomUseCase       : GetRoomUseCase,
     private val getWordsUseCase: GetWordsUseCase,
     private val networkUtils: NetworkUtils,
+    private val initializeChallengeProgressUseCase: InitializeChallengeProgressUseCase,
 ) : BaseMviViewModel<HomeIntent, HomeUiState, HomeEffect>(
     initialState = HomeUiState()
 ) {
 
+    private val prefs = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+
     init {
+        // 1. Ensure there is always a Firebase user (anonymous on first launch).
+        //    Welcome sheet is shown only after this succeeds, on first ever launch.
+        viewModelScope.launch {
+            ensureAnonymousAuth()
+        }
+
+        // 2. Observe auth state changes (handles both anonymous and Google sign-in).
         viewModelScope.launch {
             getAuthState().collect {
                 val user = FirebaseAuth.getInstance().currentUser
@@ -60,6 +77,7 @@ class HomeViewModel @Inject constructor(
                 if (isRealUser) ensureProfileExists()
             }
         }
+
         viewModelScope.launch {
             getGameProgressUseCase().collect { progress ->
                 setState {
@@ -70,8 +88,8 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
+
         viewModelScope.launch {
-            // check both languages, show countdown if either is solved
             getChallengeSolvedState("en").combine(
                 getChallengeSolvedState("ar")
             ) { enSolved, arSolved ->
@@ -80,23 +98,34 @@ class HomeViewModel @Inject constructor(
                 setState { copy(hasSolvedChallenge = solved) }
             }
         }
-        viewModelScope.launch {
-            // Prefetch anonymous auth so Firebase is ready before the user taps "Create Room".
-            // Without this, sign-in happens at room creation time and adds ~5 s of latency.
-            val auth = FirebaseAuth.getInstance()
-            if (auth.currentUser == null) {
-                Log.d("RoomPerf", "[prefetch] No user — warming up anonymous sign-in")
-                val start = System.currentTimeMillis()
-                try {
-                    auth.signInAnonymously().await()
-                    Log.d("RoomPerf", "[prefetch] Anonymous sign-in complete | step=${System.currentTimeMillis() - start}ms")
-                } catch (e: Exception) {
-                    Log.d("RoomPerf", "[prefetch] Anonymous sign-in failed: ${e.message}")
-                }
-            } else {
-                Log.d("RoomPerf", "[prefetch] User already authenticated (uid=${auth.currentUser?.uid}) — skipping")
+    }
+
+    private suspend fun ensureAnonymousAuth() {
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            try {
+                auth.signInAnonymously().await()
+                auth.currentUser?.let { setGuestDisplayName(it) }
+                Log.d("HomeViewModel", "Anonymous sign-in complete uid=${auth.currentUser?.uid}")
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Anonymous sign-in failed: ${e.message}")
+                return
             }
         }
+        // Show welcome sheet once, after auth is ready.
+        val hasShown = prefs.getBoolean("hasShownWelcomeSheet", false)
+        if (!hasShown) {
+            setState { copy(showWelcomeSheet = true) }
+        }
+    }
+
+    private suspend fun setGuestDisplayName(user: FirebaseUser) {
+        if (!user.displayName.isNullOrEmpty()) return
+        val guestName = "GUEST-${user.uid.take(5).uppercase()}"
+        val request = UserProfileChangeRequest.Builder()
+            .setDisplayName(guestName)
+            .build()
+        try { user.updateProfile(request).await() } catch (_: Exception) {}
     }
 
     private val cachedWords = mutableMapOf<String, List<String>>()
@@ -130,6 +159,11 @@ class HomeViewModel @Inject constructor(
                     if (result.data == null) {
                         createProfileUseCase(uid, email.substringBefore("@"))
                     }
+                    // Initialize challenge progress document if it doesn't exist yet.
+                    runCatching { initializeChallengeProgressUseCase(uid) }
+                    // Migrate any locally-saved guest stats to the Strapi profile.
+                    // This is a no-op if no local stats exist or already migrated.
+                    runCatching { migrateLocalStatsUseCase() }
                 }
                 else -> Unit
             }
@@ -290,5 +324,53 @@ class HomeViewModel @Inject constructor(
         setState { copy(noInternetError = false) }
     }
 
-    override fun onEvent(intent: HomeIntent) = Unit
+    fun markWelcomeSheetShown() {
+        prefs.edit().putBoolean("hasShownWelcomeSheet", true).apply()
+        setState { copy(showWelcomeSheet = false) }
+    }
+
+    fun signInWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val auth = FirebaseAuth.getInstance()
+            val currentUser = auth.currentUser
+            try {
+                if (currentUser != null && currentUser.isAnonymous) {
+                    try {
+                        currentUser.linkWithCredential(credential).await()
+                    } catch (e: FirebaseAuthUserCollisionException) {
+                        auth.signInWithCredential(credential).await()
+                    }
+                } else {
+                    auth.signInWithCredential(credential).await()
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Google sign-in failed: ${e.message}")
+            }
+        }
+    }
+
+    override fun onEvent(intent: HomeIntent) {
+        when (intent) {
+            is HomeIntent.ShowGameModeSheet    -> setState { copy(showGameModeSheet = intent.show) }
+            is HomeIntent.ShowLengthSheet      -> setState { copy(showLengthSheet = intent.show) }
+            is HomeIntent.ShowMultiplayerSheet -> setState { copy(showMultiplayerSheet = intent.show) }
+            is HomeIntent.ShowWordPickerSheet  -> setState {
+                // Clear createRoomType when the sheet closes
+                copy(
+                    showWordPickerSheet = intent.show,
+                    createRoomType = if (!intent.show) null else createRoomType,
+                )
+            }
+            is HomeIntent.ShowJoinRoomSheet    -> setState {
+                // Clear the typed code when the sheet closes
+                copy(
+                    showJoinRoomSheet = intent.show,
+                    joinRoomCode = if (!intent.show) "" else joinRoomCode,
+                )
+            }
+            is HomeIntent.SetCreateRoomType    -> setState { copy(createRoomType = intent.type) }
+            is HomeIntent.SetJoinRoomCode      -> setState { copy(joinRoomCode = intent.code) }
+        }
+    }
 }

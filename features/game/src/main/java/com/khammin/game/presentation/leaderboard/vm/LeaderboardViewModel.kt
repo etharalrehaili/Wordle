@@ -55,14 +55,14 @@ class LeaderboardViewModel @Inject constructor(
         viewModelScope.launch {
             if (!isRefresh) setState { copy(isLoading = true, error = null, noInternet = false) }
             android.util.Log.d("Network", "Calling getLeaderboardUseCase")
-            when (val result = getLeaderboardUseCase(limit = 10, language = language)) {
+            when (val result = getLeaderboardUseCase(limit = 100, language = language)) {
                 is Resource.Success -> {
                     android.util.Log.d("Network", "API success: ${result.data.size} players")
                     setState {
                         copy(
                             isLoading    = false,
                             isRefreshing = false,
-                            players = result.data.filter { it.arWordsSolved >= 1 }
+                            players      = result.data.filter { it.arCurrentPoints > 0 }
                         )
                     }
                 }

@@ -19,8 +19,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -58,8 +59,10 @@ import kotlinx.coroutines.flow.SharedFlow
 @Composable
 fun SettingsScreen(
     onBack: Action,
-    onChangePasswordClick: Action,
     onSignOutClick: Action,
+    onLanguageClick: Action = {},
+    onSupportClick: Action = {},
+    isGuest: Boolean = false,
     uiEffect: SharedFlow<SettingsEffect>,
     onSignOutSuccess: Action,
 ) {
@@ -67,17 +70,18 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         uiEffect.collect { effect ->
             when (effect) {
-                SettingsEffect.SignOutSuccess            -> onSignOutSuccess()
-                SettingsEffect.NavigateToChangePassword  -> onChangePasswordClick()
+                SettingsEffect.SignOutSuccess -> onSignOutSuccess()
                 else -> Unit
             }
         }
     }
 
     SettingsContent(
-        onBack                = onBack,
-        onChangePasswordClick = onChangePasswordClick,
-        onSignOutClick        = onSignOutClick,
+        onBack          = onBack,
+        onSignOutClick  = onSignOutClick,
+        onLanguageClick = onLanguageClick,
+        onSupportClick  = onSupportClick,
+        isGuest         = isGuest,
     )
 }
 
@@ -85,8 +89,10 @@ fun SettingsScreen(
 @Composable
 fun SettingsContent(
     onBack: Action,
-    onChangePasswordClick: Action,
     onSignOutClick: Action,
+    onLanguageClick: Action = {},
+    onSupportClick: Action = {},
+    isGuest: Boolean = false,
 ) {
     var showSignOutSheet by remember { mutableStateOf(false) }
 
@@ -114,36 +120,54 @@ fun SettingsContent(
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
 
-            // Account Settings Section
-            SectionLabel(stringResource(R.string.settings_account_section))
-
-            SettingsItem(
-                label   = stringResource(R.string.settings_change_password),
-                icon    = Icons.Filled.Lock,
-                accent  = colors.logoBlue,
-                onClick = onChangePasswordClick,
-            )
+            // Preferences Section
+            SectionLabel(stringResource(R.string.settings_preferences_section))
 
             Spacer(modifier = Modifier.height(spacing.lg))
 
-            // Sign Out
             SettingsItem(
-                label         = stringResource(R.string.sign_out_title),
-                icon          = Icons.AutoMirrored.Filled.ExitToApp,
-                accent        = colors.error,
-                onClick       = { showSignOutSheet = true },
-                isDestructive = true,
-                showArrow     = false,
+                label   = stringResource(R.string.settings_language),
+                icon    = Icons.Filled.Language,
+                accent  = colors.logoGreen,
+                onClick = onLanguageClick,
             )
 
-            if (showSignOutSheet) {
-                SignOutConfirmationBottomSheet(
-                    onDismiss = { showSignOutSheet = false },
-                    onConfirm = {
-                        showSignOutSheet = false
-                        onSignOutClick()
-                    }
+            Spacer(modifier = Modifier.height(spacing.sm))
+
+            SettingsItem(
+                label   = stringResource(R.string.settings_support),
+                icon    = Icons.AutoMirrored.Outlined.HelpOutline,
+                accent  = colors.logoPurple,
+                onClick = onSupportClick,
+            )
+
+            if (!isGuest) {
+                Spacer(modifier = Modifier.height(spacing.xl))
+
+                // Account Settings Section
+                SectionLabel(stringResource(R.string.settings_account_section))
+
+                Spacer(modifier = Modifier.height(spacing.lg))
+
+                // Sign Out
+                SettingsItem(
+                    label         = stringResource(R.string.sign_out_title),
+                    icon          = Icons.AutoMirrored.Filled.ExitToApp,
+                    accent        = colors.error,
+                    onClick       = { showSignOutSheet = true },
+                    isDestructive = true,
+                    showArrow     = false,
                 )
+
+                if (showSignOutSheet) {
+                    SignOutConfirmationBottomSheet(
+                        onDismiss = { showSignOutSheet = false },
+                        onConfirm = {
+                            showSignOutSheet = false
+                            onSignOutClick()
+                        }
+                    )
+                }
             }
         }
     }
@@ -237,9 +261,8 @@ private fun SettingsItem(
 private fun PreviewSettingsScreenDark() {
     WordleTheme(appColorTheme = AppColorTheme.DARK) {
         SettingsContent(
-            onBack                = {},
-            onChangePasswordClick = {},
-            onSignOutClick        = {},
+            onBack         = {},
+            onSignOutClick = {},
         )
     }
 }
@@ -249,9 +272,8 @@ private fun PreviewSettingsScreenDark() {
 private fun PreviewSettingsScreenLight() {
     WordleTheme(appColorTheme = AppColorTheme.LIGHT) {
         SettingsContent(
-            onBack                = {},
-            onChangePasswordClick = {},
-            onSignOutClick        = {},
+            onBack         = {},
+            onSignOutClick = {},
         )
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -62,9 +63,11 @@ fun WordLengthSelectionBottomSheet(
         dragHandle       = null,
         shape            = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
 
-            // ── Top accent strip ──────────────────────────────────────
+        // ── Top accent strip ──────────────────────────────────────
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -72,13 +75,12 @@ fun WordLengthSelectionBottomSheet(
                     .background(brush = colors.logoStripBrush)
             )
 
-            // ── Main content ──────────────────────────────────────────
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .padding(horizontal = 24.dp)
-                    .padding(top = 24.dp, bottom = 36.dp),
+                    .padding(top = 16.dp, bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
 
@@ -91,7 +93,7 @@ fun WordLengthSelectionBottomSheet(
                         .background(colors.divider)
                 )
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(12.dp))
 
                 // ── Header ────────────────────────────────────────────────
                 WordleText(
@@ -109,7 +111,7 @@ fun WordLengthSelectionBottomSheet(
                     fontSize = GameDesignTheme.typography.labelMedium,
                 )
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(16.dp))
 
                 // ── Cards ─────────────────────────────────────────────────
                 data class LengthOption(
@@ -182,7 +184,7 @@ fun WordLengthSelectionBottomSheet(
                                 if (isUnlocked) Modifier.clickable { onLengthSelected(length) }
                                 else Modifier
                             )
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
 
@@ -229,7 +231,7 @@ fun WordLengthSelectionBottomSheet(
                                 repeat(length) {
                                     Box(
                                         modifier = Modifier
-                                            .size(36.dp)
+                                            .size(28.dp)
                                             .clip(RoundedCornerShape(8.dp))
                                             .background(accentColor.copy(alpha = 0.18f))
                                             .border(
@@ -273,7 +275,7 @@ fun WordLengthSelectionBottomSheet(
                         }
                     }
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(8.dp))
                 }
             }
         }

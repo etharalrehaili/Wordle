@@ -20,9 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
@@ -129,6 +131,21 @@ fun GameContent(
     val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val resultSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    // Timer: reset when a new word is loaded, stop when the game ends
+    var timerSeconds by remember { mutableIntStateOf(0) }
+    LaunchedEffect(uiState.targetWord) {
+        timerSeconds = 0
+    }
+    LaunchedEffect(uiState.isGameOver, uiState.targetWord) {
+        if (!uiState.isGameOver && uiState.targetWord.isNotEmpty()) {
+            while (true) {
+                delay(1000L)
+                timerSeconds++
+            }
+        }
+    }
+    val timerText = String.format(java.util.Locale.US, "%02d:%02d", timerSeconds / 60, timerSeconds % 60)
+
     val guessRows = uiState.board.map { row ->
         GuessRow(
             letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
@@ -144,6 +161,7 @@ fun GameContent(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             GameTopBar(
+                title = timerText,
                 endIcon = Icons.Filled.Close,
                 startIcon = Icons.Filled.Info,
                 hintIcon = Icons.Filled.Lightbulb,

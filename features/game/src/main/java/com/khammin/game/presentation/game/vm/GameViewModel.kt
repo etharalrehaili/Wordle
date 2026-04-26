@@ -6,13 +6,19 @@ import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
+import com.khammin.game.domain.model.GameMode
+import com.khammin.game.domain.model.GameResult
+import com.khammin.game.domain.usecases.challenges.AwardChallengePointsUseCase
+import com.khammin.game.domain.usecases.challenges.EvaluateChallengesUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.RecordWinUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
+import com.khammin.game.domain.usecases.stats.RecordGameUseCase
 import com.khammin.game.presentation.game.contract.GameEffect
 import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
 import com.khammin.game.presentation.game.contract.Tile
+import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,9 +28,15 @@ class GameViewModel @Inject constructor(
     private val getWordsUseCase: GetWordsUseCase,
     private val recordWinUseCase: RecordWinUseCase,
     private val validateWordUseCase: ValidateWordUseCase,
+    private val evaluateChallengesUseCase: EvaluateChallengesUseCase,
+    private val awardChallengePointsUseCase: AwardChallengePointsUseCase,
+    private val recordGameUseCase: RecordGameUseCase,
 ) : BaseMviViewModel<GameIntent, GameUiState, GameEffect>(
     initialState = GameUiState()
 ) {
+
+    /** Epoch-millis when the current game session started (reset on load/restart). */
+    private var gameStartTime = 0L
 
     override fun onEvent(intent: GameIntent) {
         when (intent) {
@@ -56,6 +68,7 @@ class GameViewModel @Inject constructor(
                             board      = List(MAX_GUESSES) { List(wordLength) { Tile() } }
                         )
                     }
+                    gameStartTime = System.currentTimeMillis()
                 }
                 is Resource.Error -> {
                     setState { copy(isLoading = false, error = result.message) }
@@ -142,7 +155,29 @@ class GameViewModel @Inject constructor(
 
             if (isWin || isLast) {
                 if (isWin) recordWinUseCase(s.wordLength)
+                viewModelScope.launch { recordGameUseCase(s.language, isWin) }
                 sendEffect { GameEffect.ShowGameDialog(isWin = isWin, targetWord = s.targetWord) }
+                val elapsed = if (gameStartTime > 0L)
+                    (System.currentTimeMillis() - gameStartTime) / 1000L else Long.MAX_VALUE
+                viewModelScope.launch {
+                    val gameResult = GameResult(
+                        isWin             = isWin,
+                        guessCount        = s.currentRow + 1,
+                        timeTakenSeconds  = elapsed,
+                        wordLength        = s.wordLength,
+                        gameMode          = GameMode.SOLO,
+                        hintsUsed         = s.hintsUsed,
+                        language          = s.language,
+                    )
+                    Log.d("ChallengeDebug", "[GameVM] Game over → isWin=$isWin guessCount=${s.currentRow + 1} timeSecs=$elapsed wordLength=${s.wordLength} mode=SOLO hintsUsed=${s.hintsUsed}")
+                    runCatching {
+                        val completed = evaluateChallengesUseCase(gameResult)
+                        Log.d("ChallengeDebug", "[GameVM] EvaluateChallenges returned completed=$completed")
+                        awardChallengePointsUseCase(completed)
+                    }.onFailure { e ->
+                        Log.e("ChallengeDebug", "[GameVM] EvaluateChallenges threw exception", e)
+                    }
+                }
             }
         }
     }
@@ -157,6 +192,7 @@ class GameViewModel @Inject constructor(
                 board      = List(MAX_GUESSES) { List(state.wordLength) { Tile() } }
             )
         }
+        gameStartTime = System.currentTimeMillis()
     }
 
     /**

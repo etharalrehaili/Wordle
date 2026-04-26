@@ -17,11 +17,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
@@ -61,8 +66,6 @@ import com.khammin.core.presentation.theme.LocalWordleColors
 @Composable
 fun GameMenuDrawerSheet(
     selectedLanguage: AppLanguage = AppLanguage.ENGLISH,
-    isLoggedIn: Boolean = true,
-    onLoginClick: Action,
     onClose: Action,
     onProfile: Action,
     onSupportClick: Action,
@@ -96,12 +99,10 @@ fun GameMenuDrawerSheet(
         ) { screen ->
             when (screen) {
                 DrawerScreen.MENU -> MenuScreen(
-                    onClose      = onClose,
-                    onLanguage   = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
-                    onProfile    = onProfile,
-                    isLoggedIn   = isLoggedIn,
-                    onLoginClick = onLoginClick,
-                    onSupport    = onSupportClick,
+                    onClose    = onClose,
+                    onLanguage = { isNavigatingForward = true; currentScreen = DrawerScreen.LANGUAGE },
+                    onProfile  = onProfile,
+                    onSupport  = onSupportClick,
                 )
                 DrawerScreen.LANGUAGE -> LanguageScreen(
                     selectedLanguage = selectedLanguage,
@@ -120,8 +121,6 @@ fun GameMenuDrawerSheet(
 @Composable
 private fun MenuScreen(
     onClose: Action,
-    isLoggedIn: Boolean,
-    onLoginClick: Action,
     onLanguage: Action,
     onProfile: Action,
     onSupport: Action,
@@ -135,23 +134,13 @@ private fun MenuScreen(
     )
 
     val items = buildList {
-        if (isLoggedIn) {
-            add(Entry(
-                icon        = Icons.Filled.Person,
-                label       = stringResource(R.string.drawer_profile),
-                description = stringResource(R.string.drawer_profile_desc),
-                accent      = colors.logoBlue,
-                action      = onProfile
-            ))
-        } else {
-            add(Entry(
-                icon        = Icons.Filled.Person,
-                label       = stringResource(R.string.drawer_login),
-                description = stringResource(R.string.drawer_login_desc),
-                accent      = colors.logoBlue,
-                action      = onLoginClick
-            ))
-        }
+        add(Entry(
+            icon        = Icons.Filled.Person,
+            label       = stringResource(R.string.drawer_profile),
+            description = stringResource(R.string.drawer_profile_desc),
+            accent      = colors.logoBlue,
+            action      = onProfile
+        ))
         add(Entry(
             icon        = Icons.Filled.Language,
             label       = stringResource(R.string.drawer_language),
@@ -342,6 +331,54 @@ private fun SelectionRow(
         thickness = 0.5.dp,
         modifier  = Modifier.padding(horizontal = 24.dp)
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageSelectionBottomSheet(
+    selectedLanguage: AppLanguage,
+    onLanguageSelected: (AppLanguage) -> Unit,
+    onDismiss: () -> Unit,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState       = sheetState,
+        containerColor   = colors.background,
+        dragHandle       = null,
+        shape            = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(brush = colors.logoStripBrush)
+            )
+            Spacer(Modifier.height(16.dp))
+            AppLanguage.entries.forEach { lang ->
+                SelectionRow(
+                    label = stringResource(
+                        when (lang) {
+                            AppLanguage.ARABIC  -> R.string.language_arabic
+                            AppLanguage.ENGLISH -> R.string.language_english
+                        }
+                    ),
+                    isSelected = lang == selectedLanguage,
+                    accent     = colors.logoGreen,
+                    onClick    = {
+                        onLanguageSelected(lang)
+                        onDismiss()
+                    }
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+    }
 }
 
 @Composable

@@ -6,6 +6,10 @@ import javax.inject.Inject
 class SaveGuestProfileUseCase @Inject constructor(
     private val store: GuestProfileDataStore
 ) {
-    suspend operator fun invoke(name: String, avatarColor: Long?, avatarEmoji: String?) =
-        store.saveProfile(name, avatarColor, avatarEmoji)
+    suspend operator fun invoke(
+        name: String,
+        avatarColor: Long?,
+        avatarEmoji: String?,
+        avatarUri: String? = null,
+    ) = store.saveProfile(name, avatarColor, avatarEmoji, avatarUri)
 }
