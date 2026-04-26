@@ -10,8 +10,9 @@ import com.khammin.game.domain.model.Profile
  * whether data comes from the remote API or local cache.
  */
 interface ProfileRepository {
-    /** Fetches a profile by Firebase UID. Returns null if no profile exists. */
-    suspend fun getProfile(firebaseUid: String): Profile?
+    /** Fetches a profile by Firebase UID. Returns null if no profile exists.
+     *  Set [forceRefresh] to true to bypass the local cache and fetch from the server. */
+    suspend fun getProfile(firebaseUid: String, forceRefresh: Boolean = false): Profile?
 
     /** Creates a new profile in Strapi using the user's Firebase UID and email. */
     suspend fun createProfile(firebaseUid: String, email: String): Profile
@@ -34,6 +35,12 @@ interface ProfileRepository {
 
     /** Fetches the top [limit] players sorted by points for the leaderboard. */
     suspend fun getLeaderboard(limit: Int, language: String): List<Profile>
+
+    /**
+     * Atomically adds [delta] points to arCurrentPoints by fetching the fresh
+     * server value first, then writing back. Avoids stale-cache overwrites.
+     */
+    suspend fun addArPoints(firebaseUid: String, delta: Int): Profile
 
     /**
      * Pushes all locally-saved profile updates (pendingSync = true) to the server.

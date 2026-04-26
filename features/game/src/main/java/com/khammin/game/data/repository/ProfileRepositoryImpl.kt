@@ -34,17 +34,20 @@ class ProfileRepositoryImpl @Inject constructor(
      *    server response.
      * 3. If offline and still no cache, return null.
      */
-    override suspend fun getProfile(firebaseUid: String): Profile? {
-        val cached = db.profileDao().getProfile(firebaseUid)
-        if (cached != null) return cached.toDomain()
+    override suspend fun getProfile(firebaseUid: String, forceRefresh: Boolean): Profile? {
+        if (!forceRefresh) {
+            val cached = db.profileDao().getProfile(firebaseUid)
+            if (cached != null) return cached.toDomain()
+        }
 
-        // No local data — first launch or new device: fetch from server.
+        // No local data (first launch / new device) OR forceRefresh: fetch from server.
         return try {
             val remoteProfile = remote.getProfile(firebaseUid) ?: return null
             db.profileDao().insertProfile(remoteProfile.toEntity())
             remoteProfile.toDomain()
         } catch (e: Exception) {
-            null
+            // On forceRefresh, fall back to cache rather than returning null
+            if (forceRefresh) db.profileDao().getProfile(firebaseUid)?.toDomain() else null
         }
     }
 
@@ -157,6 +160,40 @@ class ProfileRepositoryImpl @Inject constructor(
 
     override suspend fun getLeaderboard(limit: Int, language: String): List<Profile> =
         remote.getLeaderboard(limit, language).map { it.toDomain() }
+
+    override suspend fun addArPoints(firebaseUid: String, delta: Int): Profile {
+        // Always read fresh from the server so we never overwrite a higher value
+        // that was written by a concurrent game-win update.
+        val fresh = remote.getProfile(firebaseUid)
+            ?: throw Exception("addArPoints: profile not found for $firebaseUid")
+        val newPoints = fresh.arCurrentPoints + delta
+        return try {
+            val updated = remote.updateProfile(
+                documentId    = fresh.documentId,
+                firebaseUid   = firebaseUid,
+                name          = fresh.name,
+                avatarUrl     = fresh.avatarUrl,
+                language      = "ar",
+                gamesPlayed   = fresh.arGamesPlayed,
+                wordsSolved   = fresh.arWordsSolved,
+                winPercentage = fresh.arWinPercentage,
+                currentPoints = newPoints,
+            )
+            val entity = updated.toEntity().let {
+                if (it.firebaseUid.isBlank()) it.copy(firebaseUid = firebaseUid) else it
+            }
+            db.profileDao().insertProfile(entity)
+            entity.toDomain()
+        } catch (e: Exception) {
+            // Offline fallback: persist locally and let ProfileSyncWorker push it later
+            val cached = db.profileDao().getProfile(firebaseUid)
+            val fallback = cached?.copy(arCurrentPoints = newPoints, pendingSync = true, pendingSyncLanguage = "ar")
+                ?: throw e
+            db.profileDao().insertProfile(fallback)
+            scheduleSyncWorker()
+            fallback.toDomain()
+        }
+    }
 
     /**
      * Called by [ProfileSyncWorker] when the network becomes available.

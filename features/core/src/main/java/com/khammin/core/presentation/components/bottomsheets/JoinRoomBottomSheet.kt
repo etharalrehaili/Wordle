@@ -26,10 +26,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,11 +51,12 @@ import com.khammin.core.presentation.theme.GameDesignTheme.colors
 fun JoinRoomBottomSheet(
     onJoin: (String) -> Unit,
     onDismiss: () -> Unit,
+    roomCode: String = "",
+    onRoomCodeChange: (String) -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    var roomCode by remember { mutableStateOf("") }
 
     // Local validation (instant, no network)
     val containsArabic = roomCode.any { it in '\u0600'..'\u06FF' }
@@ -155,7 +152,7 @@ fun JoinRoomBottomSheet(
 
                 OutlinedTextField(
                     value         = roomCode,
-                    onValueChange = { if (it.length <= 6) roomCode = it.uppercase() },
+                    onValueChange = { if (it.length <= 6) onRoomCodeChange(it.uppercase()) },
                     placeholder   = {
                         Text(
                             text  = "ABC123",

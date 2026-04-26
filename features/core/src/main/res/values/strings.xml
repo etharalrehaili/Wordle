@@ -52,10 +52,10 @@
 
     <!-- Auth Bottom Sheet -->
     <string name="auth_join_title">Join the Challenge</string>
-    <string name="auth_join_subtitle">Sign in to compete with players around the world</string>
+    <string name="auth_join_subtitle">Sign in to save your progress and appear on the leaderboard</string>
     <string name="auth_continue_with">continue with</string>
-    <string name="auth_login_email">Login with Email</string>
-    <string name="auth_create_account">Create an Account</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_continue_as_guest">Continue as Guest</string>
 
     <!-- Game Results Bottom Sheet -->
     <string name="game_result_word_was">The word was</string>

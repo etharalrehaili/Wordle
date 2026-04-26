@@ -42,6 +42,7 @@ import com.khammin.core.presentation.theme.GameDesignTheme.colors
 fun GameTopBar(
     modifier: Modifier = Modifier,
     title: String? = null,
+    points: Int? = null,
     startIcon: ImageVector? = null,
     endIcon: ImageVector? = null,
     hintIcon: ImageVector? = null,
@@ -78,19 +79,39 @@ fun GameTopBar(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 0.dp)
+                .padding(start = 4.dp)
         ) {
-            if (startIcon != null && onStartIconClicked != null) {
-                IconButton(
-                    onClick = { onStartIconClicked() },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = startIcon,
-                        contentDescription = null,
-                        tint = colors.body,
-                        modifier = Modifier.size(24.dp)
-                    )
+            when {
+                points != null -> {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.surface)
+                            .border(1.dp, colors.border, RoundedCornerShape(10.dp))
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        WordleText(
+                            text          = "$points PTS",
+                            color         = colors.logoGreen,
+                            fontSize      = 13.sp,
+                            fontWeight    = FontWeight.Bold,
+                            letterSpacing = 1.sp,
+                        )
+                    }
+                }
+                startIcon != null && onStartIconClicked != null -> {
+                    IconButton(
+                        onClick  = { onStartIconClicked() },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector        = startIcon,
+                            contentDescription = null,
+                            tint               = colors.body,
+                            modifier           = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         }
@@ -98,16 +119,16 @@ fun GameTopBar(
         // title
         if (title != null) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.align(Alignment.Center)
+                modifier              = Modifier.align(Alignment.Center)
             ) {
                 WordleText(
-                    text = title.uppercase(),
-                    color = colors.title,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center,
+                    text          = title.uppercase(),
+                    color         = colors.title,
+                    fontSize      = 18.sp,
+                    fontWeight    = FontWeight.ExtraBold,
+                    textAlign     = TextAlign.Center,
                     letterSpacing = 3.sp,
                 )
             }

@@ -10,9 +10,13 @@ import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
+import com.khammin.game.domain.model.GameMode
+import com.khammin.game.domain.model.GameResult
 import com.khammin.game.domain.usecases.challenge.ChallengeError
 import com.khammin.game.domain.usecases.challenge.GetDailyChallengeUseCase
 import com.khammin.game.domain.usecases.challenge.LoadTodayChallengeUseCase
+import com.khammin.game.domain.usecases.challenges.AwardChallengePointsUseCase
+import com.khammin.game.domain.usecases.challenges.EvaluateChallengesUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.challenge.SaveChallengeStateUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
@@ -38,9 +42,13 @@ class ChallengeViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
     private val validateWordUseCase: ValidateWordUseCase,
-    ) : BaseMviViewModel<ChallengeIntent, ChallengeUiState, ChallengeEffect>(
+    private val evaluateChallengesUseCase: EvaluateChallengesUseCase,
+    private val awardChallengePointsUseCase: AwardChallengePointsUseCase,
+) : BaseMviViewModel<ChallengeIntent, ChallengeUiState, ChallengeEffect>(
     initialState = ChallengeUiState()
 ) {
+
+    private var gameStartTime = 0L
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onEvent(intent: ChallengeIntent) {
@@ -83,6 +91,8 @@ class ChallengeViewModel @Inject constructor(
                         }
                         if (saved.isGameOver) {
                             sendEffect { ChallengeEffect.ShowGameDialog(isWin = saved.isWin, targetWord = saved.targetWord) }
+                        } else {
+                            gameStartTime = System.currentTimeMillis()
                         }
                     }
                     is Resource.Error   -> setState { copy(isLoading = false, error = wordsResult.message) }
@@ -113,6 +123,7 @@ class ChallengeViewModel @Inject constructor(
                                     isGameOver = false,
                                 )
                                 }
+                                gameStartTime = System.currentTimeMillis()
                             }
                             is Resource.Error   -> setState { copy(isLoading = false, error = wordsResult.message) }
                             is Resource.Loading -> Unit
@@ -227,6 +238,23 @@ class ChallengeViewModel @Inject constructor(
             if (isWin || isLast) {
                 sendEffect { ChallengeEffect.ShowGameDialog(isWin = isWin, targetWord = s.targetWord) }
                 updateProfileStats(isWin = isWin, guessCount = s.currentRow + 1, language = s.language)
+                val elapsed = if (gameStartTime > 0L)
+                    (System.currentTimeMillis() - gameStartTime) / 1000L else Long.MAX_VALUE
+                viewModelScope.launch {
+                    runCatching {
+                        val completed = evaluateChallengesUseCase(
+                            GameResult(
+                                isWin            = isWin,
+                                guessCount       = s.currentRow + 1,
+                                timeTakenSeconds = elapsed,
+                                wordLength       = s.wordLength,
+                                gameMode         = GameMode.DAILY_CHALLENGE,
+                                language         = s.language,
+                            )
+                        )
+                        awardChallengePointsUseCase(completed)
+                    }
+                }
             }
         }
     }

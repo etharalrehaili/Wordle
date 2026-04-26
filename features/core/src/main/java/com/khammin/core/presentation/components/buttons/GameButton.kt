@@ -32,12 +32,18 @@ enum class GameButtonVariant {
     Ghost     // Leaderboard — outlined
 }
 
+enum class GameButtonSize {
+    Regular,  // default — 64dp height, 18sp
+    Small     // compact — 44dp height, 15sp
+}
+
 @Composable
 fun GameButton(
     modifier: Modifier = Modifier,
     label: String,
     icon: ImageVector? = null,
     variant: GameButtonVariant = GameButtonVariant.Primary,
+    size: GameButtonSize = GameButtonSize.Regular,
     enabled: Boolean = true,
     onClick: Action,
 ) {
@@ -64,22 +70,26 @@ fun GameButton(
     }
 
     val showBorder = variant == GameButtonVariant.Ghost
+    val buttonHeight = if (size == GameButtonSize.Small) 44.dp else 64.dp
+    val cornerRadius = if (size == GameButtonSize.Small) 14.dp else 28.dp
+    val fontSize     = if (size == GameButtonSize.Small) 15.sp else 18.sp
+    val minWidth     = if (size == GameButtonSize.Small) 120.dp else 280.dp
 
     Box(
         modifier = modifier
             .scale(scale)
-            .widthIn(min = 280.dp)
-            .height(64.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .widthIn(min = minWidth)
+            .height(buttonHeight)
+            .clip(RoundedCornerShape(cornerRadius))
             .background(
                 if (enabled) backgroundColor else backgroundColor.copy(alpha = 0.38f),
-                RoundedCornerShape(28.dp)
+                RoundedCornerShape(cornerRadius)
             )
             .then(
                 if (showBorder) Modifier.border(
                     width = 1.5.dp,
                     color = if (enabled) colors.buttonGhostBorder else colors.buttonGhostBorder.copy(alpha = 0.38f),
-                    shape = RoundedCornerShape(28.dp)
+                    shape = RoundedCornerShape(cornerRadius)
                 ) else Modifier
             )
             .clickable(
@@ -106,7 +116,7 @@ fun GameButton(
             Text(
                 text = label,
                 color = alphaColor,
-                fontSize = 18.sp,
+                fontSize = fontSize,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 letterSpacing = 0.3.sp

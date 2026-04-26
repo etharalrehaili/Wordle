@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -53,9 +54,11 @@ fun WordleInfoBottomSheet(
         dragHandle       = null,
         shape            = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
 
-            // ── Top accent strip ──────────────────────────────────────
+        // ── Top accent strip ──────────────────────────────────────
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -153,16 +156,6 @@ fun WordleInfoBottomSheet(
                     HighlightCaption(
                         letter      = stringResource(R.string.info_example_4_letter).first(),
                         description = stringResource(R.string.info_example_4_desc),
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                    HorizontalDivider(color = colors.divider, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text  = stringResource(R.string.info_new_wordle),
-                        color = colors.body,
-                        fontSize = 14.sp
                     )
                 }
             }

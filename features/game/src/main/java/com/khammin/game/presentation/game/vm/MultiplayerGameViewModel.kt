@@ -38,6 +38,10 @@ import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
 import com.khammin.game.domain.usecases.game.UpdatePresenceStateUseCase
 import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
 import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
+import com.khammin.game.domain.model.GameMode
+import com.khammin.game.domain.model.GameResult
+import com.khammin.game.domain.usecases.challenges.AwardChallengePointsUseCase
+import com.khammin.game.domain.usecases.challenges.EvaluateChallengesUseCase
 import com.khammin.game.domain.usecases.game.SetPlayerReadyUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
@@ -89,12 +93,15 @@ class MultiplayerGameViewModel @Inject constructor(
     private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
     private val setLobbyWinnerUseCase: SetLobbyWinnerUseCase,
     private val setPlayerReadyUseCase: SetPlayerReadyUseCase,
+    private val evaluateChallengesUseCase: EvaluateChallengesUseCase,
+    private val awardChallengePointsUseCase: AwardChallengePointsUseCase,
     private val auth: FirebaseAuth
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
 ) {
 
     private val isAppForegroundFlow = MutableStateFlow(true)
+    private var gameStartTime = 0L
 
     init {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -1019,6 +1026,7 @@ class MultiplayerGameViewModel @Inject constructor(
             val solved   = tileStates.all { it == TileState.CORRECT || it == TileState.SIMILAR }
             val newRow   = s2.currentRow + 1
             val gameOver = solved || newRow >= newBoard.size
+            if (gameStartTime == 0L) gameStartTime = System.currentTimeMillis()
 
             setState {
                 copy(board = newBoard, currentRow = newRow, currentCol = 0, keyboardStates = newKeyboardStates)
@@ -1053,6 +1061,23 @@ class MultiplayerGameViewModel @Inject constructor(
             )
 
             if (gameOver) {
+                val elapsed = (System.currentTimeMillis() - gameStartTime) / 1000L
+                gameStartTime = 0L  // reset for next round
+                viewModelScope.launch {
+                    runCatching {
+                        val completed = evaluateChallengesUseCase(
+                            GameResult(
+                                isWin            = solved,
+                                guessCount       = newRow,
+                                timeTakenSeconds = elapsed,
+                                wordLength       = s2.wordLength,
+                                gameMode         = GameMode.MULTIPLAYER,
+                                language         = s2.language,
+                            )
+                        )
+                        awardChallengePointsUseCase(completed)
+                    }
+                }
                 if (s2.isCustomWord || s2.isLobbyMode) {
                     // ── Custom word / lobby mode: go to in-screen result lobby ─
                     setState { copy(isGameOver = true, isMyWin = solved) }

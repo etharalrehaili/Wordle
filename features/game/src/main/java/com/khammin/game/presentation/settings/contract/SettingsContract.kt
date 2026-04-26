@@ -7,6 +7,7 @@ import com.khammin.core.mvi.UiState
 data class SettingsUiState(
     val isLoading: Boolean = false,
     val email: String = "",
+    val isGuest: Boolean = false,
 ) : UiState
 
 sealed interface SettingsEffect : UiEffect {
