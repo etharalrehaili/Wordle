@@ -141,7 +141,15 @@
     <string name="lobby_player_voted">%1$d player voted</string>
     <string name="lobby_players_voted">%1$d players voted</string>
     <string name="custom_word_hint">Your secret word (4–6 letters)</string>
+    <string name="custom_word_valid">Valid length</string>
+    <string name="custom_word_invalid_length">Must be 4–6 letters</string>
     <string name="custom_word_players_count">Players (%1$d/4)</string>
+    <string name="lobby_badge_not_ready">NOT READY</string>
+    <string name="lobby_hint_enter_word">Enter a word to start</string>
+    <string name="lobby_hint_need_players">Need at least 1 player to join</string>
+    <string name="lobby_hint_wait_ready">Waiting for all players to be ready</string>
+    <string name="lobby_hint_tap_ready">Tap Ready when you\'re set to play</string>
+    <string name="lobby_guest_waiting_subtitle">The host will start the game once everyone is ready</string>
     <string name="custom_word_players_count_4">Players (%1$d/4)</string>
     <string name="spectator_play_again_question">Play again?</string>
     <string name="spectator_no_votes">No votes yet</string>
