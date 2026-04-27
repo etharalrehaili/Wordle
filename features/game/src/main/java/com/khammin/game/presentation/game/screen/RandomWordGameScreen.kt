@@ -308,17 +308,14 @@ private fun RandomWordGameContent(
                 } else if (state.isLobbyMode && state.roomStatus == "waiting") {
                     if (state.isHost) {
                         RandomWordLobbyHost(
-                            myName          = state.myName,
-                            avatarColor     = state.avatarColor,
-                            avatarEmoji     = state.avatarEmoji,
-                            avatarUrl       = state.avatarUrl,
-                            waitingPlayers  = state.waitingPlayers,
-                            roomId          = roomId,
-                            onStart         = { onIntent(MultiplayerGameIntent.StartMatch) },
-                            onUpdateProfile = { name, color, emoji ->
-                                onIntent(MultiplayerGameIntent.UpdateGuestProfile(name, color, emoji))
-                            },
-                            modifier = Modifier.fillMaxWidth().weight(1f)
+                            myName         = state.myName,
+                            avatarColor    = state.avatarColor,
+                            avatarEmoji    = state.avatarEmoji,
+                            avatarUrl      = state.avatarUrl,
+                            waitingPlayers = state.waitingPlayers,
+                            roomId         = roomId,
+                            onStart        = { onIntent(MultiplayerGameIntent.StartMatch) },
+                            modifier       = Modifier.fillMaxWidth().weight(1f),
                         )
                     } else {
                         RandomWordLobbyGuest(
@@ -335,10 +332,7 @@ private fun RandomWordGameContent(
                             },
                             isReady         = state.waitingPlayers.firstOrNull { it.userId == state.myUserId }?.isReady == true,
                             onSetReady      = { onIntent(MultiplayerGameIntent.SetReady) },
-                            onUpdateProfile = { name, color, emoji ->
-                                onIntent(MultiplayerGameIntent.UpdateGuestProfile(name, color, emoji))
-                            },
-                            modifier = Modifier.fillMaxWidth().weight(1f)
+                            modifier        = Modifier.fillMaxWidth().weight(1f),
                         )
                     }
                 } else {

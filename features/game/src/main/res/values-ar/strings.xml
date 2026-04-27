@@ -141,7 +141,15 @@
     <string name="lobby_player_voted">لاعب واحد صوّت</string>
     <string name="lobby_players_voted">%1$d لاعبين صوّتوا</string>
     <string name="custom_word_hint">كلمتك السرية (4–6 أحرف)</string>
+    <string name="custom_word_valid">الطول صحيح</string>
+    <string name="custom_word_invalid_length">يجب أن يكون 4–6 أحرف</string>
     <string name="custom_word_players_count">اللاعبون (%1$d/4)</string>
+    <string name="lobby_badge_not_ready">غير جاهز</string>
+    <string name="lobby_hint_enter_word">أدخل كلمة للبدء</string>
+    <string name="lobby_hint_need_players">يحتاج إلى لاعب واحد على الأقل للانضمام</string>
+    <string name="lobby_hint_wait_ready">في انتظار استعداد جميع اللاعبين</string>
+    <string name="lobby_hint_tap_ready">اضغط جاهز عندما تكون مستعداً للعب</string>
+    <string name="lobby_guest_waiting_subtitle">سيبدأ المضيف اللعبة بمجرد استعداد الجميع</string>
     <string name="custom_word_players_count_4">اللاعبون (%1$d/4)</string>
     <string name="spectator_play_again_question">العب مجدداً؟</string>
     <string name="spectator_no_votes">لا أصوات بعد</string>
