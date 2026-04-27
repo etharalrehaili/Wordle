@@ -58,11 +58,12 @@
     <string name="settings_title">Settings</string>
     <string name="settings_preferences_section">Preferences</string>
     <string name="settings_language">Language</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_subtitle">Weekly challenge alerts</string>
     <string name="settings_account_section">Account Settings</string>
     <string name="settings_app_section">App Settings</string>
     <string name="settings_support_section">Support</string>
     <string name="settings_change_password">Change Password</string>
-    <string name="settings_notifications">Notifications</string>
     <string name="settings_support">Support</string>
     <string name="settings_sign_out">Sign Out</string>
     <string name="sign_out_title">Sign Out</string>
@@ -96,7 +97,7 @@
     <string name="multiplayer_result_title">RESULTS</string>
     <string name="spectator_round">Round %1$d</string>
     <string name="spectator_votes">Votes for play again: %1$d / %2$d</string>
-    <string name="spectator_solved">Solved in %1$d  ·  %2$d pts</string>
+    <string name="spectator_solved">%1$d pts</string>
     <string name="spectator_failed">Failed</string>
     <string name="spectator_waiting_guess">Waiting…</string>
     <string name="spectator_guess_progress">%1$d/%2$d</string>

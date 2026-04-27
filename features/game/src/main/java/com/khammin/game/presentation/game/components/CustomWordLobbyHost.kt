@@ -191,23 +191,12 @@ fun CustomWordLobbyHost(
                         )
                     }
                     if (waitingPlayers.isNotEmpty() && !allReady) {
-                        Row(
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon(
-                                imageVector        = Icons.Outlined.HourglassEmpty,
-                                contentDescription = null,
-                                tint               = colors.logoOrange.copy(alpha = 0.7f),
-                                modifier           = Modifier.size(13.dp)
-                            )
-                            WordleText(
-                                text      = stringResource(R.string.lobby_waiting_ready),
-                                color     = colors.logoOrange.copy(alpha = 0.8f),
-                                fontSize  = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
-                        }
+                        WordleText(
+                            text      = stringResource(R.string.lobby_waiting_ready),
+                            color     = colors.logoOrange.copy(alpha = 0.8f),
+                            fontSize  = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
                     }
                 }
 
