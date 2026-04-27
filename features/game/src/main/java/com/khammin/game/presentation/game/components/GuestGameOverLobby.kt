@@ -1,16 +1,7 @@
 package com.khammin.game.presentation.game.components
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,24 +12,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import java.util.Locale
 import androidx.compose.ui.text.font.FontWeight
@@ -50,9 +32,6 @@ import com.khammin.core.presentation.components.ConfettiLayer
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.OpponentProgress
-import kotlinx.coroutines.launch
-import kotlin.math.cos
-import kotlin.math.sin
 
 private data class LeaderboardPlayer(
     val name: String,
@@ -77,9 +56,6 @@ fun GuestGameOverLobby(
     myGuessCount: Int = 0,
     myTotalPoints: Int = 0,
     sessionPoints: Map<String, Int> = emptyMap(),
-    playAgainVotes: List<String> = emptyList(),
-    hasVotedPlayAgain: Boolean,
-    onVotePlayAgain: () -> Unit,
 ) {
     val accentColor = if (isWin) colors.logoGreen else colors.logoPink
 
@@ -100,13 +76,6 @@ fun GuestGameOverLobby(
         )
     }
     val ranked = (listOf(meEntry) + opponentEntries).sortedByDescending { it.sessionPoints }
-
-    val voterInfo: Map<String, Triple<String, Long?, String?>> = buildMap {
-        put(myUserId, Triple(myName.ifBlank { "You" }, myAvatarColor, myAvatarEmoji))
-        opponentsProgress.forEach { (id, p) ->
-            put(id, Triple(p.name, p.avatarColor, p.avatarEmoji))
-        }
-    }
 
     Box(modifier = modifier) {
         if (isWin) {
@@ -135,7 +104,7 @@ fun GuestGameOverLobby(
                     )
                     Text(
                         text       = if (isWin) stringResource(CoreRes.string.spectator_result_you_guessed)
-                        else stringResource(CoreRes.string.result_lose_title),
+                                     else stringResource(CoreRes.string.result_lose_title),
                         color      = accentColor,
                         fontSize   = 18.sp,
                         fontWeight = FontWeight.ExtraBold,
@@ -292,17 +261,6 @@ fun GuestGameOverLobby(
                 }
             }
 
-            // ── Play again vote section ───────────────────────────────────────
-            item {
-                PlayAgainVoteSection(
-                    hasVotedPlayAgain = hasVotedPlayAgain,
-                    playAgainVotes    = playAgainVotes,
-                    voterInfo         = voterInfo,
-                    myUserId          = myUserId,
-                    onVotePlayAgain   = onVotePlayAgain,
-                )
-            }
-
             // ── Waiting indicator ─────────────────────────────────────────────
             item {
                 Text(
@@ -312,170 +270,6 @@ fun GuestGameOverLobby(
                     textAlign = TextAlign.Center,
                     modifier  = Modifier.padding(top = 4.dp),
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlayAgainVoteSection(
-    hasVotedPlayAgain: Boolean,
-    playAgainVotes: List<String>,
-    voterInfo: Map<String, Triple<String, Long?, String?>>,
-    myUserId: String,
-    onVotePlayAgain: () -> Unit,
-) {
-    val confettiFired     = remember { mutableStateOf(false) }
-    val confettiAngles    = remember { List(10) { (0..359).random().toFloat() } }
-    val confettiAnimations = remember { List(10) { Animatable(0f) } }
-
-    LaunchedEffect(hasVotedPlayAgain) {
-        if (hasVotedPlayAgain && !confettiFired.value) {
-            confettiFired.value = true
-            confettiAnimations.forEach { it.snapTo(0f) }
-            confettiAnimations.forEach { anim ->
-                launch {
-                    anim.animateTo(1f, tween(700, easing = FastOutSlowInEasing))
-                }
-            }
-        }
-    }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue  = 1f,
-        targetValue   = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "pulseScale",
-    )
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue  = 0.55f,
-        targetValue   = 1f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "glowAlpha",
-    )
-
-    val confettiColors = listOf(
-        colors.logoBlue,
-        colors.logoGreen,
-        colors.logoPink,
-        colors.logoOrange,
-        colors.logoTeal,
-        colors.logoPurple,
-    )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (confettiFired.value) {
-                Canvas(modifier = Modifier.size(220.dp)) {
-                    confettiAnimations.forEachIndexed { i, anim ->
-                        val p        = anim.value
-                        val angleRad = Math.toRadians(confettiAngles[i].toDouble())
-                        val radius   = 90.dp.toPx() * p
-                        val x        = center.x + cos(angleRad).toFloat() * radius
-                        val y        = center.y + sin(angleRad).toFloat() * radius
-                        drawCircle(
-                            color  = confettiColors[i % confettiColors.size].copy(alpha = (1f - p).coerceIn(0f, 1f)),
-                            radius = 5.dp.toPx() * (1f - p * 0.4f),
-                            center = Offset(x, y),
-                        )
-                    }
-                }
-            }
-
-            if (hasVotedPlayAgain) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(colors.logoGreen.copy(alpha = 0.15f))
-                            .border(2.dp, colors.logoGreen, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text       = "✓",
-                            color      = colors.logoGreen,
-                            fontSize   = 26.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                        )
-                    }
-                    Text(
-                        text       = stringResource(R.string.lobby_voted_play_again),
-                        color      = colors.logoGreen,
-                        fontSize   = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text     = stringResource(R.string.lobby_cancel_vote),
-                        color    = colors.body.copy(alpha = 0.45f),
-                        fontSize = 11.sp,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .clickable(onClick = onVotePlayAgain)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
-                }
-            } else {
-                Button(
-                    onClick  = onVotePlayAgain,
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .height(52.dp)
-                        .graphicsLayer { scaleX = pulseScale; scaleY = pulseScale },
-                    shape  = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.logoGreen.copy(alpha = glowAlpha),
-                    ),
-                ) {
-                    Text(
-                        text       = stringResource(R.string.lobby_play_again_question),
-                        fontSize   = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color      = Color.White,
-                    )
-                }
-            }
-        }
-
-        if (playAgainVotes.isNotEmpty()) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    text     = if (playAgainVotes.size == 1)
-                        stringResource(R.string.lobby_player_voted)
-                    else
-                        String.format(Locale.US, stringResource(R.string.lobby_players_voted), playAgainVotes.size),
-                    color    = colors.body.copy(alpha = 0.55f),
-                    fontSize = 11.sp,
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy((-8).dp),
-                    verticalAlignment     = Alignment.CenterVertically,
-                ) {
-                    playAgainVotes.forEach { voterId ->
-                        val info = voterInfo[voterId]
-                        VoterBubble(
-                            name        = info?.first ?: "?",
-                            avatarColor = info?.second,
-                            avatarEmoji = info?.third,
-                        )
-                    }
-                }
             }
         }
     }

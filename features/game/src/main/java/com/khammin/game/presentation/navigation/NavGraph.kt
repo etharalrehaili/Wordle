@@ -172,6 +172,7 @@ fun NavGraphBuilder.navGraph(
             onSignInWithGoogle = {
                 googleSignInClient?.let { googleSignInLauncher.launch(it.signInIntent) }
             },
+            currentLanguage = currentLanguage(),
         )
     }
 

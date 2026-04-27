@@ -95,26 +95,10 @@ fun CustomWordLobbyGuest(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(colors.logoOrange.copy(alpha = 0.06f))
-                    .border(1.dp, colors.logoOrange.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
                     .padding(horizontal = 16.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .scale(pulseScale)
-                        .clip(CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector        = Icons.Outlined.HourglassEmpty,
-                        contentDescription = null,
-                        tint               = colors.logoOrange.copy(alpha = pulseAlpha),
-                        modifier           = Modifier.size(24.dp),
-                    )
-                }
                 WordleText(
                     text       = stringResource(R.string.multiplayer_waiting_for_host),
                     color      = colors.logoOrange,

@@ -59,7 +59,7 @@
     <string name="settings_title">الإعدادات</string>
     <string name="settings_preferences_section">التفضيلات</string>
     <string name="settings_language">اللغة</string>
-    <string name="settings_account_section">إعدادات الحساب</string>
+    <string name="settings_notifications_subtitle">تنبيهات التحديات الأسبوعية</string>    <string name="settings_account_section">إعدادات الحساب</string>
     <string name="settings_app_section">إعدادات التطبيق</string>
     <string name="settings_support_section">الدعم</string>
     <string name="settings_change_password">تغيير كلمة المرور</string>
@@ -97,7 +97,7 @@
     <string name="multiplayer_result_title">النتائج</string>
     <string name="spectator_round">الجولة %1$d</string>
     <string name="spectator_votes"> أصوات اللعب مجدداً: %1$d / %2$d</string>
-    <string name="spectator_solved">تم الحل في %1$d  ·  %2$d نقطة</string>
+    <string name="spectator_solved">%1$d نقطة</string>
     <string name="spectator_failed">فشل</string>
     <string name="spectator_waiting_guess">في الانتظار…</string>
     <string name="spectator_guess_progress">%1$d/%2$d</string>
@@ -109,9 +109,10 @@
     <string name="lobby_ready">جاهز</string>
     <string name="lobby_ready_done">جاهز!</string>
     <string name="lobby_badge_ready">جاهز</string>
-    <string name="lobby_waiting_ready">في انتظار أن يكون جميع اللاعبين جاهزين…</string>
+    <string name="lobby_waiting_ready">في انتظار جاهزية جميع اللاعبين…</string>
     <string name="lobby_you">أنت</string>
     <string name="lobby_badge_host">مضيف</string>
+    <string name="lobby_waiting_for_players">في انتظار انتهاء جميع اللاعبين…</string>
     <string name="profile_edit">تعديل</string>
     <string name="profile_display_name">اسم اللاعب</string>
     <string name="profile_avatar_color">اختر اللون</string>

@@ -264,6 +264,7 @@ fun RandomWordGameOverLobby(
             // ── Action ───────────────────────────────────────────────────────────
             item {
                 val allPlayersFinished = opponentsProgress.values.all { it.solved || it.failed }
+                val canPlayAgain = isWin || allPlayersFinished
                 if (isHost) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -272,11 +273,11 @@ fun RandomWordGameOverLobby(
                         GameButton(
                             label = stringResource(R.string.lobby_play_again),
                             onClick = onPlayAgain,
-                            enabled = allPlayersFinished,
-                            variant = if (allPlayersFinished) GameButtonVariant.Primary else GameButtonVariant.Muted,
+                            enabled = canPlayAgain,
+                            variant = if (canPlayAgain) GameButtonVariant.Primary else GameButtonVariant.Muted,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        if (!allPlayersFinished) {
+                        if (!canPlayAgain) {
                             Text(
                                 text = stringResource(R.string.lobby_waiting_for_players),
                                 color = colors.body.copy(alpha = 0.45f),

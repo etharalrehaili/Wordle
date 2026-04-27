@@ -10,6 +10,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
 class ChallengeDefinitionDataSourceImpl @Inject constructor(
@@ -18,21 +20,44 @@ class ChallengeDefinitionDataSourceImpl @Inject constructor(
 
     private val collection get() = firestore.collection("challengeDefinitions")
 
+    private fun getCurrentWeekId(): String {
+        val calendar = Calendar.getInstance().apply {
+            firstDayOfWeek = Calendar.MONDAY
+            minimalDaysInFirstWeek = 4
+        }
+        val week = calendar.get(Calendar.WEEK_OF_YEAR)
+        val year = calendar.get(Calendar.YEAR)
+        return String.format(Locale.US, "%d-W%02d", year, week)
+    }
+
+    private fun weekQuery() = collection
+        .whereEqualTo("weekId", getCurrentWeekId())
+        .whereEqualTo("isActive", true)
+
     override fun observeDefinitions(): Flow<List<RemoteChallengeDefinition>> = callbackFlow {
-        val listener = collection.addSnapshotListener { snapshot, error ->
+        val currentWeek = getCurrentWeekId()
+        Log.d("ChallengeDebug", "currentWeek=$currentWeek")
+        val listener = weekQuery().addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.e("ChallengeDebug", "[DefDataSource] observeDefinitions error", error)
                 trySend(emptyList())
                 return@addSnapshotListener
             }
-            trySend(snapshot?.toDefinitions() ?: emptyList())
+            val definitions = snapshot?.toDefinitions() ?: emptyList()
+            Log.d("ChallengeDebug", "allDefinitions=$definitions")
+            trySend(definitions)
         }
         awaitClose { listener.remove() }
     }
 
     override suspend fun getDefinitions(): List<RemoteChallengeDefinition> =
-        try { collection.get().await().toDefinitions() }
-        catch (e: Exception) {
+        try {
+            val currentWeek = getCurrentWeekId()
+            Log.d("ChallengeDebug", "currentWeek=$currentWeek")
+            val definitions = weekQuery().get().await().toDefinitions()
+            Log.d("ChallengeDebug", "allDefinitions=$definitions")
+            definitions
+        } catch (e: Exception) {
             Log.e("ChallengeDebug", "[DefDataSource] getDefinitions error", e)
             emptyList()
         }

@@ -34,6 +34,8 @@ fun GameBoard(
     currentCol: Int = 0,
     wordLength: Int = WORD_LENGTH
 ) {
+    val clampedWordLength = wordLength.coerceIn(4, 6)
+
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -42,7 +44,7 @@ fun GameBoard(
     ) {
         val rowCount   = guesses.size.coerceAtLeast(1)
         val tileFromH  = (maxHeight - 2.dp * (rowCount - 1)) / rowCount
-        val tileFromW  = (maxWidth  - 2.dp * (wordLength - 1)) / wordLength
+        val tileFromW  = (maxWidth  - 2.dp * (clampedWordLength - 1)) / clampedWordLength
         val tileSize: Dp = minOf(tileFromH, tileFromW, 80.dp)
         val gap = (maxHeight * 0.01f).coerceIn(2.dp, 6.dp)
 
@@ -54,7 +56,7 @@ fun GameBoard(
                 .matchParentSize()
         ) {
             guesses.forEachIndexed { rowIndex, guess ->
-                val colCount = if (guess.letters.isEmpty()) wordLength else guess.letters.size
+                val colCount = clampedWordLength
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),

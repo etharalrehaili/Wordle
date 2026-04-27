@@ -1,5 +1,12 @@
 package com.khammin.game.presentation.settings.screen
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,10 +29,13 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,10 +46,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.bottomsheets.SignOutConfirmationBottomSheet
 import com.khammin.core.presentation.components.enums.AppColorTheme
@@ -134,6 +149,10 @@ fun SettingsContent(
 
             Spacer(modifier = Modifier.height(spacing.sm))
 
+            NotificationToggleItem()
+
+            Spacer(modifier = Modifier.height(spacing.sm))
+
             SettingsItem(
                 label   = stringResource(R.string.settings_support),
                 icon    = Icons.AutoMirrored.Outlined.HelpOutline,
@@ -171,6 +190,116 @@ fun SettingsContent(
             }
         }
     }
+}
+
+@Composable
+private fun NotificationToggleItem() {
+    val context = LocalContext.current
+    val prefs   = remember { context.getSharedPreferences("app_settings_prefs", Context.MODE_PRIVATE) }
+
+    var notificationsEnabled by remember {
+        mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
+    }
+
+    // Always create the launcher (Compose rule: no conditional composable calls).
+    // Only actually used on Android 13+.
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        notificationsEnabled = granted
+        // Mark that we've already shown the system dialog — never show it again.
+        prefs.edit().putBoolean("notification_permission_asked", true).apply()
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    val onToggle = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsEnabled) {
+            // Android 13+: request the permission the first time; open settings after that.
+            val alreadyAsked = prefs.getBoolean("notification_permission_asked", false)
+            if (!alreadyAsked) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                openNotificationSettings(context)
+            }
+        } else {
+            // Android < 13, or notifications already enabled → open settings.
+            openNotificationSettings(context)
+        }
+    }
+
+    val accent = colors.logoBlue
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(spacing.md))
+            .background(colors.surface)
+            .clickable { onToggle() }
+            .padding(horizontal = spacing.md, vertical = spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(spacing.xxl)
+                .clip(RoundedCornerShape(spacing.md))
+                .background(accent.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector        = Icons.Outlined.Notifications,
+                contentDescription = null,
+                tint               = accent,
+                modifier           = Modifier.size(spacing.md),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(spacing.sm))
+
+        Column(modifier = Modifier.weight(1f)) {
+            WordleText(
+                text       = stringResource(R.string.settings_notifications),
+                color      = colors.title,
+                fontSize   = GameDesignTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(spacing.xxs))
+            WordleText(
+                text     = stringResource(R.string.settings_notifications_subtitle),
+                color    = colors.body.copy(alpha = 0.4f),
+                fontSize = GameDesignTheme.typography.labelSmall,
+            )
+        }
+
+        Switch(
+            checked         = notificationsEnabled,
+            onCheckedChange = { onToggle() },
+            colors          = SwitchDefaults.colors(
+                checkedThumbColor       = Color.White,
+                checkedTrackColor       = accent,
+                uncheckedThumbColor     = Color.White,
+                uncheckedTrackColor     = colors.border,
+                uncheckedBorderColor    = colors.border,
+            ),
+        )
+    }
+}
+
+private fun openNotificationSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
 }
 
 @Composable
@@ -249,7 +378,7 @@ private fun SettingsItem(
                 imageVector        = Icons.Filled.ChevronRight,
                 contentDescription = null,
                 tint               = if (isDestructive) accent.copy(alpha = 0.5f)
-                else colors.body.copy(alpha = 0.20f),
+                                     else colors.body.copy(alpha = 0.20f),
                 modifier           = Modifier.size(spacing.md)
             )
         }

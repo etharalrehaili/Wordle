@@ -35,8 +35,13 @@ class MyApp : Application(), Configuration.Provider {
         FirebaseAppCheck.getInstance().installAppCheckProviderFactory(appCheckFactory)
 
         OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID)
-        CoroutineScope(Dispatchers.IO).launch {
-            OneSignal.Notifications.requestPermission(true)
+        val prefs = getSharedPreferences("app_settings_prefs", MODE_PRIVATE)
+        val dialogShown = prefs.getBoolean("notification_dialog_shown", false)
+        if (!dialogShown) {
+            prefs.edit().putBoolean("notification_dialog_shown", true).apply()
+            CoroutineScope(Dispatchers.IO).launch {
+                OneSignal.Notifications.requestPermission(false)
+            }
         }
     }
 }

@@ -62,6 +62,7 @@ import com.khammin.game.R
 import com.khammin.core.R as CoreR
 import com.khammin.game.domain.model.ChallengeDifficulty
 import com.khammin.game.domain.model.ChallengeStatus
+import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.game.presentation.challenge.contract.ChallengeUiItem
 import com.khammin.game.presentation.challenge.vm.ChallengesViewModel
 import java.util.Locale
@@ -70,6 +71,7 @@ import java.util.Locale
 fun ChallengesScreen(
     onClose: Action,
     onSignInWithGoogle: Action = {},
+    currentLanguage: AppLanguage = AppLanguage.ENGLISH,
     viewModel: ChallengesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -88,6 +90,7 @@ fun ChallengesScreen(
         challenges         = state.challenges,
         isGuest            = isGuest,
         onSignInWithGoogle = onSignInWithGoogle,
+        currentLanguage    = currentLanguage,
     )
 }
 
@@ -99,8 +102,9 @@ fun ChallengesContent(
     challenges: List<ChallengeUiItem> = emptyList(),
     isGuest: Boolean = false,
     onSignInWithGoogle: Action = {},
+    currentLanguage: AppLanguage = AppLanguage.ENGLISH,
 ) {
-    val isArabic = Locale.getDefault().language == "ar"
+    val isArabic = currentLanguage == AppLanguage.ARABIC
 
     Scaffold(
         modifier            = Modifier.fillMaxSize(),

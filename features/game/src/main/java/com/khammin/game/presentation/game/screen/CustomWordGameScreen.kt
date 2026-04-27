@@ -397,9 +397,6 @@ private fun CustomWordGameContent(
                         myGuessCount      = state.currentRow,
                         myTotalPoints     = state.sessionPoints[state.myUserId] ?: 0,
                         sessionPoints     = state.sessionPoints,
-                        playAgainVotes    = state.playAgainVotes,
-                        hasVotedPlayAgain = state.myUserId in state.playAgainVotes,
-                        onVotePlayAgain   = { onIntent(MultiplayerGameIntent.VotePlayAgain) },
                         modifier          = Modifier.fillMaxWidth().weight(1f),
                     )
                 } else if (state.roomStatus == "waiting" || (!state.isHost && state.isHostLeft)) {
@@ -478,15 +475,12 @@ private fun CustomWordGameContent(
                             }
                         }
                         SpectatorView(
-                            word               = state.targetWord,
-                            wordLength         = state.wordLength.takeIf { it > 0 } ?: 4,
-                            opponentsProgress  = state.opponentsProgress,
-                            roundNumber        = state.roundNumber,
-                            playAgainVoteCount = state.playAgainVotes.size,
-                            playAgainVotes     = state.playAgainVotes,
-                            totalGuests        = state.guestIds.size,
-                            onPlayAgain        = onPlayAgain,
-                            modifier           = Modifier.fillMaxWidth().weight(1f)
+                            word              = state.targetWord,
+                            wordLength        = state.wordLength.takeIf { it > 0 } ?: 4,
+                            opponentsProgress = state.opponentsProgress,
+                            roundNumber       = state.roundNumber,
+                            onPlayAgain       = onPlayAgain,
+                            modifier          = Modifier.fillMaxWidth().weight(1f),
                         )
                     } else {
                         val keyboardEnabled = state.roomStatus == "playing"
