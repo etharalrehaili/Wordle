@@ -209,8 +209,10 @@ fun NavGraphBuilder.navGraph(
             onNameChanged      = { viewModel.onEvent(ProfileIntent.OnNameChanged(it)) },
             onAvatarChanged    = { viewModel.onEvent(ProfileIntent.OnAvatarChanged(it)) },
             onSettingsClick    = { navController.navigate(Route.SettingsScreen) },
-            onSignInWithGoogle = { googleSignInClient?.let { googleSignInLauncher.launch(it.signInIntent) } },
-            onRefresh          = { viewModel.refresh() },
+            onSignInWithGoogle      = { viewModel.onEvent(ProfileIntent.OnSignInWithGoogleClick) },
+            onSignInWithGoogleLaunch = { googleSignInClient?.let { googleSignInLauncher.launch(it.signInIntent) } },
+            onDismissNoInternet     = { viewModel.onEvent(ProfileIntent.DismissNoInternet) },
+            onRefresh               = { viewModel.refresh() },
         )
     }
 

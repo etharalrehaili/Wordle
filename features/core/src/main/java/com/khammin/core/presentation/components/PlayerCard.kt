@@ -59,7 +59,7 @@ fun PlayerCard(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text       = rank.toString(),
+                text = String.format(java.util.Locale.US, "%d", rank),
                 color      = borderColor ?: colors.body,
                 fontSize   = 13.sp,
                 fontWeight = FontWeight.ExtraBold,

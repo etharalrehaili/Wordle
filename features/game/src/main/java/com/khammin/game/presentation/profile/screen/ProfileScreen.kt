@@ -61,6 +61,7 @@ import coil.compose.AsyncImage
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.CustomSnackbarHost
 import com.khammin.core.presentation.components.DotsLoadingIndicator
+import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomSheet
 import com.khammin.core.presentation.components.buttons.GameButton
 import com.khammin.core.presentation.components.buttons.GameButtonSize
 import com.khammin.core.presentation.components.buttons.GameButtonVariant
@@ -81,6 +82,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     uiState: ProfileUiState,
@@ -93,6 +95,8 @@ fun ProfileScreen(
     onNameChanged: (String) -> Unit,
     onAvatarChanged: (Uri?) -> Unit,
     onSignInWithGoogle: Action = {},
+    onSignInWithGoogleLaunch: Action = {},
+    onDismissNoInternet: Action = {},
     onRefresh: Action = {},
 ) {
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
@@ -113,22 +117,32 @@ fun ProfileScreen(
                     snackbarState = SnackbarState(profileSavedMessage, SnackbarType.SUCCESS)
                 ProfileEffect.SignedInWithGoogle ->
                     snackbarState = SnackbarState(signedInMessage, SnackbarType.SUCCESS)
+                ProfileEffect.TriggerGoogleSignIn ->
+                    onSignInWithGoogleLaunch()
             }
         }
     }
 
     ProfileContent(
-        uiState            = uiState,
-        onBack             = if (uiState.isEditMode) onCancelEditClick else onBack,
-        onSettingsClick    = onSettingsClick,
-        onEditProfileClick = onEditProfileClick,
-        onSaveProfileClick = onSaveProfileClick,
-        onCancelEditClick  = onCancelEditClick,
-        onNameChanged      = onNameChanged,
-        onAvatarChanged    = onAvatarChanged,
-        onSignInWithGoogle = onSignInWithGoogle,
-        onRefresh          = onRefresh,
+        uiState             = uiState,
+        onBack              = if (uiState.isEditMode) onCancelEditClick else onBack,
+        onSettingsClick     = onSettingsClick,
+        onEditProfileClick  = onEditProfileClick,
+        onSaveProfileClick  = onSaveProfileClick,
+        onCancelEditClick   = onCancelEditClick,
+        onNameChanged       = onNameChanged,
+        onAvatarChanged     = onAvatarChanged,
+        onSignInWithGoogle  = onSignInWithGoogle,
+        onDismissNoInternet = onDismissNoInternet,
+        onRefresh           = onRefresh,
     )
+
+    if (uiState.showNoInternet) {
+        NoInternetBottomSheet(
+            onRetry   = { onDismissNoInternet(); onSignInWithGoogle() },
+            onDismiss = onDismissNoInternet,
+        )
+    }
 
     if (snackbarState != null) {
         CustomSnackbarHost(
@@ -150,6 +164,7 @@ fun ProfileContent(
     onNameChanged: (String) -> Unit,
     onAvatarChanged: (Uri?) -> Unit,
     onSignInWithGoogle: Action = {},
+    onDismissNoInternet: Action = {},
     onRefresh: Action = {},
 ) {
     val focusManager = LocalFocusManager.current

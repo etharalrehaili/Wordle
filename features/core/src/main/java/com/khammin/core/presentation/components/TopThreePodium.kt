@@ -40,10 +40,10 @@ data class PodiumPlayer(
 
 @Composable
 fun TopThreePodium(
+    modifier: Modifier = Modifier,
     first: PodiumPlayer,
     second: PodiumPlayer? = null,
-    third: PodiumPlayer? = null,
-    modifier: Modifier = Modifier,
+    third: PodiumPlayer? = null
 ) {
     Row(
         modifier              = modifier
@@ -86,7 +86,7 @@ private fun EmptyPodiumSlot(rank: Int, colors: WordleColors) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text       = rank.toString(),
+                text = String.format(java.util.Locale.US, "%d", rank),
                 color      = colors.buttonTaupe.copy(alpha = 0.35f),
                 fontSize   = 12.sp,
                 fontWeight = FontWeight.ExtraBold,
@@ -154,7 +154,7 @@ private fun PodiumEntry(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text       = rank.toString(),
+                    text = String.format(java.util.Locale.US, "%d", rank),
                     color      = resolvedAccent,
                     fontSize   = 12.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -211,7 +211,7 @@ private fun PodiumEntry(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text       = "%,d".format(player.points),
+                text = String.format(java.util.Locale.US, "%,d", player.points),
                 color      = resolvedAccent,
                 fontSize   = 12.sp,
                 fontWeight = FontWeight.Bold,
