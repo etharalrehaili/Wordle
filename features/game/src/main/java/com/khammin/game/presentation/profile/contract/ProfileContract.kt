@@ -21,11 +21,13 @@ data class ProfileUiState(
     val totalPoints: Int      = 0,
     val arGamesPlayed: Int = 0,
     val arWordsSolved: Int = 0,
+    val showNoInternet: Boolean = false,
 ) : UiState
 
 sealed interface ProfileEffect : UiEffect {
     data object ProfileSaved : ProfileEffect
     data object SignedInWithGoogle : ProfileEffect
+    data object TriggerGoogleSignIn : ProfileEffect
     data class ShowError(val message: String) : ProfileEffect
 }
 
@@ -33,6 +35,8 @@ sealed class ProfileIntent : UiIntent {
     data object OnEditProfileClick : ProfileIntent()
     data object OnSaveProfileClick : ProfileIntent()
     data object OnCancelEditClick : ProfileIntent()
+    data object OnSignInWithGoogleClick : ProfileIntent()
+    data object DismissNoInternet : ProfileIntent()
     data class OnNameChanged(val name: String) : ProfileIntent()
     data class OnAvatarChanged(val avatarUri: Uri?) : ProfileIntent()
 }

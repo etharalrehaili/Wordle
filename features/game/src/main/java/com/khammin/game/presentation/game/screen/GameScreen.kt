@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
-
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -56,6 +55,7 @@ import com.khammin.game.presentation.game.contract.toTypes
 import com.khammin.game.presentation.game.vm.GameViewModel
 import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,7 +127,6 @@ fun GameContent(
     onRestart: Action,
     onIntent: (GameIntent) -> Unit,
 ) {
-    val colors = LocalWordleColors.current
     val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val resultSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 

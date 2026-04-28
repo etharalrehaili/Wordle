@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import java.io.ByteArrayOutputStream
 import com.khammin.core.mvi.BaseMviViewModel
+import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
 import com.khammin.game.R
 import com.khammin.game.data.local.GuestProfileDataStore
@@ -46,6 +47,7 @@ class ProfileViewModel @Inject constructor(
     private val guestProfileDataStore: GuestProfileDataStore,
     private val challengeProgressRepository: ChallengeProgressRepository,
     private val challengeDefinitionRepository: ChallengeDefinitionRepository,
+    private val networkUtils: NetworkUtils,
     @ApplicationContext private val context: Context,
 ) : BaseMviViewModel<ProfileIntent, ProfileUiState, ProfileEffect>(
     initialState = ProfileUiState()
@@ -217,6 +219,16 @@ class ProfileViewModel @Inject constructor(
             is ProfileIntent.OnAvatarChanged -> setState {
                 copy(pendingAvatarUri = intent.avatarUri)
             }
+
+            ProfileIntent.OnSignInWithGoogleClick -> {
+                if (networkUtils.isConnected()) {
+                    sendEffect { ProfileEffect.TriggerGoogleSignIn }
+                } else {
+                    setState { copy(showNoInternet = true) }
+                }
+            }
+
+            ProfileIntent.DismissNoInternet -> setState { copy(showNoInternet = false) }
 
             ProfileIntent.OnSaveProfileClick -> {
                 val trimmed = uiState.value.editName.trim()
