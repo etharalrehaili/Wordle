@@ -26,6 +26,10 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,14 +62,15 @@ fun JoinRoomBottomSheet(
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
 
-    // Local validation (instant, no network)
     val containsArabic = roomCode.any { it in '\u0600'..'\u06FF' }
     val isValid = roomCode.trim().length == 6 && !containsArabic
 
-    // Combined error: local takes priority over server error
+    var hasAttempted by remember { mutableStateOf(false) }
+
     val displayError = when {
         containsArabic -> stringResource(R.string.join_room_error_arabic)
-        else           -> errorMessage  // from ViewModel (not found / already used)
+        hasAttempted && roomCode.trim().length < 6 -> stringResource(R.string.join_room_error_length)
+        else -> errorMessage
     }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -221,10 +226,9 @@ fun JoinRoomBottomSheet(
                     GameButton(
                         label    = stringResource(R.string.join_room_join),
                         enabled  = roomCode.isNotEmpty(),
-                        onClick  = {
-                            if (isValid) {
-                                onJoin(roomCode.trim())
-                            }
+                        onClick = {
+                            hasAttempted = true
+                            if (isValid) onJoin(roomCode.trim())
                         },
                         variant  = GameButtonVariant.Primary,
                         modifier = Modifier.fillMaxWidth()

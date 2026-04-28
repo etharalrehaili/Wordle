@@ -283,7 +283,6 @@ private fun RandomWordGameContent(
                     endIcon = Icons.Filled.Close,
                     startIcon = Icons.Filled.Info,
                     onEndIconClicked = onClose,
-                    showBackground = false,
                     modifier = Modifier.fillMaxWidth().statusBarsPadding()
                 )
 

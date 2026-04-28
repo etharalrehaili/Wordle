@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -51,7 +50,6 @@ fun NoInternetBottomSheet(
         Column(
             modifier            = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.5f)
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -67,7 +65,7 @@ fun NoInternetBottomSheet(
                 modifier            = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 28.dp)
-                    .padding(top = 36.dp, bottom = 32.dp),
+                    .padding(top = 28.dp, bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
@@ -87,7 +85,7 @@ fun NoInternetBottomSheet(
                 )
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(28.dp))
 
             Text(
                 text          = stringResource(R.string.no_internet_title),
@@ -108,7 +106,7 @@ fun NoInternetBottomSheet(
                 lineHeight = 20.sp,
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(40.dp))
 
             GameButton(
                 label    = stringResource(R.string.no_internet_try_again),
@@ -117,7 +115,7 @@ fun NoInternetBottomSheet(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(16.dp))
 
             GameButton(
                 label    = stringResource(R.string.no_internet_cancel),
@@ -125,7 +123,10 @@ fun NoInternetBottomSheet(
                 variant  = GameButtonVariant.Ghost,
                 modifier = Modifier.fillMaxWidth()
             )
-        }
+
+                Spacer(Modifier.height(40.dp))
+
+            }
     }
 }
 }

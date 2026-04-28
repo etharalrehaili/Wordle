@@ -20,23 +20,26 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.khammin.core.R
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.text.WordleText
 import com.khammin.core.presentation.preview.GameDarkBackgroundPreview
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.core.presentation.theme.GameDesignTheme.spacing
+import java.util.Locale
 
 @Composable
 fun GameTopBar(
@@ -50,32 +53,21 @@ fun GameTopBar(
     onStartIconClicked: Action? = null,
     onEndIconClicked: Action? = null,
     onHintClicked: Action? = null,
-    containerColor: Color? = null,
     isDarkMode: Boolean = true,
     onThemeToggle: ((AppColorTheme) -> Unit)? = null,
-    showBackground: Boolean = true,
-    onCloseClicked: Action? = null
+    onCloseClicked: Action? = null,
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = spacing.md, vertical = spacing.xs)
             .clip(RoundedCornerShape(20.dp))
-            .then(
-                if (showBackground)
-                    Modifier
-                        .background(color = colors.topBarBackground)
-                        .border(
-                            width = 1.dp,
-                            color = colors.topBarBorder,
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                else Modifier
-            )
             .height(56.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
-        // Start icon
+
+        // ── Start slot (left in English) ──────────────────────────────────────────
+        // Shows a points badge when `points` is provided, otherwise shows the navigation icon (e.g. back arrow).
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -83,16 +75,20 @@ fun GameTopBar(
         ) {
             when {
                 points != null -> {
+                    // Points badge — pill-shaped chip with the player's score.
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
                             .background(colors.surface)
                             .border(1.dp, colors.border, RoundedCornerShape(10.dp))
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(horizontal = spacing.sm, vertical = 4.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
                         WordleText(
-                            text          = "$points PTS",
+                            text = stringResource(
+                                R.string.top_bar_points_label,
+                                String.format(Locale.US, "%d", points)
+                            ),
                             color         = colors.logoGreen,
                             fontSize      = 13.sp,
                             fontWeight    = FontWeight.Bold,
@@ -100,28 +96,30 @@ fun GameTopBar(
                         )
                     }
                 }
+
                 startIcon != null && onStartIconClicked != null -> {
+                    // Navigation icon
                     IconButton(
                         onClick  = { onStartIconClicked() },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
                             imageVector        = startIcon,
                             contentDescription = null,
                             tint               = colors.body,
-                            modifier           = Modifier.size(24.dp)
+                            modifier           = Modifier.size(24.dp),
                         )
                     }
                 }
             }
         }
 
-        // title
+        // ── Center slot — screen title ─────────────────────────────────
         if (title != null) {
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier              = Modifier.align(Alignment.Center)
+                modifier              = Modifier.align(Alignment.Center),
             ) {
                 WordleText(
                     text          = title.uppercase(),
@@ -134,51 +132,55 @@ fun GameTopBar(
             }
         }
 
-        // End icon / hint icon
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 0.dp)
-        ) {
+        // ── End slot (right in English) ───────────────────────────────────────────
+        // Renders action buttons in a fixed priority order:
+        // theme toggle → hint → close (or generic end icon).
+        Box(modifier = Modifier.align(Alignment.CenterEnd)) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             ) {
-                // Theme toggle — sun / moon
+
+                // Theme toggle — shows sun when dark mode is active (tap → light),
+                // and moon when light mode is active (tap → dark).
                 if (onThemeToggle != null) {
                     IconButton(
                         onClick = {
                             val newTheme = if (isDarkMode) AppColorTheme.LIGHT else AppColorTheme.DARK
-                            onThemeToggle?.invoke(newTheme)
+                            onThemeToggle(newTheme)
                         },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
-                            imageVector = if (isDarkMode)
-                                Icons.Outlined.LightMode
+                            imageVector        = if (isDarkMode) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
+                            contentDescription = if (isDarkMode)
+                                stringResource(R.string.top_bar_switch_to_light)
                             else
-                                Icons.Outlined.DarkMode,
-                            contentDescription = if (isDarkMode) "Switch to light mode" else "Switch to dark mode",
-                            tint = colors.body,
-                            modifier = Modifier.size(22.dp)
+                                stringResource(R.string.top_bar_switch_to_dark),
+                            tint     = colors.body,
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 }
+
+                // Hint button — disabled and shows an "Ad" badge when no hints remain.
                 if (hintIcon != null && onHintClicked != null) {
                     Box {
                         IconButton(
-                            onClick = onHintClicked,
-                            enabled = hintsRemaining > 0,
-                            modifier = Modifier.size(36.dp)
+                            onClick  = onHintClicked,
+                            enabled  = hintsRemaining > 0,
+                            modifier = Modifier.size(36.dp),
                         ) {
                             Icon(
-                                imageVector = hintIcon,
-                                contentDescription = "Use hint ($hintsRemaining remaining)",
-                                tint = if (hintsRemaining > 0) colors.body
-                                else colors.body.copy(alpha = 0.35f),
-                                modifier = Modifier.size(26.dp)
+                                imageVector        = hintIcon,
+                                contentDescription = stringResource(R.string.top_bar_hint_remaining, hintsRemaining),
+                                tint     = if (hintsRemaining > 0) colors.body else colors.body.copy(alpha = 0.35f),
+                                modifier = Modifier.size(26.dp),
                             )
                         }
+
+                        // Badge overlaid on the top-right corner of the hint button.
+                        // Green with a count when hints remain; pink with "Ad" when empty.
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
@@ -186,43 +188,48 @@ fun GameTopBar(
                                 .defaultMinSize(minWidth = 22.dp)
                                 .background(
                                     color = if (hintsRemaining > 0) colors.logoGreen else colors.logoPink,
-                                    shape = RoundedCornerShape(6.dp)
+                                    shape = RoundedCornerShape(6.dp),
                                 )
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                text = if (hintsRemaining > 0) "$hintsRemaining" else "Ad",
-                                color = Color.White,
-                                fontSize = 11.sp,
+                            WordleText(
+                                text       = if (hintsRemaining > 0) "$hintsRemaining"
+                                             else stringResource(R.string.top_bar_hint_watch_ad),
+                                color      = Color.White,
+                                fontSize   = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                lineHeight = 11.sp
+                                lineHeight = 11.sp,
                             )
                         }
                     }
                 }
+
+                // Close button takes priority over the generic end icon.
+                // Use `onCloseClicked` for dismiss/cancel actions (e.g. result sheets).
+                // Use `endIcon` + `onEndIconClicked` for secondary navigation actions.
                 if (onCloseClicked != null) {
                     IconButton(
                         onClick  = { onCloseClicked() },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
                             imageVector        = Icons.Filled.Close,
                             contentDescription = null,
                             tint               = colors.body,
-                            modifier           = Modifier.size(22.dp)
+                            modifier           = Modifier.size(22.dp),
                         )
                     }
                 } else if (endIcon != null && onEndIconClicked != null) {
                     IconButton(
-                        onClick = { onEndIconClicked() },
-                        modifier = Modifier.size(36.dp)
+                        onClick  = { onEndIconClicked() },
+                        modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
-                            imageVector = endIcon,
+                            imageVector        = endIcon,
                             contentDescription = null,
-                            tint = colors.body,
-                            modifier = Modifier.size(24.dp)
+                            tint               = colors.body,
+                            modifier           = Modifier.size(24.dp),
                         )
                     }
                 }
@@ -235,11 +242,11 @@ fun GameTopBar(
 @Composable
 private fun PreviewGameTopBarWithBothIcons() {
     GameTopBar(
-        title = "WORDLE",
-        startIcon = Icons.Outlined.Info,
+        title              = "WORDLE",
+        startIcon          = Icons.Outlined.Info,
         onStartIconClicked = {},
-        endIcon = Icons.Filled.Menu,
-        onEndIconClicked = {}
+        endIcon            = Icons.Filled.Menu,
+        onEndIconClicked   = {},
     )
 }
 
@@ -247,7 +254,7 @@ private fun PreviewGameTopBarWithBothIcons() {
 @Composable
 private fun PreviewGameTopBarEndIconOnly() {
     GameTopBar(
-        endIcon = Icons.Filled.Menu,
-        onEndIconClicked = {}
+        endIcon          = Icons.Filled.Menu,
+        onEndIconClicked = {},
     )
 }

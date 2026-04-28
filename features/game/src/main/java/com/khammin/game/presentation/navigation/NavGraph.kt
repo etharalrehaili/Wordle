@@ -15,7 +15,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.khammin.onboarding.OnboardingScreen
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -24,7 +23,6 @@ import com.khammin.game.presentation.home.vm.HomeViewModel
 import com.khammin.game.presentation.profile.screen.ProfileScreen
 import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.enums.AppLanguage
-import com.khammin.game.presentation.challenge.screen.ChallengeScreen
 import com.khammin.game.presentation.challenge.screen.ChallengesScreen
 import com.khammin.game.presentation.game.screen.GameScreen
 import com.khammin.game.presentation.game.screen.MultiplayerGameScreen
@@ -51,16 +49,6 @@ fun NavGraphBuilder.navGraph(
     currentTheme: () -> AppColorTheme
 ) {
 
-    composable<Route.OnboardingScreen> {
-        OnboardingScreen(
-            onNavigateToHome = {
-                navController.navigate(Route.HomeScreen) {
-                    popUpTo(Route.OnboardingScreen) { inclusive = true }
-                }
-            }
-        )
-    }
-
     composable<Route.HomeScreen> {
 
         HomeScreen(
@@ -75,7 +63,7 @@ fun NavGraphBuilder.navGraph(
                 }
             },
             onChallengeClick = {
-                navController.navigate(Route.ChallengesScreen) {
+                navController.navigate(Route.ChallengeScreen) {
                     launchSingleTop = true
                 }
             },
@@ -124,17 +112,6 @@ fun NavGraphBuilder.navGraph(
     }
 
     composable<Route.ChallengeScreen> {
-        ChallengeScreen(
-            onClose = {
-                if (navController.previousBackStackEntry != null) {
-                    navController.popBackStack()
-                }
-            },
-            currentLanguage = currentLanguage(),
-        )
-    }
-
-    composable<Route.ChallengesScreen> {
         val context = LocalContext.current
         val homeViewModel: HomeViewModel = hiltViewModel()
 
@@ -312,13 +289,7 @@ sealed interface Route {
     data object ChallengeScreen : Route
 
     @Serializable
-    data object ChallengesScreen : Route
-
-    @Serializable
     data object LeaderboardScreen : Route
-
-    @Serializable
-    data object OnboardingScreen : Route
 
     @Serializable
     data object ProfileScreen : Route

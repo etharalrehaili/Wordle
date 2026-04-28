@@ -81,7 +81,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     uiState: ProfileUiState,
@@ -181,8 +180,6 @@ fun ProfileContent(
                     onStartIconClicked = onBack,
                     endIcon            = Icons.Filled.Settings,
                     onEndIconClicked   = onSettingsClick,
-                    containerColor     = Color.Transparent,
-                    showBackground     = false,
                     modifier           = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding(),
@@ -388,14 +385,14 @@ fun ProfileContent(
                         MiniStatCard(
                             icon     = Icons.Filled.Games,
                             label    = stringResource(R.string.profile_stat_played),
-                            value    = (uiState.enGamesPlayed + uiState.arGamesPlayed).toString(),
+                            value    = (uiState.arGamesPlayed).toString(),
                             accent   = colors.logoGreen,
                             modifier = Modifier.weight(1f),
                         )
                         MiniStatCard(
                             icon     = Icons.Filled.Check,
                             label    = stringResource(R.string.profile_stat_solved),
-                            value    = (uiState.enWordsSolved + uiState.arWordsSolved).toString(),
+                            value    = (uiState.arWordsSolved).toString(),
                             accent   = colors.logoTeal,
                             modifier = Modifier.weight(1f),
                         )
@@ -403,8 +400,8 @@ fun ProfileContent(
                             icon     = Icons.Outlined.EmojiEvents,
                             label    = stringResource(R.string.profile_stat_win_rate),
                             value    = run {
-                                val totalGames  = uiState.enGamesPlayed + uiState.arGamesPlayed
-                                val totalSolved = uiState.enWordsSolved + uiState.arWordsSolved
+                                val totalGames  = uiState.arGamesPlayed
+                                val totalSolved = uiState.arWordsSolved
                                 val rate        = if (totalGames > 0) (totalSolved * 100 / totalGames) else 0
                                 "$rate%"
                             },
@@ -659,10 +656,6 @@ private fun PreviewProfileScreenLight() {
         uiState = ProfileUiState(
             name            = "Ahmed Al-Rashid",
             email           = "ahmed@example.com",
-            enGamesPlayed   = 42,
-            enWordsSolved   = 35,
-            enWinPercentage = 78,
-            enCurrentPoints = 24500,
             isEditMode      = false,
         ),
         uiEffect           = MutableSharedFlow(),
@@ -683,10 +676,6 @@ private fun PreviewProfileScreenEditMode() {
         uiState = ProfileUiState(
             name            = "Ahmed Al-Rashid",
             email           = "ahmed@example.com",
-            enGamesPlayed   = 42,
-            enWordsSolved   = 35,
-            enWinPercentage = 78,
-            enCurrentPoints = 24500,
             isEditMode      = true,
             editName        = "Ahmed Al-Rashid",
         ),

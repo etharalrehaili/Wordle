@@ -20,12 +20,15 @@ data class ChallengeUiItem(
 
 data class ChallengesUiState(
     val isLoading: Boolean = true,
-    /** Points earned from completed challenges (sum of their point values). */
+    val isRefreshing: Boolean = false,
+    val noInternet: Boolean = false,
+    val error: String? = null,
     val totalPoints: Int = 0,
-    /** All active challenges, ordered as returned from Firestore. */
     val challenges: List<ChallengeUiItem> = emptyList(),
 ) : UiState
 
-sealed interface ChallengesIntent : UiIntent
+sealed interface ChallengesIntent : UiIntent {
+    data object Refresh : ChallengesIntent
+}
 
 sealed interface ChallengesEffect : UiEffect
