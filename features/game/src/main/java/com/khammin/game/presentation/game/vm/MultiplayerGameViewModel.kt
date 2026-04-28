@@ -107,7 +107,6 @@ class MultiplayerGameViewModel @Inject constructor(
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
                 isAppForegroundFlow.value = true
-                android.util.Log.d("PresenceDebug", "[Lifecycle] ON_START → app is FOREGROUND | userId=${uiState.value.myUserId} | roomId=${uiState.value.roomId}")
                 val s = uiState.value
                 if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
@@ -127,7 +126,6 @@ class MultiplayerGameViewModel @Inject constructor(
             }
             override fun onStop(owner: LifecycleOwner) {
                 isAppForegroundFlow.value = false
-                android.util.Log.d("PresenceDebug", "[Lifecycle] ON_STOP → app is BACKGROUND | userId=${uiState.value.myUserId} | roomId=${uiState.value.roomId}")
                 val s = uiState.value
                 if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
@@ -136,7 +134,6 @@ class MultiplayerGameViewModel @Inject constructor(
                 }
             }
             override fun onDestroy(owner: LifecycleOwner) {
-                android.util.Log.d("PresenceDebug", "[Lifecycle] ON_DESTROY → app is KILLED | userId=${uiState.value.myUserId} | roomId=${uiState.value.roomId}")
             }
         })
     }

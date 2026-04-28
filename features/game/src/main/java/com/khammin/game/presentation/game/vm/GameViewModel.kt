@@ -18,7 +18,6 @@ import com.khammin.game.presentation.game.contract.GameEffect
 import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
 import com.khammin.game.presentation.game.contract.Tile
-import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -169,13 +168,10 @@ class GameViewModel @Inject constructor(
                         hintsUsed         = s.hintsUsed,
                         language          = s.language,
                     )
-                    Log.d("ChallengeDebug", "[GameVM] Game over → isWin=$isWin guessCount=${s.currentRow + 1} timeSecs=$elapsed wordLength=${s.wordLength} mode=SOLO hintsUsed=${s.hintsUsed}")
                     runCatching {
                         val completed = evaluateChallengesUseCase(gameResult)
-                        Log.d("ChallengeDebug", "[GameVM] EvaluateChallenges returned completed=$completed")
                         awardChallengePointsUseCase(completed)
                     }.onFailure { e ->
-                        Log.e("ChallengeDebug", "[GameVM] EvaluateChallenges threw exception", e)
                     }
                 }
             }
@@ -188,6 +184,7 @@ class GameViewModel @Inject constructor(
             GameUiState(
                 wordLength = state.wordLength,
                 wordList   = state.wordList,
+                language   = state.language,
                 targetWord = state.wordList.randomOrNull()?.normalizeForWordle() ?: "",
                 board      = List(MAX_GUESSES) { List(state.wordLength) { Tile() } }
             )
