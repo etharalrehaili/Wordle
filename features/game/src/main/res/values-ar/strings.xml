@@ -71,6 +71,13 @@
     <string name="sign_out_confirm">نعم، سجّل الخروج</string>
     <string name="sign_out_cancel">إلغاء</string>
 
+    <!-- Support Screen -->
+    <string name="support_title">الدعم</string>
+    <string name="support_header_title">شاركني رأيك!</string>
+    <string name="support_header_body">أسعد بسماع آراءكم وملاحظاتكم تساعد في تطوير التطبيق\nتواصلوا معي في حسابي على LinkedIn</string>
+    <string name="support_linkedin_name">ايثار الرحيلي</string>
+    <string name="support_linkedin_handle">linkedin.com/in/ethar-alrehaili</string>
+
     <!-- Profile Screen -->
     <string name="profile_total_points">إجمالي النقاط</string>
     <string name="profile_edit_button">تعديل الملف</string>
@@ -147,7 +154,7 @@
     <string name="custom_word_players_count">اللاعبون (%1$d/4)</string>
     <string name="lobby_badge_not_ready">غير جاهز</string>
     <string name="lobby_hint_enter_word">أدخل كلمة للبدء</string>
-    <string name="lobby_hint_need_players">يحتاج إلى لاعب واحد على الأقل للانضمام</string>
+    <string name="lobby_hint_need_players">يجب أن ينضم لاعب واحد على الأقل للبدء</string>
     <string name="lobby_hint_wait_ready">في انتظار استعداد جميع اللاعبين</string>
     <string name="lobby_hint_tap_ready">اضغط جاهز عندما تكون مستعداً للعب</string>
     <string name="lobby_guest_waiting_subtitle">سيبدأ المضيف اللعبة بمجرد استعداد الجميع</string>

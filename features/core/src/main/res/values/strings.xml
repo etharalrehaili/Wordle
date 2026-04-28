@@ -94,6 +94,7 @@
     <string name="join_room_subtitle">Enter the 6-character code shared by your friend</string>
     <string name="join_room_placeholder">ABC123</string>
     <string name="join_room_error_arabic">Invalid code. Use English characters only.</string>
+    <string name="join_room_error_length">Code should be 6 digits</string>
     <string name="join_room_joining">Joining…</string>
     <string name="join_room_join">Join</string>
 
@@ -139,6 +140,13 @@
     <string name="spectator_title">You set the word!</string>
     <string name="spectator_watching">Watching %s play…</string>
     <string name="spectator_waiting">Waiting for your opponent to join…</string>
+
+    <!-- Game Top Bar -->
+    <string name="top_bar_points_label">%1$s PTS</string>
+    <string name="top_bar_hint_watch_ad">Ad</string>
+    <string name="top_bar_switch_to_light">Switch to light mode</string>
+    <string name="top_bar_switch_to_dark">Switch to dark mode</string>
+    <string name="top_bar_hint_remaining">Use hint (%1$d remaining)</string>
 
     <!-- Theme and Language options -->
     <string name="theme_dark">Dark</string>

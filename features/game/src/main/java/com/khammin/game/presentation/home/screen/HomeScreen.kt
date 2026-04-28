@@ -218,8 +218,6 @@ fun HomeContent(
             modifier           = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding(),
-            containerColor     = Color.Transparent,
-            showBackground     = false,
             isDarkMode         = uiState.selectedTheme == AppColorTheme.DARK,
             onThemeToggle      = { onIntent(PreferencesIntent.ChangeTheme(it)) }
         )

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +25,7 @@ import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FlashOn
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Groups
@@ -34,9 +34,12 @@ import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -64,12 +68,15 @@ import com.khammin.game.domain.model.ChallengeDifficulty
 import com.khammin.game.domain.model.ChallengeStatus
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.game.presentation.challenge.contract.ChallengeUiItem
+import com.khammin.game.presentation.challenge.contract.ChallengesIntent
 import com.khammin.game.presentation.challenge.vm.ChallengesViewModel
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChallengesScreen(
     onClose: Action,
+    onRefresh: Action = {},
     onSignInWithGoogle: Action = {},
     currentLanguage: AppLanguage = AppLanguage.ENGLISH,
     viewModel: ChallengesViewModel = hiltViewModel(),
@@ -85,7 +92,11 @@ fun ChallengesScreen(
 
     ChallengesContent(
         onClose            = onClose,
+        onRefresh          = { viewModel.onEvent(ChallengesIntent.Refresh) },
         isLoading          = state.isLoading,
+        isRefreshing       = state.isRefreshing,
+        noInternet         = state.noInternet,
+        error              = state.error,
         totalPoints        = state.totalPoints,
         challenges         = state.challenges,
         isGuest            = isGuest,
@@ -94,10 +105,15 @@ fun ChallengesScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChallengesContent(
     onClose: Action,
+    onRefresh: Action = {},
     isLoading: Boolean = false,
+    isRefreshing: Boolean = false,
+    noInternet: Boolean = false,
+    error: String? = null,
     totalPoints: Int = 0,
     challenges: List<ChallengeUiItem> = emptyList(),
     isGuest: Boolean = false,
@@ -116,129 +132,205 @@ fun ChallengesContent(
                 points           = totalPoints,
                 endIcon          = Icons.Filled.Close,
                 onEndIconClicked = onClose,
-                showBackground   = false,
                 modifier         = Modifier.fillMaxWidth().statusBarsPadding(),
             )
         },
     ) { innerPadding ->
-        if (isLoading) {
-            Box(
-                modifier         = Modifier.fillMaxSize().padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = colors.logoGreen)
-            }
-            return@Scaffold
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(28.dp)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh    = onRefresh,
+            modifier     = Modifier.fillMaxSize().padding(innerPadding),
         ) {
-            Spacer(Modifier.height(8.dp))
-
-            // ── Guest banner ──────────────────────────────────────────
-            if (isGuest) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.logoBlue.copy(alpha = 0.07f))
-                        .border(1.dp, colors.logoBlue.copy(alpha = 0.18f), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 20.dp, vertical = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Icon + title row
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            when {
+                isLoading || isRefreshing -> {
+                    Box(
+                        modifier         = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(colors.logoBlue.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                        CircularProgressIndicator(
+                            color       = colors.logoBlue,
+                            strokeWidth = 2.dp,
+                        )
+                    }
+                }
+
+                noInternet -> {
+                    Box(
+                        modifier         = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier            = Modifier.padding(horizontal = 32.dp)
                         ) {
                             Icon(
-                                imageVector        = Icons.Outlined.EmojiEvents,
+                                imageVector        = Icons.Outlined.WifiOff,
                                 contentDescription = null,
-                                tint               = colors.logoBlue,
-                                modifier           = Modifier.size(24.dp)
+                                tint               = colors.body.copy(alpha = 0.3f),
+                                modifier           = Modifier.size(48.dp)
                             )
-                        }
-                        Column {
                             WordleText(
-                                text       = stringResource(CoreR.string.auth_join_title),
+                                text       = stringResource(R.string.leaderboard_no_internet_title),
                                 color      = colors.title,
-                                fontSize   = GameDesignTheme.typography.labelLarge,
+                                fontSize   = GameDesignTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
+                                textAlign  = TextAlign.Center,
                             )
-                            Spacer(Modifier.height(2.dp))
                             WordleText(
-                                text       = stringResource(CoreR.string.auth_join_subtitle),
-                                color      = colors.body.copy(alpha = 0.65f),
-                                fontSize   = GameDesignTheme.typography.labelSmall,
+                                text      = stringResource(R.string.leaderboard_no_internet_subtitle),
+                                color     = colors.body.copy(alpha = 0.5f),
+                                fontSize  = GameDesignTheme.typography.labelMedium,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            GameButton(
+                                label    = stringResource(R.string.leaderboard_try_again),
+                                onClick  = onRefresh,
+                                variant  = GameButtonVariant.Primary,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
-
-                    // Divider
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(colors.logoBlue.copy(alpha = 0.12f))
-                    )
-
-                    GameButton(
-                        label    = stringResource(CoreR.string.auth_sign_in_google),
-                        onClick  = onSignInWithGoogle,
-                        variant  = GameButtonVariant.Primary,
-                        size     = GameButtonSize.Small,
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
-            }
 
-            val byDifficulty = challenges.groupBy { it.difficulty }
-
-            listOf(
-                ChallengeDifficulty.BEGINNER,
-                ChallengeDifficulty.INTERMEDIATE,
-                ChallengeDifficulty.EXPERT,
-            ).forEach { difficulty ->
-                val items = byDifficulty[difficulty]
-                    ?.sortedBy { item ->
-                        when (item.status) {
-                            ChallengeStatus.AVAILABLE   -> 0
-                            ChallengeStatus.IN_PROGRESS -> 1
-                            ChallengeStatus.COMPLETED   -> 2
+                error != null -> {
+                    Box(
+                        modifier         = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Outlined.ErrorOutline,
+                                contentDescription = null,
+                                tint               = colors.body.copy(alpha = 0.3f),
+                                modifier           = Modifier.size(48.dp)
+                            )
+                            WordleText(
+                                text     = error,
+                                color    = colors.body.copy(alpha = 0.5f),
+                                fontSize = GameDesignTheme.typography.labelMedium,
+                            )
                         }
                     }
-                if (!items.isNullOrEmpty()) {
-                    ChallengeSection(
-                        difficulty = difficulty,
-                        cards = items.map { item ->
-                            {
-                                ChallengeCard(
-                                    title  = if (isArabic) item.titleAr else item.titleEn,
-                                    points = item.points,
-                                    icon   = iconForName(item.iconName),
-                                    item   = item,
+                }
+
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(28.dp)
+                    ) {
+                        Spacer(Modifier.height(8.dp))
+
+                        // ── Guest banner ──────────────────────────────────────────
+                        if (isGuest) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(colors.logoBlue.copy(alpha = 0.07f))
+                                    .border(1.dp, colors.logoBlue.copy(alpha = 0.18f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Icon + title row
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(colors.logoBlue.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector        = Icons.Outlined.EmojiEvents,
+                                            contentDescription = null,
+                                            tint               = colors.logoBlue,
+                                            modifier           = Modifier.size(24.dp)
+                                        )
+                                    }
+                                    Column {
+                                        WordleText(
+                                            text       = stringResource(CoreR.string.auth_join_title),
+                                            color      = colors.title,
+                                            fontSize   = GameDesignTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+
+                                        Spacer(Modifier.height(2.dp))
+
+                                        WordleText(
+                                            text       = stringResource(CoreR.string.auth_join_subtitle),
+                                            color      = colors.body.copy(alpha = 0.65f),
+                                            fontSize   = GameDesignTheme.typography.labelSmall,
+                                        )
+                                    }
+                                }
+
+                                // Divider
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(colors.logoBlue.copy(alpha = 0.12f))
+                                )
+
+                                GameButton(
+                                    label    = stringResource(CoreR.string.auth_sign_in_google),
+                                    onClick  = onSignInWithGoogle,
+                                    variant  = GameButtonVariant.Primary,
+                                    size     = GameButtonSize.Small,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }
-                    )
-                }
-            }
 
-            Spacer(Modifier.height(16.dp))
-        }
+                        val byDifficulty = challenges.groupBy { it.difficulty }
+
+                        listOf(
+                            ChallengeDifficulty.BEGINNER,
+                            ChallengeDifficulty.INTERMEDIATE,
+                            ChallengeDifficulty.EXPERT,
+                        ).forEach { difficulty ->
+                            val items = byDifficulty[difficulty]
+                                ?.sortedBy { item ->
+                                    when (item.status) {
+                                        ChallengeStatus.AVAILABLE   -> 0
+                                        ChallengeStatus.IN_PROGRESS -> 1
+                                        ChallengeStatus.COMPLETED   -> 2
+                                    }
+                                }
+                            if (!items.isNullOrEmpty()) {
+                                ChallengeSection(
+                                    difficulty = difficulty,
+                                    cards = items.map { item ->
+                                        {
+                                            ChallengeCard(
+                                                title  = if (isArabic) item.titleAr else item.titleEn,
+                                                points = item.points,
+                                                icon   = iconForName(item.iconName),
+                                                item   = item,
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+                    }
+                } // else
+            } // when
+        } // PullToRefreshBox
     }
 }
 

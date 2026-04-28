@@ -14,6 +14,8 @@ import com.khammin.game.data.mappers.toEntity
 import com.khammin.game.data.remote.datasource.profile.ProfileRemoteDataSource
 import com.khammin.game.domain.model.Profile
 import com.khammin.game.domain.repository.ProfileRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
@@ -50,6 +52,9 @@ class ProfileRepositoryImpl @Inject constructor(
             if (forceRefresh) db.profileDao().getProfile(firebaseUid)?.toDomain() else null
         }
     }
+
+    override fun observeProfile(firebaseUid: String): Flow<Profile?> =
+        db.profileDao().observeProfile(firebaseUid).map { it?.toDomain() }
 
     override suspend fun createProfile(firebaseUid: String, email: String): Profile {
         val profile = remote.createProfile(firebaseUid, email)

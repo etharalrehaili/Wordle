@@ -79,7 +79,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(project(":features:core"))
     implementation(project(":features:game"))
-    implementation(project(":features:onboarding"))
     implementation(project(":features:authentication"))
     // Hilt
     implementation(libs.hilt.android)

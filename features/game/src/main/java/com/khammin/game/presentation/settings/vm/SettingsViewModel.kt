@@ -17,14 +17,9 @@ class SettingsViewModel @Inject constructor(
 ) {
 
     init {
-        // Load the current user's email as soon as the ViewModel is created
         loadEmail()
     }
 
-    /**
-     * Fetches the currently logged-in user's email from Firebase
-     * and stores it in the UI state for display in the settings screen.
-     */
     private fun loadEmail() {
         val user    = FirebaseAuth.getInstance().currentUser
         val email   = user?.email ?: ""
@@ -34,12 +29,6 @@ class SettingsViewModel @Inject constructor(
 
     override fun onEvent(intent: SettingsIntent) {
         when (intent) {
-
-            // Trigger navigation to the change password screen
-            SettingsIntent.OnChangePasswordClick ->
-                sendEffect { SettingsEffect.NavigateToChangePassword }
-
-            // Sign the user out via Firebase and notify the UI to navigate away
             SettingsIntent.OnSignOutClick -> {
                 signOutUseCase()
                 sendEffect { SettingsEffect.SignOutSuccess }

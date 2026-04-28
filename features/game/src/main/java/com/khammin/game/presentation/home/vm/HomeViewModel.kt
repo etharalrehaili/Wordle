@@ -26,6 +26,7 @@ import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.JoinRoomUseCase
 import com.khammin.game.domain.usecases.profile.CreateProfileUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
+import com.khammin.game.domain.usecases.profile.ObserveProfileUseCase
 import com.khammin.game.domain.usecases.stats.MigrateLocalStatsUseCase
 import com.khammin.game.presentation.home.contract.HomeEffect
 import com.khammin.game.presentation.home.contract.HomeIntent
@@ -34,6 +35,8 @@ import com.khammin.game.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -44,6 +47,7 @@ class HomeViewModel @Inject constructor(
     getChallengeSolvedState: GetChallengeSolvedStateUseCase,
     getGameProgressUseCase: GetGameProgressUseCase,
     private val getProfileUseCase         : GetProfileUseCase,
+    private val observeProfileUseCase     : ObserveProfileUseCase,
     private val createProfileUseCase      : CreateProfileUseCase,
     private val migrateLocalStatsUseCase  : MigrateLocalStatsUseCase,
     private val createRoomUseCase: CreateRoomUseCase,
@@ -78,15 +82,44 @@ class HomeViewModel @Inject constructor(
             }
         }
 
+        // For guest users, both counters come from the local DataStore.
+        // For logged-in users, easyWordsSolved is driven by the profile observer below
+        // (which reads from the Room cache that stays in sync with Firestore stats).
+        // classicWordsSolved always uses local DataStore — the profile model does not
+        // track words-solved broken down by word length.
         viewModelScope.launch {
             getGameProgressUseCase().collect { progress ->
                 setState {
+                    val user = FirebaseAuth.getInstance().currentUser
+                    val isGuest = user == null || user.isAnonymous
                     copy(
-                        easyWordsSolved    = progress.easyWordsSolved,
+                        easyWordsSolved    = if (isGuest) progress.easyWordsSolved else easyWordsSolved,
                         classicWordsSolved = progress.classicWordsSolved,
                     )
                 }
             }
+        }
+
+        // For logged-in users, override easyWordsSolved with the Firestore-backed profile
+        // value (enWordsSolved + arWordsSolved). flatMapLatest re-subscribes automatically
+        // whenever the auth state changes (sign-in / sign-out).
+        viewModelScope.launch {
+            getAuthState()
+                .flatMapLatest { _ ->
+                    val user = FirebaseAuth.getInstance().currentUser
+                    if (user != null && !user.isAnonymous) {
+                        observeProfileUseCase(user.uid)
+                    } else {
+                        flowOf(null)
+                    }
+                }
+                .collect { profile ->
+                    if (profile != null) {
+                        setState {
+                            copy(easyWordsSolved = profile.enWordsSolved + profile.arWordsSolved)
+                        }
+                    }
+                }
         }
 
         viewModelScope.launch {

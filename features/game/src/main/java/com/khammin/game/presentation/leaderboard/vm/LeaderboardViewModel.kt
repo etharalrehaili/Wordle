@@ -29,6 +29,10 @@ class LeaderboardViewModel @Inject constructor(
                 setState { copy(isRefreshing = true) }
                 loadLeaderboard(isRefresh = true, language = uiState.value.language)
             }
+            LeaderboardIntent.Retry -> {
+                setState { copy(isRetrying = true) }
+                loadLeaderboard(isRetry = true, language = uiState.value.language)
+            }
             is LeaderboardIntent.ChangeFilter -> setState { copy(selectedFilter = intent.filter) }
             is LeaderboardIntent.ChangeLanguage -> {
                 setState { copy(language = intent.language) }
@@ -39,29 +43,25 @@ class LeaderboardViewModel @Inject constructor(
     }
 
     @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
-    private fun loadLeaderboard(isRefresh: Boolean = false, language: String) {
-        android.util.Log.d("Network", "loadLeaderboard called — checking network first")
-
-        val connected = networkUtils.isConnected()
-        android.util.Log.d("Network", "isConnected = $connected")
-
-        if (!connected) {
-            android.util.Log.d("Network", "No internet — setting noInternet = true, returning early")
-            setState { copy(isLoading = false, isRefreshing = false, noInternet = true) }
-            return
-        }
-
-        android.util.Log.d("Network", "Has internet — launching coroutine to call API")
+    private fun loadLeaderboard(isRefresh: Boolean = false, isRetry: Boolean = false, language: String) {
         viewModelScope.launch {
-            if (!isRefresh) setState { copy(isLoading = true, error = null, noInternet = false) }
-            android.util.Log.d("Network", "Calling getLeaderboardUseCase")
+            val connected = networkUtils.isConnected()
+
+            if (!connected) {
+                setState { copy(isLoading = false, isRefreshing = false, isRetrying = false, noInternet = true) }
+                return@launch
+            }
+
+            if (!isRefresh && !isRetry) setState { copy(isLoading = true, error = null, noInternet = false) }
+
             when (val result = getLeaderboardUseCase(limit = 100, language = language)) {
                 is Resource.Success -> {
-                    android.util.Log.d("Network", "API success: ${result.data.size} players")
                     setState {
                         copy(
                             isLoading    = false,
                             isRefreshing = false,
+                            isRetrying   = false,
+                            noInternet   = false,
                             players      = result.data.filter { it.arCurrentPoints > 0 }
                         )
                     }
@@ -73,6 +73,7 @@ class LeaderboardViewModel @Inject constructor(
                         copy(
                             isLoading    = false,
                             isRefreshing = false,
+                            isRetrying   = false,
                             error        = if (isNoInternet) null else result.message,
                             noInternet   = isNoInternet
                         )

@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -45,6 +46,7 @@ fun GameButton(
     variant: GameButtonVariant = GameButtonVariant.Primary,
     size: GameButtonSize = GameButtonSize.Regular,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
     onClick: Action,
 ) {
 
@@ -95,32 +97,40 @@ fun GameButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                enabled = enabled,
+                enabled = enabled && !isLoading,
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            val alphaColor = if (enabled) contentColor else contentColor.copy(alpha = 0.38f)
-            icon?.let {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    tint = alphaColor,
-                    modifier = Modifier.size(22.dp)
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier    = Modifier.size(if (size == GameButtonSize.Small) 20.dp else 24.dp),
+                color       = contentColor,
+                strokeWidth = 2.dp,
+            )
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val alphaColor = if (enabled) contentColor else contentColor.copy(alpha = 0.38f)
+                icon?.let {
+                    Icon(
+                        imageVector = it,
+                        contentDescription = null,
+                        tint = alphaColor,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Text(
+                    text = label,
+                    color = alphaColor,
+                    fontSize = fontSize,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.3.sp
                 )
             }
-            Text(
-                text = label,
-                color = alphaColor,
-                fontSize = fontSize,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.3.sp
-            )
         }
     }
 }

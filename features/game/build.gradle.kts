@@ -68,7 +68,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(project(":features:core"))
-    implementation(project(":features:onboarding"))
     implementation(project(":features:authentication"))
     // Hilt
     implementation(libs.hilt.android)

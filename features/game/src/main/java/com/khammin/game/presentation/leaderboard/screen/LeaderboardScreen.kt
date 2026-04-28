@@ -36,7 +36,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -105,8 +104,6 @@ fun LeaderboardContent(
             title            = stringResource(R.string.leaderboard),
             endIcon          = Icons.Filled.Close,
             onEndIconClicked = onClose,
-            containerColor   = Color.Transparent,
-            showBackground     = false,
             modifier           = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding(),
@@ -160,13 +157,23 @@ fun LeaderboardContent(
                                 fontSize  = typography.labelMedium,
                                 textAlign = TextAlign.Center,
                             )
+
                             Spacer(Modifier.height(8.dp))
-                            GameButton(
-                                label    = stringResource(R.string.leaderboard_try_again),
-                                onClick         = { onIntent(LeaderboardIntent.ChangeLanguage(uiState.language)) },
-                                variant  = GameButtonVariant.Primary,
-                                modifier        = Modifier.fillMaxWidth()
-                            )
+
+                            if (uiState.isRetrying) {
+                                CircularProgressIndicator(
+                                    color       = colors.logoBlue,
+                                    strokeWidth = 2.dp,
+                                    modifier    = Modifier.size(32.dp)
+                                )
+                            } else {
+                                GameButton(
+                                    label    = stringResource(R.string.leaderboard_try_again),
+                                    onClick  = { onIntent(LeaderboardIntent.Retry) },
+                                    variant  = GameButtonVariant.Primary,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }

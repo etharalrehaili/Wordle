@@ -71,6 +71,15 @@
     <string name="sign_out_confirm">Yes, Sign Out</string>
     <string name="sign_out_cancel">Cancel</string>
 
+    <!-- Support Screen -->
+    <string name="support_title">Support</string>
+    <string name="support_header_title">Share Your Thoughts!</string>
+    <string name="support_header_body">I\'d love to hear your thoughts, your feedback helps improve the app! Reach out to me on my LinkedIn profile.</string>
+    <string name="support_linkedin_name">Ethar Alrehaili</string>
+    <string name="support_linkedin_handle">linkedin.com/in/ethar-alrehaili</string>
+    <string name="support_linkedin_url">https://www.linkedin.com/in/ethar-alrehaili/</string>
+    <string name="support_linkedin_logo_text">in</string>
+
     <!-- Profile Screen -->
     <string name="profile_total_points">Total Points</string>
     <string name="profile_edit_button">Edit Profile</string>

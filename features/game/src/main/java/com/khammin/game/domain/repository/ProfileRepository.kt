@@ -3,6 +3,7 @@ package com.khammin.game.domain.repository
 import android.content.Context
 import android.net.Uri
 import com.khammin.game.domain.model.Profile
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository interface for profile operations.
@@ -13,6 +14,13 @@ interface ProfileRepository {
     /** Fetches a profile by Firebase UID. Returns null if no profile exists.
      *  Set [forceRefresh] to true to bypass the local cache and fetch from the server. */
     suspend fun getProfile(firebaseUid: String, forceRefresh: Boolean = false): Profile?
+
+    /**
+     * Returns a [Flow] that emits the local-cached profile for [firebaseUid] and
+     * re-emits every time the Room row is updated (e.g. after a game win syncs stats).
+     * Emits `null` when no cached profile exists yet.
+     */
+    fun observeProfile(firebaseUid: String): Flow<Profile?>
 
     /** Creates a new profile in Strapi using the user's Firebase UID and email. */
     suspend fun createProfile(firebaseUid: String, email: String): Profile

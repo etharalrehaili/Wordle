@@ -62,6 +62,9 @@
     <string name="game_result_play_again">العب مجدداً</string>
     <string name="game_result_close">إغلاق</string>
 
+    <!-- Game Top Bar -->
+    <string name="top_bar_points_label">%1$s نقطة</string>
+
     <!-- Sign Out Bottom Sheet -->
     <string name="sign_out_title">تسجيل الخروج</string>
     <string name="sign_out_subtitle">هل أنت متأكد أنك تريد تسجيل الخروج؟</string>
@@ -92,6 +95,7 @@
     <string name="join_room_subtitle">أدخل الرمز المكون من 6 أحرف الذي شاركه معك صديقك</string>
     <string name="join_room_placeholder">ABC123</string>
     <string name="join_room_error_arabic">رمز غير صالح. استخدم أحرفاً إنجليزية فقط.</string>
+    <string name="join_room_error_length">الرمز يجب أن يكون 6 أرقام</string>
     <string name="join_room_joining">جارٍ الانضمام…</string>
     <string name="join_room_join">انضمام</string>
 

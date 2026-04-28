@@ -169,7 +169,6 @@ fun GameContent(
                 onEndIconClicked = onClose,
                 onStartIconClicked = onInfoClick,
                 onHintClicked = { onIntent(GameIntent.UseHint) },
-                showBackground = false,
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding(),
