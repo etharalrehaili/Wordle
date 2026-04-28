@@ -12,7 +12,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import java.io.ByteArrayOutputStream
 import com.khammin.core.mvi.BaseMviViewModel
-import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
 import com.khammin.game.R
 import com.khammin.game.data.local.GuestProfileDataStore
@@ -23,7 +22,6 @@ import com.khammin.game.domain.repository.ChallengeProgressRepository
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.profile.UpdateProfileUseCase
 import com.khammin.game.domain.usecases.profile.UploadAvatarUseCase
-import com.khammin.game.domain.usecases.stats.MigrateLocalStatsUseCase
 import com.khammin.game.presentation.profile.contract.ProfileEffect
 import com.khammin.game.presentation.profile.contract.ProfileIntent
 import com.khammin.game.presentation.profile.contract.ProfileUiState
@@ -48,31 +46,13 @@ class ProfileViewModel @Inject constructor(
     private val guestProfileDataStore: GuestProfileDataStore,
     private val challengeProgressRepository: ChallengeProgressRepository,
     private val challengeDefinitionRepository: ChallengeDefinitionRepository,
-    private val migrateLocalStatsUseCase: MigrateLocalStatsUseCase,
-    private val networkUtils: NetworkUtils,
     @ApplicationContext private val context: Context,
 ) : BaseMviViewModel<ProfileIntent, ProfileUiState, ProfileEffect>(
-    initialState = ProfileUiState(
-        totalPoints = if (FirebaseAuth.getInstance().currentUser?.isAnonymous == true)
-            localStatsDataStore.getTotalPoints() else 0,
-    )
+    initialState = ProfileUiState()
 ) {
-
     init {
         loadProfile()
         observeAuthState()
-        observeGuestPoints()
-    }
-
-    private fun observeGuestPoints() {
-        viewModelScope.launch {
-            localStatsDataStore.observeTotalPoints().collect { points ->
-                val isCurrentlyGuest = FirebaseAuth.getInstance().currentUser?.isAnonymous == true
-                if (isCurrentlyGuest) {
-                    setState { copy(totalPoints = points) }
-                }
-            }
-        }
     }
 
     private fun observeAuthState() {
@@ -82,12 +62,7 @@ class ProfileViewModel @Inject constructor(
             val isNowSignedIn = !user.isAnonymous
             if (wasAnonymous && isNowSignedIn) {
                 wasAnonymous = false
-                // Run migration inline so loadProfile sees the already-merged stats.
-                // Guest stats remain visible in the UI while migration runs (seamless transition).
-                viewModelScope.launch {
-                    runCatching { migrateLocalStatsUseCase() }
-                    loadProfile(forceRefresh = true)
-                }
+                loadProfile()
                 sendEffect { ProfileEffect.SignedInWithGoogle }
             }
         }
@@ -157,8 +132,10 @@ class ProfileViewModel @Inject constructor(
                             arWordsSolved = wordsSolved,
                         )
                     }
-                    loadTotalPoints(uid, isGuest = true)
 
+                    // Guest data loads from local storage in <10ms — faster than one frame.
+                    // Delay until at least 600ms have elapsed so the pull-to-refresh indicator
+                    // is actually visible before isRefreshing flips back to false.
                     if (forceRefresh) {
                         val elapsed = System.currentTimeMillis() - start
                         val remaining = 600L - elapsed
@@ -197,9 +174,6 @@ class ProfileViewModel @Inject constructor(
                         isGuest       = false,
                         arGamesPlayed = profile.arGamesPlayed,
                         arWordsSolved = profile.arWordsSolved,
-                        // Show the cached total immediately so it renders with the other stats.
-                        // loadTotalPoints refreshes it from challenge definitions in the background.
-                        totalPoints   = profile.arCurrentPoints,
                     )
                 }
 
@@ -212,45 +186,17 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun loadTotalPoints(uid: String, isGuest: Boolean = false) {
+    private fun loadTotalPoints(uid: String) {
         viewModelScope.launch {
             runCatching {
                 val definitions = challengeDefinitionRepository.getDefinitions()
                 val snapshot    = challengeProgressRepository.getSnapshot(uid)
-                val completed   = definitions.filter { def -> snapshot.challenges[def.id]?.status == ChallengeStatus.COMPLETED }
-                val total       = completed.sumOf { it.points }
-                val cachedPoints = uiState.value.totalPoints
-                // For Google users: never lower totalPoints below the Strapi-confirmed value.
-                // The Firestore challenge snapshot can be 0 right after a guest→Google migration
-                // (challenge progress isn't migrated, only Strapi stats are), which would
-                // incorrectly overwrite the valid migrated value with 0.
-                setState { copy(totalPoints = if (isGuest) total else maxOf(total, cachedPoints)) }
-                if (!isGuest && total > cachedPoints) {
-                    reconcileArPoints(uid, total)
-                }
-            }.onFailure { _ -> }
-        }
-    }
-
-    private suspend fun reconcileArPoints(uid: String, correctTotal: Int) {
-        runCatching {
-            val profile = when (val result = getProfileUseCase(uid, forceRefresh = false)) {
-                is Resource.Success -> result.data ?: return@runCatching
-                else -> return@runCatching
+                val total = definitions
+                    .filter { def -> snapshot.challenges[def.id]?.status == ChallengeStatus.COMPLETED }
+                    .sumOf { it.points }
+                setState { copy(totalPoints = total) }
             }
-            if (profile.arCurrentPoints == correctTotal) return@runCatching
-            updateProfileUseCase(
-                documentId    = profile.documentId,
-                firebaseUid   = uid,
-                name          = profile.name,
-                avatarUrl     = profile.avatarUrl,
-                language      = "ar",
-                gamesPlayed   = profile.arGamesPlayed,
-                wordsSolved   = profile.arWordsSolved,
-                winPercentage = profile.arWinPercentage,
-                currentPoints = correctTotal,
-            )
-        }.onFailure { _ -> }
+        }
     }
 
     override fun onEvent(intent: ProfileIntent) {
@@ -271,16 +217,6 @@ class ProfileViewModel @Inject constructor(
             is ProfileIntent.OnAvatarChanged -> setState {
                 copy(pendingAvatarUri = intent.avatarUri)
             }
-
-            ProfileIntent.OnSignInWithGoogleClick -> {
-                if (networkUtils.isConnected()) {
-                    sendEffect { ProfileEffect.TriggerGoogleSignIn }
-                } else {
-                    setState { copy(showNoInternet = true) }
-                }
-            }
-
-            ProfileIntent.DismissNoInternet -> setState { copy(showNoInternet = false) }
 
             ProfileIntent.OnSaveProfileClick -> {
                 val trimmed = uiState.value.editName.trim()

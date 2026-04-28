@@ -16,6 +16,7 @@ interface ProfileDao {
     @Query("SELECT * FROM profile_table WHERE firebaseUid = :firebaseUid LIMIT 1")
     suspend fun getProfile(firebaseUid: String): ProfileEntity?
 
+    /** Emits the profile row whenever it is inserted or updated in Room. */
     @Query("SELECT * FROM profile_table WHERE firebaseUid = :firebaseUid LIMIT 1")
     fun observeProfile(firebaseUid: String): Flow<ProfileEntity?>
 

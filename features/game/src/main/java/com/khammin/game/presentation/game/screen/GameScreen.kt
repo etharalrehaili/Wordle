@@ -1,6 +1,5 @@
 package com.khammin.game.presentation.game.screen
 
-import android.app.Activity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
+
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -45,6 +45,7 @@ import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.presentation.components.navigation.GameTopBar
+import com.khammin.core.presentation.theme.LocalWordleColors
 import com.khammin.game.R
 import com.khammin.core.R as CoreRes
 import com.khammin.game.presentation.game.contract.GameDialogState
@@ -55,8 +56,6 @@ import com.khammin.game.presentation.game.contract.toTypes
 import com.khammin.game.presentation.game.vm.GameViewModel
 import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.khammin.core.presentation.theme.GameDesignTheme.colors
-import com.khammin.core.util.AdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,10 +71,6 @@ fun GameScreen(
     var dialogState by remember { mutableStateOf<GameDialogState>(GameDialogState.None) }
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
     val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        AdManager.preload(context)
-    }
 
     LaunchedEffect(wordLength) {
         viewModel.onEvent(GameIntent.LoadWords("ar", wordLength))
@@ -114,28 +109,6 @@ fun GameScreen(
             },
             onClose = onClose,
             onIntent = viewModel::onEvent,
-            onHintClicked = {
-                val hintsRemaining = uiState.maxHints - uiState.hintsUsed
-                if (hintsRemaining > 0) {
-                    // Has hints — use directly
-                    viewModel.onEvent(GameIntent.UseHint)
-                } else {
-                    // No hints — show rewarded ad to earn one
-                    AdManager.showHintAd(
-                        activity = context as Activity,
-                        onRewarded = {
-                            viewModel.onEvent(GameIntent.EarnHint)
-                        },
-                        onNotReady = {
-                            // Show snackbar "Ad not ready, try again"
-                            snackbarState = SnackbarState(
-                                context.getString(R.string.ad_not_ready),
-                                SnackbarType.WARNING
-                            )
-                        }
-                    )
-                }
-            }
         )
     }
 }
@@ -152,9 +125,9 @@ fun GameContent(
     onInfoClick: Action,
     onDismissDialog: Action,
     onRestart: Action,
-    onHintClicked: Action,
-    onIntent: (GameIntent) -> Unit
+    onIntent: (GameIntent) -> Unit,
 ) {
+    val colors = LocalWordleColors.current
     val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val resultSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -195,7 +168,7 @@ fun GameContent(
                 hintsRemaining = uiState.maxHints - uiState.hintsUsed,
                 onEndIconClicked = onClose,
                 onStartIconClicked = onInfoClick,
-                onHintClicked = onHintClicked,
+                onHintClicked = { onIntent(GameIntent.UseHint) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding(),
