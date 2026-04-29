@@ -17,6 +17,11 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.Wordle"
         android:usesCleartextTraffic="true">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8863028974412116~5696245076"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -3,6 +3,7 @@ package com.khammin.app
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
@@ -26,6 +27,8 @@ class MyApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         FirebaseApp.initializeApp(this)
+
+        MobileAds.initialize(this) {}
 
         val appCheckFactory = if (BuildConfig.DEBUG) {
             com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()

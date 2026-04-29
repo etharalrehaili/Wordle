@@ -153,7 +153,7 @@ fun CustomWordLobbyHost(
                     val len = customWord.length
                     val isValidLen = len in 4..6
                     WordleText(
-                        text      = "$len / 6 · ${if (isValidLen) stringResource(R.string.custom_word_valid) else stringResource(R.string.custom_word_invalid_length)}",
+                        text      = "${String.format(Locale.US, "%d", len)} / 6 · ${if (isValidLen) stringResource(R.string.custom_word_valid) else stringResource(R.string.custom_word_invalid_length)}",
                         color     = if (isValidLen) colors.logoGreen else colors.logoPink,
                         fontSize  = 12.sp,
                         fontWeight = FontWeight.Medium,

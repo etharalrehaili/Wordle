@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.components.GuessRow
+import java.util.Locale
 import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.multiplayer.GuestCard
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
@@ -49,10 +50,10 @@ fun LeaderboardRow(
         1    -> "🥇"
         2    -> "🥈"
         3    -> "🥉"
-        else -> "$rank."
+        else -> "${String.format(Locale.US, "%d", rank)}."
     }
     val roundBadgeText = when {
-        entry.roundSolved -> "Solved in ${entry.roundGuessCount}"
+        entry.roundSolved -> "Solved in ${String.format(Locale.US, "%d", entry.roundGuessCount)}"
         entry.roundFailed -> "Failed"
         else              -> null
     }
@@ -96,7 +97,7 @@ fun LeaderboardRow(
         ) {
             if (!entry.isHost) {
                 Text(
-                    text       = "${entry.sessionPoints} pts",
+                    text       = "${String.format(Locale.US, "%d", entry.sessionPoints)} pts",
                     color      = colors.title,
                     fontSize   = 13.sp,
                     fontWeight = FontWeight.Bold,

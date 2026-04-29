@@ -50,7 +50,7 @@ fun SpectatorView(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text          = stringResource(R.string.spectator_round, roundNumber),
+            text          = stringResource(R.string.spectator_round, String.format(Locale.US, "%d", roundNumber)),
             color         = colors.logoBlue,
             fontSize      = 13.sp,
             fontWeight    = FontWeight.Bold,
@@ -115,7 +115,9 @@ fun SpectatorView(
                             Locale.US, "%d", points))
                         progress.failed          -> stringResource(R.string.spectator_failed)
                         progress.guessCount == 0 -> stringResource(R.string.spectator_waiting_guess)
-                        else                     -> stringResource(R.string.spectator_guess_progress, progress.guessCount, MAX_GUESSES)
+                        else                     -> stringResource(R.string.spectator_guess_progress,
+                            String.format(Locale.US, "%d", progress.guessCount),
+                            String.format(Locale.US, "%d", MAX_GUESSES))
                     }
 
                     val statusColor = when {

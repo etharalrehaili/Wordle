@@ -168,7 +168,7 @@ fun GameTopBar(
                     Box {
                         IconButton(
                             onClick  = onHintClicked,
-                            enabled  = hintsRemaining > 0,
+                            enabled  = true,
                             modifier = Modifier.size(36.dp),
                         ) {
                             Icon(
