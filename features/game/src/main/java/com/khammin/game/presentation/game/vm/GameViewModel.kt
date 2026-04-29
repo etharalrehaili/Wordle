@@ -45,6 +45,7 @@ class GameViewModel @Inject constructor(
             is GameIntent.SubmitGuess  -> submitGuess()
             is GameIntent.RestartGame  -> restartGame()
             is GameIntent.UseHint      -> useHint()
+            is GameIntent.EarnHint -> earnHint()
         }
     }
 
@@ -124,7 +125,7 @@ class GameViewModel @Inject constructor(
             val normalizedGuess  = rawGuess.normalizeForWordle()
             val normalizedTarget = state.targetWord.normalizeForWordle()
             val isValid = normalizedGuess == normalizedTarget ||
-                validateWordUseCase(rawGuess, state.language, state.wordList)
+                    validateWordUseCase(rawGuess, state.language, state.wordList)
             setState { copy(isValidating = false) }
 
             if (!isValid) {
@@ -291,6 +292,12 @@ class GameViewModel @Inject constructor(
                 currentCol = if (hintIndex >= currentCol) hintIndex + 1 else currentCol
             )
         }
+    }
+
+    private fun earnHint() {
+        // Give +1 hint then immediately use it
+        setState { copy(maxHints = maxHints + 1) }
+        useHint()
     }
 
 }

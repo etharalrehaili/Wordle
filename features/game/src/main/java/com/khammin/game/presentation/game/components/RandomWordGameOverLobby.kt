@@ -116,7 +116,7 @@ fun RandomWordGameOverLobby(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = stringResource(R.string.lobby_round, roundNumber),
+                        text = stringResource(R.string.lobby_round, String.format(Locale.US, "%d", roundNumber)),
                         color = colors.logoBlue,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -196,7 +196,7 @@ fun RandomWordGameOverLobby(
                     ranked.forEachIndexed { index, player ->
                         val rank = index + 1
                         val rankLabel = when (rank) {
-                            1 -> "🥇"; 2 -> "🥈"; 3 -> "🥉"; else -> "$rank."
+                            1 -> "🥇"; 2 -> "🥈"; 3 -> "🥉"; else -> "${String.format(Locale.US, "%d", rank)}."
                         }
                         Row(
                             modifier = Modifier

@@ -104,12 +104,12 @@
     <string name="multiplayer_room_tap_copy">Tap to copy</string>
     <string name="room_code_copied_label">Room Code</string>
     <string name="multiplayer_result_title">RESULTS</string>
-    <string name="spectator_round">Round %1$d</string>
+    <string name="spectator_round">Round %1$s</string>
     <string name="spectator_votes">Votes for play again: %1$d / %2$d</string>
     <string name="spectator_solved">%1$s pts</string>
     <string name="spectator_failed">Failed</string>
     <string name="spectator_waiting_guess">Waiting…</string>
-    <string name="spectator_guess_progress">%1$d/%2$d</string>
+    <string name="spectator_guess_progress">%1$s/%2$s</string>
     <string name="spectator_total_points">Total: %1$s pts</string>
     <string name="multiplayer_waiting_for_players">Waiting for players to join…</string>
     <string name="multiplayer_waiting_for_host">Waiting for host to start…</string>
@@ -133,7 +133,7 @@
     <string name="host_left_title">Host left the room</string>
     <string name="host_left_subtitle">The host ended the session. Head back and start a new game!</string>
     <string name="host_left_go_home">Back to Home</string>
-    <string name="lobby_round">Round %1$d</string>
+    <string name="lobby_round">Round %1$s</string>
     <string name="lobby_you_won">You Won! 🎉</string>
     <string name="lobby_you_lost">You Lost!</string>
     <string name="lobby_winner_won">%1$s won this round</string>
@@ -191,5 +191,5 @@
     <string name="rejoin_button">Rejoin</string>
     <string name="rejoin_go_home">Go Home</string>
 
-
+    <string name="ad_not_ready">Ad not ready, please try again</string>
 </resources>

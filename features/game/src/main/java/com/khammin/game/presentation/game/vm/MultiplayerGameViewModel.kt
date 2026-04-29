@@ -205,7 +205,7 @@ class MultiplayerGameViewModel @Inject constructor(
         val network = cm.activeNetwork
         val caps = network?.let { cm.getNetworkCapabilities(it) }
         val isConnected = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
-                          caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
         if (isConnected) setState { copy(isNoInternet = false) }
     }
 
@@ -331,7 +331,7 @@ class MultiplayerGameViewModel @Inject constructor(
             viewModelScope.launch {
                 val result = getWordsUseCase(language, length)
                 if (result is Resource.Success && result.data.isNotEmpty()) {
-                    wordCache[length] = result.data
+                    wordCache[length] = result.data.filter { it.length == length }
                 }
             }
         }
@@ -445,7 +445,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 viewModelScope.launch {
                     val result = getWordsUseCase(language, room.wordLength)
                     if (result is Resource.Success && result.data.isNotEmpty()) {
-                        wordCache[room.wordLength] = result.data
+                        wordCache[room.wordLength] = result.data.filter { it.length == room.wordLength }
                     }
                 }
             }
@@ -499,7 +499,7 @@ class MultiplayerGameViewModel @Inject constructor(
 
             // isLobbyMode guests also observe the host's board so it appears in mini-boards
             if (isLobbyModeRoom && !isHostOfRoom && room.hostId.isNotEmpty()
-                    && room.hostId !in observingGuestIds) {
+                && room.hostId !in observingGuestIds) {
                 observingGuestIds.add(room.hostId)
                 observeGuestState(roomId, room.hostId)
                 fetchGuestInfo(room.hostId)
@@ -553,8 +553,8 @@ class MultiplayerGameViewModel @Inject constructor(
 
             if (room.status == "finished" && uiState.value.isGameOver && !isMultiPlayer) {
                 val opponentJustLeft = room.leftBy.isNotEmpty()
-                    && room.leftBy != myId
-                    && !uiState.value.opponentLeft
+                        && room.leftBy != myId
+                        && !uiState.value.opponentLeft
                 if (opponentJustLeft) setState { copy(opponentLeft = true) }
             }
 
@@ -736,7 +736,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     avatarEmoji = resolvedEmoji,
                 )),
                 waitingPlayers    = waitingPlayers.filter { it.userId != guestId } +
-                    WaitingPlayer(guestId, resolvedName, resolvedUrl, resolvedColor, resolvedEmoji, existing?.isReady ?: false),
+                        WaitingPlayer(guestId, resolvedName, resolvedUrl, resolvedColor, resolvedEmoji, existing?.isReady ?: false),
             )
         }
     }
@@ -837,8 +837,8 @@ class MultiplayerGameViewModel @Inject constructor(
                 val words = wordCache[length] ?: run {
                     val result = getWordsUseCase(s.language, length)
                     if (result is Resource.Success && result.data.isNotEmpty()) {
-                        wordCache[length] = result.data
-                        result.data
+                        wordCache[length] = result.data.filter { it.length == length }
+                        result.data.filter { it.length == length }
                     } else null
                 }
                 val word = words?.randomOrNull()?.uppercase() ?: return@launch

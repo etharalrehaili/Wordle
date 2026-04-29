@@ -38,6 +38,7 @@ sealed class GameIntent : UiIntent {
     data object SubmitGuess : GameIntent()
     data object RestartGame : GameIntent()
     data object UseHint : GameIntent()
+    data object EarnHint : GameIntent()
 }
 
 sealed interface GameDialogState {

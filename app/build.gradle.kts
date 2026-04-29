@@ -92,4 +92,7 @@ dependencies {
 
     // Firebase App Check Debug Provider (for testing purposes only)
     debugImplementation("com.google.firebase:firebase-appcheck-debug:19.0.2")
+
+    // Google Mobile Ads SDK
+    implementation("com.google.android.gms:play-services-ads:23.3.0")
 }
