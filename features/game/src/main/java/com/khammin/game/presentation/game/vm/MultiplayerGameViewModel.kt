@@ -1,6 +1,8 @@
 package com.khammin.game.presentation.game.vm
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -29,13 +31,12 @@ import com.khammin.game.domain.usecases.game.LeaveRoomUseCase
 import com.khammin.game.domain.usecases.game.ObserveOpponentPresenceUseCase
 import com.khammin.game.domain.usecases.game.ObserveOpponentUseCase
 import com.khammin.game.domain.usecases.game.ObserveRoomUseCase
-import com.khammin.game.domain.usecases.game.RegisterPresenceUseCase
 import com.khammin.game.domain.usecases.game.RestartRoomUseCase
+import com.khammin.game.domain.usecases.game.RegisterPresenceUseCase
 import com.khammin.game.domain.usecases.game.RemoveGuestFromRoomUseCase
 import com.khammin.game.domain.usecases.game.ResetCustomRoomUseCase
 import com.khammin.game.domain.usecases.game.StartRoomUseCase
 import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
-import com.khammin.game.domain.usecases.game.UpdatePresenceStateUseCase
 import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
 import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
 import com.khammin.game.domain.model.GameMode
@@ -44,10 +45,12 @@ import com.khammin.game.domain.usecases.challenges.AwardChallengePointsUseCase
 import com.khammin.game.domain.usecases.challenges.EvaluateChallengesUseCase
 import com.khammin.game.domain.usecases.game.SetPlayerReadyUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
+import com.khammin.game.domain.usecases.game.UpdatePresenceStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
 import com.khammin.game.domain.usecases.profile.GetGuestProfileUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.profile.SaveGuestProfileUseCase
+import com.khammin.game.domain.usecases.profile.UploadAvatarUseCase
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
 import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
 import com.khammin.game.presentation.game.contract.MultiplayerGameUiState
@@ -59,7 +62,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -81,8 +83,6 @@ class MultiplayerGameViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
     private val getGuestProfileUseCase: GetGuestProfileUseCase,
     private val saveGuestProfileUseCase: SaveGuestProfileUseCase,
-    private val registerPresenceUseCase: RegisterPresenceUseCase,
-    private val observeOpponentPresenceUseCase: ObserveOpponentPresenceUseCase,
     private val validateWordUseCase: ValidateWordUseCase,
     private val startRoomUseCase: StartRoomUseCase,
     private val removeGuestFromRoomUseCase: RemoveGuestFromRoomUseCase,
@@ -90,18 +90,23 @@ class MultiplayerGameViewModel @Inject constructor(
     private val votePlayAgainUseCase: VotePlayAgainUseCase,
     private val updateGuestProfileUseCase: UpdateGuestProfileUseCase,
     private val updateSessionPointsUseCase: UpdateSessionPointsUseCase,
-    private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
     private val setLobbyWinnerUseCase: SetLobbyWinnerUseCase,
     private val setPlayerReadyUseCase: SetPlayerReadyUseCase,
     private val evaluateChallengesUseCase: EvaluateChallengesUseCase,
     private val awardChallengePointsUseCase: AwardChallengePointsUseCase,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val registerPresenceUseCase: RegisterPresenceUseCase,
+    private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
+    private val observeOpponentPresenceUseCase: ObserveOpponentPresenceUseCase,
+    private val uploadAvatarUseCase: UploadAvatarUseCase,
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
 ) {
 
-    private val isAppForegroundFlow = MutableStateFlow(true)
     private var gameStartTime = 0L
+    private val isAppForegroundFlow = MutableStateFlow(true)
+    // Maps userId → pending disconnect job (30-second grace period before firing OpponentDisconnected)
+    private val presenceDropJobs = mutableMapOf<String, Job>()
 
     init {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -112,14 +117,14 @@ class MultiplayerGameViewModel @Inject constructor(
                     viewModelScope.launch {
                         runCatching { updatePresenceStateUseCase(s.roomId, s.myUserId, isForeground = true) }
                     }
-                    // Custom-word guest: check if we were removed from guestIds while away
-                    if (s.isCustomWord && !s.isHost) {
-                        viewModelScope.launch {
-                            val room = runCatching { getRoomUseCase(s.roomId) }.getOrNull()
-                            if (room != null && room.status in listOf("waiting", "playing")
-                                && s.myUserId !in room.guestIds) {
-                                sendEffect { MultiplayerGameEffect.ShowRejoinSheet }
-                            }
+                }
+                // Custom-word guest: check if we were removed from guestIds while away
+                if (s.isCustomWord && !s.isHost && s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
+                    viewModelScope.launch {
+                        val room = runCatching { getRoomUseCase(s.roomId) }.getOrNull()
+                        if (room != null && room.status in listOf("waiting", "playing")
+                            && s.myUserId !in room.guestIds) {
+                            sendEffect { MultiplayerGameEffect.ShowRejoinSheet }
                         }
                     }
                 }
@@ -132,8 +137,6 @@ class MultiplayerGameViewModel @Inject constructor(
                         runCatching { updatePresenceStateUseCase(s.roomId, s.myUserId, isForeground = false) }
                     }
                 }
-            }
-            override fun onDestroy(owner: LifecycleOwner) {
             }
         })
     }
@@ -163,14 +166,7 @@ class MultiplayerGameViewModel @Inject constructor(
 
     private var observingOpponentId: String = ""
     private val observingGuestIds = mutableSetOf<String>()
-    private val observingGuestPresenceIds = mutableSetOf<String>()
-    private val guestSeenOnline = mutableSetOf<String>()
     private val wordCache: MutableMap<Int, List<String>> = mutableMapOf()
-    private var presenceStarted = false
-
-    // Grace-period jobs: cancelled if the player comes back online within the window
-    private var opponentPresenceDropJob: Job? = null
-    private val guestPresenceDropJobs = mutableMapOf<String, Job>()
 
     // ── Network connectivity monitoring ───────────────────────────────────────
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
@@ -184,11 +180,9 @@ class MultiplayerGameViewModel @Inject constructor(
             .build()
         networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                android.util.Log.d("RoomPerf", "[Network] Connection restored")
                 setState { copy(isNoInternet = false) }
             }
             override fun onLost(network: Network) {
-                android.util.Log.d("RoomPerf", "[Network] Connection lost")
                 setState { copy(isNoInternet = true) }
             }
         }
@@ -242,10 +236,15 @@ class MultiplayerGameViewModel @Inject constructor(
             ?: uiState.value.myUserId.takeIf { it.isNotEmpty() }
             ?: return
 
+        viewModelScope.launch {
+            runCatching { registerPresenceUseCase(roomId, myId) }
+        }
+
         // Determine auth state synchronously
         val firebaseUser = auth.currentUser
         val isLoggedIn   = firebaseUser != null && !firebaseUser.isAnonymous
         val isAnonymous  = !isLoggedIn && (firebaseUser?.isAnonymous == true || myId.startsWith("guest_"))
+        Log.d("AvatarDebug", "[loadGame] authState: isLoggedIn=$isLoggedIn | isAnonymous=$isAnonymous | firebaseUser=${firebaseUser?.uid} | firebaseIsAnonymous=${firebaseUser?.isAnonymous} | firebasePhotoUrl=${firebaseUser?.photoUrl}")
 
         // For guests we can resolve the fallback name instantly; logged-in name comes from Strapi below
         val guestFallbackName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
@@ -260,21 +259,26 @@ class MultiplayerGameViewModel @Inject constructor(
             )
         }
 
-        viewModelScope.launch { registerPresenceUseCase(roomId, myId) }
 
         viewModelScope.launch {
             when {
                 isLoggedIn -> {
-                    // Logged-in user: name and avatar come from our Strapi profile, not Firebase Auth
-                    val result = getProfileUseCase(myId)
+                    // Always fetch fresh from Strapi so we never show a stale cached avatar.
+                    val result = getProfileUseCase(myId, forceRefresh = true)
+                    Log.d("AvatarDebug", "[loadGame] getProfileUseCase result=${result::class.simpleName} | userId=$myId")
                     if (result is Resource.Success) {
                         val name     = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
-                        val photoUrl = result.data?.avatarUrl
+                        val strapiUrl = result.data?.avatarUrl
+                        val firebaseUrl = firebaseUser?.photoUrl?.toString()
+                        // Fall back to Firebase Auth photo (Google profile picture) when Strapi has no avatar
+                        val photoUrl = strapiUrl ?: firebaseUrl
+                        Log.d("AvatarDebug", "[loadGame] strapiAvatarUrl=$strapiUrl | firebasePhotoUrl=$firebaseUrl | resolved=$photoUrl | userId=$myId")
                         setState { copy(myName = name, avatarUrl = photoUrl) }
                         // Push to Firestore so other players see the correct name and photo
-                        runCatching {
+                        val pushResult = runCatching {
                             updateGuestProfileUseCase(roomId, myId, name, null, null, photoUrl)
                         }
+                        Log.d("AvatarDebug", "[loadGame] pushed to guestProfiles | photoUrl=$photoUrl | success=${pushResult.isSuccess} | userId=$myId")
                     }
                 }
                 isAnonymous -> {
@@ -283,26 +287,38 @@ class MultiplayerGameViewModel @Inject constructor(
                     val resolvedName        = saved?.name        ?: guestFallbackName
                     val resolvedAvatarColor = saved?.avatarColor
                     val resolvedAvatarEmoji = saved?.avatarEmoji
+                    Log.d("AvatarDebug", "[loadGame] anonymous branch | saved=$saved | resolvedName=$resolvedName | avatarColor=$resolvedAvatarColor | avatarEmoji=$resolvedAvatarEmoji | avatarUri=${saved?.avatarUri}")
                     if (saved != null) {
                         setState {
                             copy(
                                 myName      = resolvedName,
                                 avatarColor = resolvedAvatarColor,
                                 avatarEmoji = resolvedAvatarEmoji,
+                                // Use local file URI so the avatar shows on this device
+                                avatarUrl   = saved.avatarUri,
                             )
                         }
                     } else {
                         // First launch: persist the generated name so it stays consistent
                         saveGuestProfileUseCase(guestFallbackName, null, null)
                     }
-                    // Always push local profile to Firestore so other players see the correct name/avatar
+                    // If the guest has a local avatar, upload it to Strapi so other devices can load it.
+                    val hostedAvatarUrl: String? = if (saved?.avatarUri != null) {
+                        val uploadResult = runCatching {
+                            uploadAvatarUseCase(Uri.parse(saved.avatarUri), context)
+                        }.getOrNull()
+                        val url = (uploadResult as? Resource.Success)?.data
+                        Log.d("AvatarDebug", "[loadGame] anonymous avatar upload | localUri=${saved.avatarUri} | hostedUrl=$url | success=${uploadResult is Resource.Success}")
+                        url
+                    } else null
+                    // Push name, emoji/color, and the hosted URL (if any) to Firestore.
                     runCatching {
-                        updateGuestProfileUseCase(roomId, myId, resolvedName, resolvedAvatarColor, resolvedAvatarEmoji)
+                        updateGuestProfileUseCase(roomId, myId, resolvedName, resolvedAvatarColor, resolvedAvatarEmoji, hostedAvatarUrl)
                     }
                 }
                 else -> {
                     // Registered user whose Firebase session is somehow absent — fall back to Strapi
-                    val result = getProfileUseCase(myId)
+                    val result = getProfileUseCase(myId, forceRefresh = true)
                     if (result is Resource.Success) {
                         val name = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
                         setState { copy(myName = name) }
@@ -345,14 +361,19 @@ class MultiplayerGameViewModel @Inject constructor(
                 val updatedWaiting = room.guestIds.map { guestId ->
                     val existing = waitingPlayers.firstOrNull { it.userId == guestId }
                     val profile  = room.guestProfiles[guestId]
+                    Log.d("AvatarDebug", "[roomObserver] guestId=$guestId | profile=$profile | existing.avatarUrl=${existing?.avatarUrl}")
                     when {
-                        profile != null -> (existing ?: WaitingPlayer(guestId, guestNameFromId(guestId))).copy(
-                            name        = profile["name"]?.takeIf { it.isNotBlank() } ?: existing?.name ?: guestNameFromId(guestId),
-                            avatarColor = profile["avatarColor"]?.toLongOrNull() ?: existing?.avatarColor,
-                            avatarEmoji = profile["avatarEmoji"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarEmoji,
-                            avatarUrl   = profile["avatarUrl"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarUrl,
-                            isReady     = profile["ready"] == "true",
-                        )
+                        profile != null -> {
+                            val resolvedUrl = profile["avatarUrl"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarUrl
+                            Log.d("AvatarDebug", "[roomObserver] guestId=$guestId | profile[avatarUrl]=${profile["avatarUrl"]} | resolvedUrl=$resolvedUrl")
+                            (existing ?: WaitingPlayer(guestId, guestNameFromId(guestId))).copy(
+                                name        = profile["name"]?.takeIf { it.isNotBlank() } ?: existing?.name ?: guestNameFromId(guestId),
+                                avatarColor = profile["avatarColor"]?.toLongOrNull() ?: existing?.avatarColor,
+                                avatarEmoji = profile["avatarEmoji"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarEmoji,
+                                avatarUrl   = resolvedUrl,
+                                isReady     = profile["ready"] == "true",
+                            )
+                        }
                         existing != null -> existing
                         else -> WaitingPlayer(guestId, guestNameFromId(guestId)) // placeholder until fetchGuestInfo fills it in
                     }
@@ -372,6 +393,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     }
                 // For guests: apply host's saved profile if present
                 val hostProfile = room.guestProfiles[room.hostId]
+                Log.d("AvatarDebug", "[roomObserver] hostId=${room.hostId} | isHostOfRoom=$isHostOfRoom | hostProfile=$hostProfile")
                 val resolvedOpponentName = if (!isHostOfRoom && hostProfile != null)
                     hostProfile["name"] ?: opponentName else opponentName
                 val resolvedOpponentAvatarColor = if (!isHostOfRoom && hostProfile != null)
@@ -380,6 +402,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     hostProfile["avatarEmoji"]?.takeIf { it.isNotEmpty() } else opponentAvatarEmoji
                 val resolvedOpponentAvatarUrl = if (!isHostOfRoom && hostProfile != null)
                     hostProfile["avatarUrl"]?.takeIf { it.isNotEmpty() } else opponentAvatarUrl
+                Log.d("AvatarDebug", "[roomObserver] resolvedOpponentAvatarUrl=$resolvedOpponentAvatarUrl | opponentAvatarUrl(prev)=$opponentAvatarUrl")
                 copy(
                     targetWord            = room.word.uppercase(),
                     wordLength            = room.wordLength,
@@ -433,8 +456,8 @@ class MultiplayerGameViewModel @Inject constructor(
                 for (guestId in newGuests) {
                     observingGuestIds.add(guestId)
                     observeGuestState(roomId, guestId)
+                    observeOpponentPresence(roomId, guestId)
                     fetchGuestInfo(guestId)
-                    observeGuestPresence(roomId, guestId)
                 }
             }
 
@@ -448,16 +471,16 @@ class MultiplayerGameViewModel @Inject constructor(
                 }
             }
 
-            // ── 1v1 / multi-player guest: observe host name + presence ────────
+            // ── 1v1 / multi-player guest: observe host name ──────────────────
             if (!isMultiPlayer) {
                 if (opponentId.isNotEmpty() && opponentId != observingOpponentId) {
                     observingOpponentId = opponentId
                     observeOpponent(roomId, opponentId)
-                    fetchOpponentName(opponentId)
                     observeOpponentPresence(roomId, opponentId)
+                    fetchOpponentName(opponentId)
                 }
             } else if (!isHostOfRoom && opponentId.isNotEmpty() && opponentId != observingOpponentId) {
-                // Custom-word / lobby guest: fetch host name + observe host presence for app-kill detection
+                // Custom-word / lobby guest: fetch host name and observe host presence
                 observingOpponentId = opponentId
                 val hostCustomName = room.guestProfiles[opponentId]?.get("name")?.takeIf { it.isNotBlank() }
                 if (hostCustomName == null) fetchOpponentName(opponentId)
@@ -521,12 +544,10 @@ class MultiplayerGameViewModel @Inject constructor(
             }
 
             // Lobby mode: winner broadcast — force ALL players to game-over via room.winnerId
-            android.util.Log.d("LobbyDebug", "winnerId check: isLobbyMode=$isLobbyModeRoom | winnerId=${room.winnerId} | isGameOver=${uiState.value.isGameOver} | myId=$myId")
             if (isLobbyModeRoom && !room.winnerId.isNullOrEmpty() && !uiState.value.isGameOver) {
                 val iWon = room.winnerId == myId
                 val winnerProgress = uiState.value.opponentsProgress[room.winnerId]
                 val winnerName = if (iWon) "" else (winnerProgress?.name?.takeIf { it.isNotBlank() } ?: "")
-                android.util.Log.d("LobbyDebug", "→ forcing game-over: iWon=$iWon | winnerName=$winnerName")
                 setState { copy(isGameOver = true, isMyWin = iWon, lobbyWinnerName = winnerName) }
             }
 
@@ -681,126 +702,43 @@ class MultiplayerGameViewModel @Inject constructor(
     private fun fetchGuestInfo(guestId: String) {
         if (guestId.startsWith("guest_")) {
             val name = guestNameFromId(guestId)
+            Log.d("AvatarDebug", "[fetchGuestInfo] anonymous guest=$guestId | no avatar")
             updateGuestInfo(guestId, name, null)
             return
         }
         viewModelScope.launch {
-            val result = getProfileUseCase(guestId)
+            val result = getProfileUseCase(guestId, forceRefresh = true)
             val name = (result as? Resource.Success)?.data?.name?.takeIf { it.isNotBlank() }
                 ?: guestNameFromId(guestId)
             val avatar = (result as? Resource.Success)?.data?.avatarUrl
+            Log.d("AvatarDebug", "[fetchGuestInfo] guestId=$guestId | strapiAvatarUrl=$avatar | profileSuccess=${result is Resource.Success}")
             updateGuestInfo(guestId, name, avatar)
         }
     }
 
     private fun updateGuestInfo(guestId: String, name: String, avatarUrl: String?) {
+        Log.d("AvatarDebug", "[updateGuestInfo] guestId=$guestId | name=$name | avatarUrl=$avatarUrl")
         setState {
             // Prefer any profile override the player has already saved (picked up via room observer)
             val existing = waitingPlayers.firstOrNull { it.userId == guestId }
             val resolvedName = existing?.name?.takeIf { it.isNotBlank() } ?: name
             val resolvedColor = existing?.avatarColor
             val resolvedEmoji = existing?.avatarEmoji
+            // Prefer Firestore-sourced avatarUrl already in state over the Strapi one (may be more recent)
+            val resolvedUrl = existing?.avatarUrl ?: avatarUrl
+            Log.d("AvatarDebug", "[updateGuestInfo] guestId=$guestId | existing.avatarUrl=${existing?.avatarUrl} | resolvedUrl=$resolvedUrl")
             val progress = opponentsProgress[guestId] ?: OpponentProgress()
             copy(
                 opponentsProgress = opponentsProgress + (guestId to progress.copy(
                     name        = resolvedName,
-                    avatarUrl   = avatarUrl,
+                    avatarUrl   = resolvedUrl,
                     avatarColor = resolvedColor,
                     avatarEmoji = resolvedEmoji,
                 )),
                 waitingPlayers    = waitingPlayers.filter { it.userId != guestId } +
-                    WaitingPlayer(guestId, resolvedName, avatarUrl, resolvedColor, resolvedEmoji, existing?.isReady ?: false),
+                    WaitingPlayer(guestId, resolvedName, resolvedUrl, resolvedColor, resolvedEmoji, existing?.isReady ?: false),
             )
         }
-    }
-
-    private fun observeOpponentPresence(roomId: String, opponentId: String) {
-        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Starting observation | roomId=$roomId | opponentId=$opponentId")
-        observeOpponentPresenceUseCase(roomId, opponentId)
-            .combine(isAppForegroundFlow) { isOnline, isForeground -> isOnline to isForeground }
-            .onEach { (isOnline, isForeground) ->
-                android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Event → isOnline=$isOnline | isForeground=$isForeground | presenceStarted=$presenceStarted | opponentId=$opponentId")
-                if (!presenceStarted) {
-                    presenceStarted = isOnline
-                    android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Initial value — presenceStarted=$presenceStarted, skipping reaction")
-                    return@onEach
-                }
-                if (isOnline) {
-                    // Opponent came back — cancel any pending grace-period job
-                    opponentPresenceDropJob?.cancel()
-                    opponentPresenceDropJob = null
-                    return@onEach
-                }
-                if (!isForeground) {
-                    android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Opponent offline but WE are in background — suppressing | opponentId=$opponentId")
-                    return@onEach
-                }
-                if (opponentPresenceDropJob != null) return@onEach // grace period already running
-                android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Opponent offline — starting 12s grace period | opponentId=$opponentId")
-                opponentPresenceDropJob = viewModelScope.launch {
-                    delay(12_000)
-                    opponentPresenceDropJob = null
-                    val s = uiState.value
-                    android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Grace period expired — firing left event | opponentId=$opponentId")
-                    if (s.isCustomWord && !s.isHostLeft) {
-                        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] ACTION: host killed → firing HostLeftRoom | roomId=${s.roomId}")
-                        setState { copy(isHostLeft = true) }
-                        sendEffect { MultiplayerGameEffect.HostLeftRoom }
-                    } else if (!s.isCustomWord && !s.isGameOver) {
-                        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] ACTION: opponent killed → firing ShowGameDialog(opponentLeft=true) | roomId=${s.roomId}")
-                        setState { copy(opponentLeft = true, isGameOver = true) }
-                        sendEffect {
-                            MultiplayerGameEffect.ShowGameDialog(
-                                isWin = true, targetWord = s.targetWord, opponentLeft = true
-                            )
-                        }
-                        viewModelScope.launch { finishRoomUseCase(s.roomId, s.myUserId) }
-                    } else {
-                        android.util.Log.d("PresenceDebug", "[observeOpponentPresence] Grace period expired but no action — isCustomWord=${s.isCustomWord} isHostLeft=${s.isHostLeft} isGameOver=${s.isGameOver}")
-                    }
-                }
-            }.launchIn(viewModelScope)
-    }
-
-    private fun observeGuestPresence(roomId: String, guestId: String) {
-        if (guestId in observingGuestPresenceIds) return
-        observingGuestPresenceIds.add(guestId)
-        android.util.Log.d("PresenceDebug", "[observeGuestPresence] Starting observation | roomId=$roomId | guestId=$guestId")
-        observeOpponentPresenceUseCase(roomId, guestId)
-            .combine(isAppForegroundFlow) { isOnline, isForeground -> isOnline to isForeground }
-            .onEach { (isOnline, isForeground) ->
-                android.util.Log.d("PresenceDebug", "[observeGuestPresence] Event → isOnline=$isOnline | isForeground=$isForeground | seenOnline=${guestId in guestSeenOnline} | guestId=$guestId")
-                if (isOnline) {
-                    guestSeenOnline.add(guestId)
-                    // Guest came back — cancel any pending grace-period job
-                    guestPresenceDropJobs[guestId]?.cancel()
-                    guestPresenceDropJobs.remove(guestId)
-                    return@onEach
-                }
-                if (guestId !in guestSeenOnline) {
-                    android.util.Log.d("PresenceDebug", "[observeGuestPresence] Guest offline but never seen online — skipping | guestId=$guestId")
-                    return@onEach
-                }
-                if (!isForeground) {
-                    android.util.Log.d("PresenceDebug", "[observeGuestPresence] Guest offline but WE are in background — suppressing | guestId=$guestId")
-                    return@onEach
-                }
-                if (guestId in guestPresenceDropJobs) return@onEach // grace period already running
-                android.util.Log.d("PresenceDebug", "[observeGuestPresence] Guest offline — starting 12s grace period | guestId=$guestId")
-                guestPresenceDropJobs[guestId] = viewModelScope.launch {
-                    delay(12_000)
-                    guestPresenceDropJobs.remove(guestId)
-                    val s = uiState.value
-                    if (!s.isHost || !s.isCustomWord) return@launch
-                    val guestName = s.waitingPlayers.firstOrNull { it.userId == guestId }?.name
-                        ?: guestNameFromId(guestId)
-                    android.util.Log.d("PresenceDebug", "[observeGuestPresence] ACTION: grace period expired → firing GuestLeftRoom('$guestName') | roomId=${s.roomId} | guestId=$guestId")
-                    viewModelScope.launch {
-                        runCatching { removeGuestFromRoomUseCase(s.roomId, guestId) }
-                    }
-                    sendEffect { MultiplayerGameEffect.GuestLeftRoom(guestName) }
-                }
-            }.launchIn(viewModelScope)
     }
 
     private val similarPairs: List<Set<Char>> = listOf(
@@ -822,7 +760,6 @@ class MultiplayerGameViewModel @Inject constructor(
     }
 
     private fun fetchOpponentName(opponentId: String) {
-        android.util.Log.d("GuestName", "fetchOpponentName: $opponentId")
         if (opponentId.startsWith("guest_")) {
             setState { copy(opponentName = guestNameFromId(opponentId), opponentAvatarUrl = null) }
             return
@@ -853,6 +790,41 @@ class MultiplayerGameViewModel @Inject constructor(
     private fun observeOpponent(roomId: String, opponentId: String) {
         observeOpponentUseCase(roomId, opponentId).onEach { state ->
             setState { copy(opponentState = state) }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun observeOpponentPresence(roomId: String, userId: String) {
+        observeOpponentPresenceUseCase(roomId, userId).onEach { isOnline ->
+            if (isOnline) {
+                presenceDropJobs[userId]?.cancel()
+                presenceDropJobs.remove(userId)
+            } else {
+                if (presenceDropJobs[userId]?.isActive != true) {
+                    presenceDropJobs[userId] = viewModelScope.launch {
+                        delay(30_000L)
+                        val s = uiState.value
+                        if (s.isGameOver) return@launch
+                        when {
+                            (s.isCustomWord || s.isLobbyMode) && s.isHost -> {
+                                // Host: remove the disconnected guest so the room observer
+                                // fires GuestLeftRoom and Firestore is cleaned up.
+                                runCatching { removeGuestFromRoomUseCase(s.roomId, userId) }
+                            }
+                            (s.isCustomWord || s.isLobbyMode) && !s.isHost -> {
+                                // Guest: the host went offline → treat as host left.
+                                if (!s.isHostLeft) {
+                                    setState { copy(isHostLeft = true) }
+                                    sendEffect { MultiplayerGameEffect.HostLeftRoom }
+                                }
+                            }
+                            else -> {
+                                // 1v1: show the opponent disconnected bottom sheet.
+                                sendEffect { MultiplayerGameEffect.OpponentDisconnected }
+                            }
+                        }
+                    }
+                }
+            }
         }.launchIn(viewModelScope)
     }
 
@@ -912,10 +884,7 @@ class MultiplayerGameViewModel @Inject constructor(
         val s = uiState.value
         if (s.roomId.isEmpty() || s.myUserId.isEmpty()) return
         viewModelScope.launch {
-            runCatching {
-                addGuestToRoomUseCase(s.roomId, s.myUserId)
-                registerPresenceUseCase(s.roomId, s.myUserId)
-            }
+            runCatching { addGuestToRoomUseCase(s.roomId, s.myUserId) }
         }
     }
 

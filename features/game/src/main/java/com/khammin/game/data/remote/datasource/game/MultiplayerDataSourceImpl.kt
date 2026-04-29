@@ -133,30 +133,39 @@ class MultiplayerDataSourceImpl @Inject constructor(
     }
 
     override suspend fun registerPresence(roomId: String, userId: String) {
-        val presenceRef = rtdb.getReference("presence/$roomId/$userId")
-        Log.d("PresenceDebug", "[registerPresence] Setting value='online' | roomId=$roomId | userId=$userId")
-        presenceRef.setValue("online").await()
-        Log.d("PresenceDebug", "[registerPresence] Registering onDisconnect().removeValue() | roomId=$roomId | userId=$userId")
-        presenceRef.onDisconnect().removeValue().await()
-        Log.d("PresenceDebug", "[registerPresence] onDisconnect registered ✓ | roomId=$roomId | userId=$userId")
+        Log.d("Presence", "registerPresence called | userId=$userId | roomId=$roomId")
+        val ref = rtdb.getReference("presence/$roomId/$userId")
+        try {
+            ref.setValue("online").await()
+            Log.d("Presence", "Presence set to 'online' | userId=$userId")
+            // Hard disconnect (process kill, network loss) → write "offline" instead of
+            // removing the node so observers can distinguish offline from never-connected.
+            ref.onDisconnect().setValue("offline").await()
+            Log.d("Presence", "onDisconnect registered for $userId")
+        } catch (e: Exception) {
+            Log.e("Presence", "registerPresence failed | userId=$userId | roomId=$roomId", e)
+        }
     }
 
     override suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean) {
         val ref = rtdb.getReference("presence/$roomId/$userId")
-        if (isForeground) {
-            Log.d("PresenceDebug", "[updatePresenceState] App FOREGROUND → writing 'online' + re-registering onDisconnect | roomId=$roomId | userId=$userId")
-            ref.setValue("online").await()
-            ref.onDisconnect().removeValue().await()
-            Log.d("PresenceDebug", "[updatePresenceState] Foreground setup complete ✓ | roomId=$roomId | userId=$userId")
-        } else {
-            // Do NOT cancel or re-register onDisconnect here.
-            // The hook registered in registerPresence stays active so that if the app
-            // is killed while in the background, Firebase still removes the node.
-            // Brief null spikes from connection drops are absorbed by the grace period
-            // in the ViewModel observer.
-            Log.d("PresenceDebug", "[updatePresenceState] App BACKGROUND → writing 'background' (onDisconnect hook unchanged) | roomId=$roomId | userId=$userId")
-            ref.setValue("background").await()
-            Log.d("PresenceDebug", "[updatePresenceState] Background setup complete ✓ | roomId=$roomId | userId=$userId")
+        try {
+            if (isForeground) {
+                ref.setValue("online").await()
+                Log.d("Presence", "Presence set to 'online' | userId=$userId")
+                // Re-register onDisconnect so the hook is always current after a reconnect.
+                ref.onDisconnect().setValue("offline").await()
+                Log.d("Presence", "onDisconnect registered for $userId")
+            } else {
+                ref.setValue("background").await()
+                Log.d("Presence", "Presence set to 'background' | userId=$userId")
+                // Keep onDisconnect() pointing to "offline" so a hard-kill while backgrounded
+                // still produces a clean "offline" value rather than leaving "background" forever.
+                ref.onDisconnect().setValue("offline").await()
+                Log.d("Presence", "onDisconnect registered for $userId")
+            }
+        } catch (e: Exception) {
+            Log.e("Presence", "updatePresenceState failed | userId=$userId | isForeground=$isForeground", e)
         }
     }
 
@@ -237,21 +246,27 @@ class MultiplayerDataSourceImpl @Inject constructor(
     }
 
     override fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean> = callbackFlow {
-        Log.d("PresenceDebug", "[observeOpponentPresence] Attaching listener | roomId=$roomId | opponentId=$opponentId")
         val ref = rtdb.getReference("presence/$roomId/$opponentId")
         val listener = ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val raw = snapshot.getValue(String::class.java)
-                val isPresent = raw != null
-                Log.d("PresenceDebug", "[observeOpponentPresence] Value changed → raw='$raw' | isPresent=$isPresent | roomId=$roomId | opponentId=$opponentId")
-                trySend(isPresent)
+                Log.d("Presence", "observeOpponentPresence value changed | opponentId=$opponentId | raw='$raw'")
+                // "online" and "background" are both considered connected.
+                // "offline" and null (node absent / hard disconnect) are disconnected.
+                val isConnected = raw == "online" || raw == "background"
+                if (isConnected) {
+                    Log.d("Presence", "Opponent $opponentId connected - raw value: $raw")
+                } else {
+                    Log.d("Presence", "Opponent $opponentId disconnected - raw value: $raw")
+                }
+                trySend(isConnected)
             }
             override fun onCancelled(error: DatabaseError) {
-                Log.d("PresenceDebug", "[observeOpponentPresence] Listener cancelled | error=${error.message} | roomId=$roomId | opponentId=$opponentId")
+                Log.e("Presence", "observeOpponentPresence listener cancelled | opponentId=$opponentId | error=${error.message}")
             }
         })
         awaitClose {
-            Log.d("PresenceDebug", "[observeOpponentPresence] Removing listener | roomId=$roomId | opponentId=$opponentId")
+            Log.d("Presence", "observeOpponentPresence cleanup - removing listener | opponentId=$opponentId")
             ref.removeEventListener(listener)
         }
     }

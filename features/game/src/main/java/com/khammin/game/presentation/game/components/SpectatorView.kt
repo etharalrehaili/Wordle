@@ -30,6 +30,7 @@ import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.OpponentProgress
+import java.util.Locale
 
 @Composable
 fun SpectatorView(
@@ -110,7 +111,8 @@ fun SpectatorView(
                     } else 0
 
                     val statusText = when {
-                        progress.solved          -> stringResource(R.string.spectator_solved, points)
+                        progress.solved -> stringResource(R.string.spectator_solved, String.format(
+                            Locale.US, "%d", points))
                         progress.failed          -> stringResource(R.string.spectator_failed)
                         progress.guessCount == 0 -> stringResource(R.string.spectator_waiting_guess)
                         else                     -> stringResource(R.string.spectator_guess_progress, progress.guessCount, MAX_GUESSES)
@@ -156,7 +158,7 @@ fun SpectatorView(
                             val runningTotal = progress.totalPoints + points
                             if (runningTotal > 0) {
                                 Text(
-                                    text       = stringResource(R.string.spectator_total_points, runningTotal),
+                                    text = stringResource(R.string.spectator_total_points, String.format(java.util.Locale.US, "%d", runningTotal)),
                                     color      = colors.body.copy(alpha = 0.5f),
                                     fontSize   = 10.sp,
                                     fontWeight = FontWeight.Medium,

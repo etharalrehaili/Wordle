@@ -236,8 +236,11 @@ fun CustomWordLobbyHost(
                             HorizontalDivider(color = colors.border, thickness = 0.5.dp)
                             LobbyPlayerRow(
                                 name        = player.name,
-                                badge       = if (player.isReady) stringResource(R.string.lobby_badge_ready) else null,
-                                badgeColor  = colors.logoGreen,
+                                badge       = if (player.isReady)
+                                    stringResource(R.string.lobby_badge_ready)
+                                else
+                                    stringResource(R.string.lobby_badge_not_ready),
+                                badgeColor  = if (player.isReady) colors.logoGreen else colors.logoPink,
                                 avatarColor = player.avatarColor,
                                 avatarEmoji = player.avatarEmoji,
                                 avatarUrl   = player.avatarUrl,

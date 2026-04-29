@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -194,8 +193,11 @@ fun CustomWordLobbyGuest(
                         HorizontalDivider(color = colors.border, thickness = 0.5.dp)
                         LobbyPlayerRow(
                             name        = player.name,
-                            badge       = if (player.isReady) stringResource(R.string.lobby_badge_ready) else null,
-                            badgeColor  = colors.logoGreen,
+                            badge       = if (player.isReady)
+                                stringResource(R.string.lobby_badge_ready)
+                            else
+                                stringResource(R.string.lobby_badge_not_ready), // ← add this
+                            badgeColor  = if (player.isReady) colors.logoGreen else colors.logoPink, // ← fix color too
                             avatarColor = player.avatarColor,
                             avatarEmoji = player.avatarEmoji,
                             avatarUrl   = player.avatarUrl,
