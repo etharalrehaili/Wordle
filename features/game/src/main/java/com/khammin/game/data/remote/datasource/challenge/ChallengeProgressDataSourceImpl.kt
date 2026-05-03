@@ -1,6 +1,5 @@
 package com.khammin.game.data.remote.datasource.challenge
 
-import android.util.Log
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -23,11 +22,9 @@ class ChallengeProgressDataSourceImpl @Inject constructor(
     override fun observeSnapshot(uid: String): Flow<ChallengeSnapshot> = callbackFlow {
         val listener = docRef(uid).addSnapshotListener { snapshot, error ->
             if (error != null) {
-                Log.e("ChallengeDebug", "[DataSource] observeSnapshot listener error uid=$uid", error)
                 trySend(ChallengeSnapshot())
                 return@addSnapshotListener
             }
-            Log.d("ChallengeDebug", "[DataSource] observeSnapshot listener fired uid=$uid snapshotNull=${snapshot == null}")
             trySend(snapshot?.toChallengeSnapshot() ?: ChallengeSnapshot())
         }
         awaitClose { listener.remove() }
@@ -58,21 +55,13 @@ class ChallengeProgressDataSourceImpl @Inject constructor(
             "challenges"     to challengesMap,
             "lastPlayedDate" to snapshot.lastPlayedDate,
         )
-        Log.d("ChallengeDebug", "[DataSource] saveSnapshot uid=$uid writing ${challengesMap.size} challenges, sample=${challengesMap.entries.take(3).map { "${it.key}=${it.value}" }}")
-        try {
-            docRef(uid).set(data, SetOptions.merge()).await()
-            Log.d("ChallengeDebug", "[DataSource] Firestore write completed for uid=$uid")
-        } catch (e: Exception) {
-            Log.e("ChallengeDebug", "[DataSource] Firestore write FAILED for uid=$uid", e)
-        }
+        try { docRef(uid).set(data, SetOptions.merge()).await() } catch (_: Exception) { }
     }
 
     // ── Parsing ───────────────────────────────────────────────────────────────
 
     private fun DocumentSnapshot.toChallengeSnapshot(): ChallengeSnapshot {
-        Log.d("ChallengeDebug", "[DataSource] toChallengeSnapshot — docExists=${exists()} id=$id")
         val raw = get("challenges")
-        Log.d("ChallengeDebug", "[DataSource] 'challenges' field type=${raw?.javaClass?.simpleName} value=$raw")
         val rawMap = (raw as? Map<*, *>) ?: emptyMap<Any, Any>()
         val challenges = rawMap.entries.mapNotNull { (key, value) ->
             val id = key as? String ?: return@mapNotNull null
@@ -84,7 +73,6 @@ class ChallengeProgressDataSourceImpl @Inject constructor(
             id to UserChallenge(id, status, progress)
         }.toMap()
 
-        Log.d("ChallengeDebug", "[DataSource] parsed ${challenges.size} challenges — non-available=${challenges.values.filter { it.status != ChallengeStatus.AVAILABLE }.map { "${it.id}=${it.status}" }}")
         return ChallengeSnapshot(
             challenges     = challenges,
             lastPlayedDate = getString("lastPlayedDate") ?: "",

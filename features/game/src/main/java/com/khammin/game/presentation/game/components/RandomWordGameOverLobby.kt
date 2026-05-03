@@ -264,7 +264,7 @@ fun RandomWordGameOverLobby(
             // ── Action ───────────────────────────────────────────────────────────
             item {
                 val allPlayersFinished = opponentsProgress.values.all { it.solved || it.failed }
-                val canPlayAgain = isWin || allPlayersFinished
+                val canPlayAgain = isWin || winnerName.isNotEmpty() || allPlayersFinished
                 if (isHost) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,

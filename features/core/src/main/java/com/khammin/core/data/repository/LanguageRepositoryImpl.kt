@@ -23,10 +23,15 @@ class LanguageRepositoryImpl @Inject constructor(
     // Eliminates repeated runBlocking disk I/O on the main thread.
     @Volatile private var cached: LanguageModel? = null
 
+    // Synchronous storage used by attachBaseContext (runs before DataStore is warmed up).
+    private val prefs = appContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+
     override fun getLanguages(): List<LanguageModel> = listOf(ENGLISH_MODEL, ARABIC_MODEL)
 
     override fun setLanguage(language: LanguageModel) {
         cached = language
+        // Write synchronously so attachBaseContext can read it on the next cold start.
+        prefs.edit().putString("language_code", language.code).apply()
         // Fire-and-forget — UI consistency is guaranteed by the in-memory cache.
         CoroutineScope(Dispatchers.IO).launch {
             languageDataStore.updateData { language }

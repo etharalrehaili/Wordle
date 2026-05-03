@@ -1,7 +1,6 @@
 package com.khammin.game.presentation.game.vm
 
 import android.content.Context
-import android.net.Uri
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -22,33 +21,21 @@ import com.khammin.core.presentation.components.toGuessRows
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
 import com.khammin.game.domain.usecases.game.AddGuestToRoomUseCase
-import com.khammin.game.domain.usecases.game.SetLobbyWinnerUseCase
 import com.khammin.game.domain.usecases.game.FinishRoomUseCase
 import com.khammin.game.domain.usecases.game.GetRoomUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.LeaveRoomUseCase
-import com.khammin.game.domain.usecases.game.ObserveOpponentPresenceUseCase
 import com.khammin.game.domain.usecases.game.ObserveOpponentUseCase
 import com.khammin.game.domain.usecases.game.ObserveRoomUseCase
 import com.khammin.game.domain.usecases.game.RestartRoomUseCase
-import com.khammin.game.domain.usecases.game.RegisterPresenceUseCase
 import com.khammin.game.domain.usecases.game.RemoveGuestFromRoomUseCase
 import com.khammin.game.domain.usecases.game.StartRoomUseCase
 import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
-import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
-import com.khammin.game.domain.usecases.game.VotePlayAgainUseCase
 import com.khammin.game.domain.model.GameMode
 import com.khammin.game.domain.model.GameResult
-import com.khammin.game.domain.usecases.challenges.AwardChallengePointsUseCase
-import com.khammin.game.domain.usecases.challenges.EvaluateChallengesUseCase
 import com.khammin.game.domain.usecases.game.SetPlayerReadyUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
-import com.khammin.game.domain.usecases.game.UpdatePresenceStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
-import com.khammin.game.domain.usecases.profile.GetGuestProfileUseCase
-import com.khammin.game.domain.usecases.profile.GetProfileUseCase
-import com.khammin.game.domain.usecases.profile.SaveGuestProfileUseCase
-import com.khammin.game.domain.usecases.profile.UploadAvatarUseCase
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
 import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
 import com.khammin.game.presentation.game.contract.MultiplayerGameUiState
@@ -57,8 +44,6 @@ import com.khammin.game.presentation.game.contract.Tile
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -78,32 +63,21 @@ class MultiplayerGameViewModel @Inject constructor(
     private val restartRoomUseCase: RestartRoomUseCase,
     private val getRoomUseCase: GetRoomUseCase,
     private val getWordsUseCase: GetWordsUseCase,
-    private val getProfileUseCase: GetProfileUseCase,
-    private val getGuestProfileUseCase: GetGuestProfileUseCase,
-    private val saveGuestProfileUseCase: SaveGuestProfileUseCase,
     private val validateWordUseCase: ValidateWordUseCase,
     private val startRoomUseCase: StartRoomUseCase,
     private val removeGuestFromRoomUseCase: RemoveGuestFromRoomUseCase,
-    private val votePlayAgainUseCase: VotePlayAgainUseCase,
     private val updateGuestProfileUseCase: UpdateGuestProfileUseCase,
-    private val updateSessionPointsUseCase: UpdateSessionPointsUseCase,
-    private val setLobbyWinnerUseCase: SetLobbyWinnerUseCase,
     private val setPlayerReadyUseCase: SetPlayerReadyUseCase,
-    private val evaluateChallengesUseCase: EvaluateChallengesUseCase,
-    private val awardChallengePointsUseCase: AwardChallengePointsUseCase,
     private val auth: FirebaseAuth,
-    private val registerPresenceUseCase: RegisterPresenceUseCase,
-    private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
-    private val observeOpponentPresenceUseCase: ObserveOpponentPresenceUseCase,
-    private val uploadAvatarUseCase: UploadAvatarUseCase,
+    private val presenceManager: MultiplayerPresenceManager,
+    private val profileLoader: MultiplayerProfileLoader,
+    private val resultHandler: MultiplayerGameResultHandler,
 ) : BaseMviViewModel<MultiplayerGameIntent, MultiplayerGameUiState, MultiplayerGameEffect>(
     initialState = MultiplayerGameUiState()
 ) {
 
     private var gameStartTime = 0L
     private val isAppForegroundFlow = MutableStateFlow(true)
-    // Maps userId → pending disconnect job (30-second grace period before firing OpponentDisconnected)
-    private val presenceDropJobs = mutableMapOf<String, Job>()
 
     init {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -112,7 +86,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 val s = uiState.value
                 if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
-                        runCatching { updatePresenceStateUseCase(s.roomId, s.myUserId, isForeground = true) }
+                        presenceManager.updateForeground(s.roomId, s.myUserId, isForeground = true)
                     }
                 }
                 // Custom-word guest: check if we were removed from guestIds while away
@@ -131,7 +105,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 val s = uiState.value
                 if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
-                        runCatching { updatePresenceStateUseCase(s.roomId, s.myUserId, isForeground = false) }
+                        presenceManager.updateForeground(s.roomId, s.myUserId, isForeground = false)
                     }
                 }
             }
@@ -234,7 +208,7 @@ class MultiplayerGameViewModel @Inject constructor(
             ?: return
 
         viewModelScope.launch {
-            runCatching { registerPresenceUseCase(roomId, myId) }
+            presenceManager.register(roomId, myId)
         }
 
         // Determine auth state synchronously
@@ -259,61 +233,27 @@ class MultiplayerGameViewModel @Inject constructor(
         viewModelScope.launch {
             when {
                 isLoggedIn -> {
-                    // Always fetch fresh from Strapi so we never show a stale cached avatar.
-                    val result = getProfileUseCase(myId, forceRefresh = true)
-                    if (result is Resource.Success) {
-                        val name     = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
-                        val strapiUrl = result.data?.avatarUrl
-                        val firebaseUrl = firebaseUser?.photoUrl?.toString()
-                        // Fall back to Firebase Auth photo (Google profile picture) when Strapi has no avatar
-                        val photoUrl = strapiUrl ?: firebaseUrl
-                        setState { copy(myName = name, avatarUrl = photoUrl) }
-                        // Push to Firestore so other players see the correct name and photo
-                        val pushResult = runCatching {
-                            updateGuestProfileUseCase(roomId, myId, name, null, null, photoUrl)
-                        }
+                    val profile = profileLoader.loadLoggedInProfile(myId, firebaseUser?.photoUrl?.toString(), defaultMyName)
+                    if (profile != null) {
+                        setState { copy(myName = profile.name, avatarUrl = profile.avatarUrl) }
+                        runCatching { updateGuestProfileUseCase(roomId, myId, profile.name, null, null, profile.avatarUrl) }
                     }
                 }
                 isAnonymous -> {
-                    // Guest: load persisted profile from DataStore
-                    val saved               = getGuestProfileUseCase()
-                    val resolvedName        = saved?.name        ?: guestFallbackName
-                    val resolvedAvatarColor = saved?.avatarColor
-                    val resolvedAvatarEmoji = saved?.avatarEmoji
-                    if (saved != null) {
-                        setState {
-                            copy(
-                                myName      = resolvedName,
-                                avatarColor = resolvedAvatarColor,
-                                avatarEmoji = resolvedAvatarEmoji,
-                                // Use local file URI so the avatar shows on this device
-                                avatarUrl   = saved.avatarUri,
-                            )
-                        }
-                    } else {
-                        // First launch: persist the generated name so it stays consistent
-                        saveGuestProfileUseCase(guestFallbackName, null, null)
+                    val profile = profileLoader.loadGuestProfile(guestFallbackName)
+                    setState {
+                        copy(
+                            myName      = profile.name,
+                            avatarColor = profile.avatarColor,
+                            avatarEmoji = profile.avatarEmoji,
+                            avatarUrl   = profile.avatarUrl,
+                        )
                     }
-                    // If the guest has a local avatar, upload it to Strapi so other devices can load it.
-                    val hostedAvatarUrl: String? = if (saved?.avatarUri != null) {
-                        val uploadResult = runCatching {
-                            uploadAvatarUseCase(Uri.parse(saved.avatarUri), context)
-                        }.getOrNull()
-                        val url = (uploadResult as? Resource.Success)?.data
-                        url
-                    } else null
-                    // Push name, emoji/color, and the hosted URL (if any) to Firestore.
-                    runCatching {
-                        updateGuestProfileUseCase(roomId, myId, resolvedName, resolvedAvatarColor, resolvedAvatarEmoji, hostedAvatarUrl)
-                    }
+                    runCatching { updateGuestProfileUseCase(roomId, myId, profile.name, profile.avatarColor, profile.avatarEmoji, profile.hostedAvatarUrl) }
                 }
                 else -> {
-                    // Registered user whose Firebase session is somehow absent — fall back to Strapi
-                    val result = getProfileUseCase(myId, forceRefresh = true)
-                    if (result is Resource.Success) {
-                        val name = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
-                        setState { copy(myName = name) }
-                    }
+                    val profile = profileLoader.loadLoggedInProfile(myId, null, defaultMyName)
+                    if (profile != null) setState { copy(myName = profile.name) }
                 }
             }
         }
@@ -531,11 +471,20 @@ class MultiplayerGameViewModel @Inject constructor(
             }
 
             // Lobby mode: winner broadcast — force ALL players to game-over via room.winnerId
-            if (isLobbyModeRoom && !room.winnerId.isNullOrEmpty() && !uiState.value.isGameOver) {
+            if (isLobbyModeRoom && !room.winnerId.isNullOrEmpty()) {
                 val iWon = room.winnerId == myId
-                val winnerProgress = uiState.value.opponentsProgress[room.winnerId]
-                val winnerName = if (iWon) "" else (winnerProgress?.name?.takeIf { it.isNotBlank() } ?: "")
-                setState { copy(isGameOver = true, isMyWin = iWon, lobbyWinnerName = winnerName) }
+                if (!uiState.value.isGameOver) {
+                    val winnerProgress = uiState.value.opponentsProgress[room.winnerId]
+                    val winnerName = if (iWon) "" else (winnerProgress?.name?.takeIf { it.isNotBlank() } ?: "")
+                    setState { copy(isGameOver = true, isMyWin = iWon, lobbyWinnerName = winnerName) }
+                } else if (!iWon && uiState.value.lobbyWinnerName.isBlank()) {
+                    // Host already lost before anyone won; record the winner's name now so
+                    // the Play Again button becomes enabled.
+                    val name = room.guestProfiles[room.winnerId]?.get("name")?.takeIf { it.isNotBlank() }
+                        ?: uiState.value.opponentsProgress[room.winnerId]?.name?.takeIf { it.isNotBlank() }
+                        ?: room.winnerId!!.take(8)  // fallback: partial ID — non-blank, enables button
+                    setState { copy(lobbyWinnerName = name) }
+                }
             }
 
             if (room.status == "finished" && uiState.value.isGameOver && !isMultiPlayer) {
@@ -673,7 +622,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     }
                     setState { copy(isGameOver = true, opponentsProgress = finalProgress, sessionPoints = newSessionPts) }
                     viewModelScope.launch {
-                        runCatching { updateSessionPointsUseCase(s.roomId, newSessionPts) }
+                        resultHandler.updateSessionPoints(s.roomId, newSessionPts)
                     }
                     sendEffect {
                         MultiplayerGameEffect.ShowGameDialog(
@@ -691,16 +640,12 @@ class MultiplayerGameViewModel @Inject constructor(
     // ── Fetch guest name/avatar for the waiting room list ─────────────────────
     private fun fetchGuestInfo(guestId: String) {
         if (guestId.startsWith("guest_")) {
-            val name = guestNameFromId(guestId)
-            updateGuestInfo(guestId, name, null)
+            updateGuestInfo(guestId, guestNameFromId(guestId), null)
             return
         }
         viewModelScope.launch {
-            val result = getProfileUseCase(guestId, forceRefresh = true)
-            val name = (result as? Resource.Success)?.data?.name?.takeIf { it.isNotBlank() }
-                ?: guestNameFromId(guestId)
-            val avatar = (result as? Resource.Success)?.data?.avatarUrl
-            updateGuestInfo(guestId, name, avatar)
+            val (name, avatarUrl) = profileLoader.fetchProfile(guestId)
+            updateGuestInfo(guestId, name ?: guestNameFromId(guestId), avatarUrl)
         }
     }
 
@@ -752,23 +697,15 @@ class MultiplayerGameViewModel @Inject constructor(
         }
         setState { copy(isOpponentProfileLoading = true) }
         viewModelScope.launch {
-            val result = getProfileUseCase(opponentId)
-            when (result) {
-                is Resource.Success -> {
-                    val profileName = result.data?.name?.takeIf { it.isNotBlank() }
-                    val isRealName  = profileName != null && profileName != opponentId
-                    val name        = if (isRealName) profileName else null
-                    setState {
-                        copy(
-                            opponentName             = name ?: guestNameFromId(opponentId),
-                            opponentAvatarUrl        = if (name != null) result.data?.avatarUrl else null,
-                            isOpponentProfileLoading = false
-                        )
-                    }
-                }
-                else -> setState {
-                    copy(opponentName = guestNameFromId(opponentId), opponentAvatarUrl = null, isOpponentProfileLoading = false)
-                }
+            val (profileName, avatarUrl) = profileLoader.fetchProfile(opponentId, forceRefresh = false)
+            val isRealName = profileName != null && profileName != opponentId
+            val name = if (isRealName) profileName else null
+            setState {
+                copy(
+                    opponentName             = name ?: guestNameFromId(opponentId),
+                    opponentAvatarUrl        = if (name != null) avatarUrl else null,
+                    isOpponentProfileLoading = false,
+                )
             }
         }
     }
@@ -780,38 +717,22 @@ class MultiplayerGameViewModel @Inject constructor(
     }
 
     private fun observeOpponentPresence(roomId: String, userId: String) {
-        observeOpponentPresenceUseCase(roomId, userId).onEach { isOnline ->
-            if (isOnline) {
-                presenceDropJobs[userId]?.cancel()
-                presenceDropJobs.remove(userId)
-            } else {
-                if (presenceDropJobs[userId]?.isActive != true) {
-                    presenceDropJobs[userId] = viewModelScope.launch {
-                        delay(30_000L)
-                        val s = uiState.value
-                        if (s.isGameOver) return@launch
-                        when {
-                            (s.isCustomWord || s.isLobbyMode) && s.isHost -> {
-                                // Host: remove the disconnected guest so the room observer
-                                // fires GuestLeftRoom and Firestore is cleaned up.
-                                runCatching { removeGuestFromRoomUseCase(s.roomId, userId) }
-                            }
-                            (s.isCustomWord || s.isLobbyMode) && !s.isHost -> {
-                                // Guest: the host went offline → treat as host left.
-                                if (!s.isHostLeft) {
-                                    setState { copy(isHostLeft = true) }
-                                    sendEffect { MultiplayerGameEffect.HostLeftRoom }
-                                }
-                            }
-                            else -> {
-                                // 1v1: show the opponent disconnected bottom sheet.
-                                sendEffect { MultiplayerGameEffect.OpponentDisconnected }
-                            }
-                        }
+        presenceManager.observe(roomId, userId, viewModelScope) { droppedId ->
+            val s = uiState.value
+            if (s.isGameOver) return@observe
+            when {
+                (s.isCustomWord || s.isLobbyMode) && s.isHost -> {
+                    runCatching { removeGuestFromRoomUseCase(s.roomId, droppedId) }
+                }
+                (s.isCustomWord || s.isLobbyMode) && !s.isHost -> {
+                    if (!s.isHostLeft) {
+                        setState { copy(isHostLeft = true) }
+                        sendEffect { MultiplayerGameEffect.HostLeftRoom }
                     }
                 }
+                else -> sendEffect { MultiplayerGameEffect.OpponentDisconnected }
             }
-        }.launchIn(viewModelScope)
+        }
     }
 
     // ── Start match (host only) ───────────────────────────────────────────────
@@ -1016,19 +937,16 @@ class MultiplayerGameViewModel @Inject constructor(
                 val elapsed = (System.currentTimeMillis() - gameStartTime) / 1000L
                 gameStartTime = 0L  // reset for next round
                 viewModelScope.launch {
-                    runCatching {
-                        val completed = evaluateChallengesUseCase(
-                            GameResult(
-                                isWin            = solved,
-                                guessCount       = newRow,
-                                timeTakenSeconds = elapsed,
-                                wordLength       = s2.wordLength,
-                                gameMode         = GameMode.MULTIPLAYER,
-                                language         = s2.language,
-                            )
+                    resultHandler.evaluateAndAward(
+                        GameResult(
+                            isWin            = solved,
+                            guessCount       = newRow,
+                            timeTakenSeconds = elapsed,
+                            wordLength       = s2.wordLength,
+                            gameMode         = GameMode.MULTIPLAYER,
+                            language         = s2.language,
                         )
-                        awardChallengePointsUseCase(completed)
-                    }
+                    )
                 }
                 if (s2.isCustomWord || s2.isLobbyMode) {
                     // ── Custom word / lobby mode: go to in-screen result lobby ─
@@ -1040,8 +958,8 @@ class MultiplayerGameViewModel @Inject constructor(
                         newSessionPts[s2.myUserId] = (newSessionPts[s2.myUserId] ?: 0) + pts
                         setState { copy(sessionPoints = newSessionPts) }
                         viewModelScope.launch {
-                            runCatching { updateSessionPointsUseCase(s2.roomId, newSessionPts) }
-                            runCatching { setLobbyWinnerUseCase(s2.roomId, s2.myUserId) }
+                            resultHandler.updateSessionPoints(s2.roomId, newSessionPts)
+                            resultHandler.setLobbyWinner(s2.roomId, s2.myUserId)
                         }
                     }
                 } else {
@@ -1061,9 +979,9 @@ class MultiplayerGameViewModel @Inject constructor(
         val s = uiState.value
         viewModelScope.launch {
             if (s.myUserId in s.playAgainVotes) {
-                votePlayAgainUseCase.unvote(s.roomId, s.myUserId)
+                resultHandler.unvote(s.roomId, s.myUserId)
             } else {
-                votePlayAgainUseCase.vote(s.roomId, s.myUserId)
+                resultHandler.vote(s.roomId, s.myUserId)
             }
         }
     }
@@ -1096,7 +1014,7 @@ class MultiplayerGameViewModel @Inject constructor(
         val s = uiState.value
         viewModelScope.launch {
             // Persist locally so the profile survives app restarts
-            runCatching { saveGuestProfileUseCase(trimmed, avatarColor, avatarEmoji) }
+            profileLoader.saveGuestProfile(trimmed, avatarColor, avatarEmoji)
             // Push to Firestore so other players see the updated name/avatar
             if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                 runCatching { updateGuestProfileUseCase(s.roomId, s.myUserId, trimmed, avatarColor, avatarEmoji) }

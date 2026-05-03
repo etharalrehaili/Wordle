@@ -2,6 +2,7 @@ package com.khammin.game.domain.usecases.challenges
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.khammin.game.data.local.CompletedChallengesStore
 import com.khammin.game.domain.model.ChallengeConditionType
 import com.khammin.game.domain.model.ChallengeSnapshot
 import com.khammin.game.domain.model.ChallengeStatus
@@ -14,6 +15,8 @@ import com.khammin.game.domain.repository.ChallengeProgressRepository
 import java.time.LocalDate
 import javax.inject.Inject
 
+private const val TAG = "ChallengeEval"
+
 /**
  * Evaluates a completed game against every active challenge definition fetched from Firestore,
  * updates the user's progress document, and returns the IDs of any challenges newly completed.
@@ -23,21 +26,30 @@ import javax.inject.Inject
 class EvaluateChallengesUseCase @Inject constructor(
     private val progressRepository: ChallengeProgressRepository,
     private val definitionRepository: ChallengeDefinitionRepository,
+    private val completedChallengesStore: CompletedChallengesStore,
 ) {
     /** @return list of challenge IDs that transitioned to COMPLETED in this evaluation. */
     suspend operator fun invoke(result: GameResult): List<String> {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        Log.d("ChallengeDebug", "[Evaluate] uid=$uid result=$result")
-        if (uid == null) {
-            Log.w("ChallengeDebug", "[Evaluate] uid is null — user not signed in, aborting")
-            return emptyList()
-        }
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
 
         val definitions = definitionRepository.getDefinitions().filter { it.isActive }
-        Log.d("ChallengeDebug", "[Evaluate] loaded ${definitions.size} active definitions")
         if (definitions.isEmpty()) return emptyList()
 
-        val snapshot  = progressRepository.getSnapshot(uid)
+        val snapshot = progressRepository.getSnapshot(uid)
+
+        // Backfill: sync any Firestore-confirmed completions into the local store.
+        // This covers challenges completed before the local-store fix was deployed,
+        // or challenges completed on another device/session under the same UID.
+        val firestoreCompleted = snapshot.challenges
+            .filter { it.value.status == ChallengeStatus.COMPLETED }
+            .keys
+        if (firestoreCompleted.isNotEmpty()) {
+            completedChallengesStore.markCompleted(firestoreCompleted)
+        }
+
+        val locallyCompleted = completedChallengesStore.getAll()
+        Log.d(TAG, "uid=$uid firestoreCompleted=$firestoreCompleted localStore=$locallyCompleted")
+
         val updated   = snapshot.challenges.toMutableMap()
         val completed = mutableListOf<String>()
 
@@ -50,7 +62,13 @@ class EvaluateChallengesUseCase @Inject constructor(
 
         for (def in definitions) {
             val current = updated[def.id] ?: UserChallenge(def.id)
-            if (current.status == ChallengeStatus.COMPLETED) continue
+            Log.d(TAG, "eval ${def.id}: firestoreStatus=${current.status} inLocalStore=${def.id in locallyCompleted}")
+            // Guard: device-local store prevents re-completion after UID changes (logout →
+            // new anonymous UID) even when Firestore has no record for the new UID.
+            if (current.status == ChallengeStatus.COMPLETED || def.id in locallyCompleted) {
+                Log.d(TAG, "skip ${def.id} (already completed)")
+                continue
+            }
 
             when (def.conditionType) {
 
@@ -110,7 +128,11 @@ class EvaluateChallengesUseCase @Inject constructor(
         definitions.filter { it.conditionType == ChallengeConditionType.PLAY_N_CONSECUTIVE_DAYS }
             .forEach { def ->
                 val current = updated[def.id] ?: UserChallenge(def.id)
-                if (current.status == ChallengeStatus.COMPLETED) return@forEach
+                Log.d(TAG, "eval consecutive ${def.id}: firestoreStatus=${current.status} inLocalStore=${def.id in locallyCompleted}")
+                if (current.status == ChallengeStatus.COMPLETED || def.id in locallyCompleted) {
+                    Log.d(TAG, "skip ${def.id} (already completed)")
+                    return@forEach
+                }
 
                 val newDays = when (snapshot.lastPlayedDate) {
                     today     -> current.progress      // already counted today
@@ -126,12 +148,16 @@ class EvaluateChallengesUseCase @Inject constructor(
                 updated[def.id] = current.copy(status = newStatus, progress = newDays)
             }
 
-        Log.d("ChallengeDebug", "[Evaluate] Saving snapshot — newly completed=$completed")
+        if (completed.isNotEmpty()) {
+            Log.d(TAG, "newly completed=$completed — writing to local store")
+            completedChallengesStore.markCompleted(completed)
+        } else {
+            Log.d(TAG, "no new completions this run")
+        }
         progressRepository.saveSnapshot(
             uid,
             ChallengeSnapshot(challenges = updated, lastPlayedDate = newLastPlayedDate)
         )
-        Log.d("ChallengeDebug", "[Evaluate] Snapshot saved successfully")
         return completed
     }
 
