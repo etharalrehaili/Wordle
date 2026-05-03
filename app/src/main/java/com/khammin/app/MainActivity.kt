@@ -35,6 +35,7 @@ import com.khammin.core.domain.model.isDark
 import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.theme.WordleTheme
+import com.khammin.core.util.AdManager
 import com.khammin.core.util.LocaleHelper
 import com.khammin.game.presentation.navigation.Route
 import com.khammin.game.presentation.navigation.navGraph
@@ -110,6 +111,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        AdManager.destroy()
     }
 
     private fun handleInitialSelectedLanguage() {

@@ -9,9 +9,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.security.KeyStore
 import java.security.SecureRandom
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -32,6 +33,9 @@ class SqlCipherKeyManager @Inject constructor(
         private val ENCRYPTED_KEY = stringPreferencesKey("encrypted_key")
         private val ENCRYPTION_IV  = stringPreferencesKey("encryption_iv")
     }
+
+    var wasKeyRecovered: Boolean = false
+        private set
 
     init {
         initialize()
@@ -89,12 +93,38 @@ class SqlCipherKeyManager @Inject constructor(
     private fun getSecretKey(keyAlias: String): SecretKey =
         (keyStore.getEntry(keyAlias, null) as KeyStore.SecretKeyEntry).secretKey
 
-    fun getSupportFactory(): SupportFactory = runBlocking {
+    private suspend fun recoverFromKeyMismatch() {
+        dataStore.edit { prefs ->
+            prefs.remove(ENCRYPTED_KEY)
+            prefs.remove(ENCRYPTION_IV)
+        }
+        if (keyStore.containsAlias(KEYSTORE_ALIAS)) {
+            keyStore.deleteEntry(KEYSTORE_ALIAS)
+        }
+        generateKeystoreKeyIfNeeded()
+        generateAndEncryptSqlCipherKey()
+        wasKeyRecovered = true
+    }
+
+    fun getSupportFactory(): SupportOpenHelperFactory = runBlocking {
+
         val prefs = dataStore.data.first()
         val encryptedKey = prefs[ENCRYPTED_KEY] ?: error("Encrypted SQLCipher key missing")
         val iv           = prefs[ENCRYPTION_IV]  ?: error("SQLCipher IV missing")
-        val decryptedKey = getDecryptedSqlCipherKey(encryptedKey, iv)
+        val decryptedKey = try {
+            getDecryptedSqlCipherKey(encryptedKey, iv)
+        } catch (_: AEADBadTagException) {
+            // Keystore key was wiped (e.g. app reinstall with auto-backup restore).
+            // Regenerate everything and signal the caller to delete the old database.
+            recoverFromKeyMismatch()
+            val recoveredPrefs = dataStore.data.first()
+            getDecryptedSqlCipherKey(
+                recoveredPrefs[ENCRYPTED_KEY] ?: error("Encrypted SQLCipher key missing after recovery"),
+                recoveredPrefs[ENCRYPTION_IV]  ?: error("SQLCipher IV missing after recovery"),
+            )
+        }
         // clearPassphrase = true: SQLCipher zeros the key array after opening the database
-        SupportFactory(decryptedKey, null, true)
+        SupportOpenHelperFactory(decryptedKey, null, true)
+
     }
 }

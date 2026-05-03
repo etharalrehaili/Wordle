@@ -7,11 +7,16 @@ import com.google.android.gms.ads.MobileAds
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.khammin.core.data.extentions.languageDataStore
+import com.khammin.core.data.extentions.themeDataStore
 import com.onesignal.OneSignal
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import leakcanary.LeakCanary
+import shark.AndroidReferenceMatchers
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -26,9 +31,17 @@ class MyApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        System.loadLibrary("sqlcipher")
         FirebaseApp.initializeApp(this)
 
-        MobileAds.initialize(this) {}
+        if (BuildConfig.DEBUG) {
+            LeakCanary.config = LeakCanary.config.copy(
+                referenceMatchers = AndroidReferenceMatchers.appDefaults +
+                        AndroidReferenceMatchers.ignoredInstanceField(
+                            "com.google.android.gms.dynamic.ObjectWrapper", "a"
+                        )
+            )
+        }
 
         val appCheckFactory = if (BuildConfig.DEBUG) {
             com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
@@ -37,12 +50,23 @@ class MyApp : Application(), Configuration.Provider {
         }
         FirebaseAppCheck.getInstance().installAppCheckProviderFactory(appCheckFactory)
 
+        // OneSignal must be initialized on the main thread.
         OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID)
-        val prefs = getSharedPreferences("app_settings_prefs", MODE_PRIVATE)
-        val dialogShown = prefs.getBoolean("notification_dialog_shown", false)
-        if (!dialogShown) {
-            prefs.edit().putBoolean("notification_dialog_shown", true).apply()
-            CoroutineScope(Dispatchers.IO).launch {
+
+        CoroutineScope(Dispatchers.IO).launch {
+            // Pre-warm DataStore caches so the first runBlocking read in MainActivity
+            // finds data already in memory instead of hitting disk.
+            languageDataStore.data.first()
+            themeDataStore.data.first()
+
+            // MobileAds init is slow (~300ms). Safe to run off the main thread —
+            // ads will not load until after init completes regardless.
+            MobileAds.initialize(this@MyApp) {}
+
+            // Notification permission prompt — no reason to block the main thread.
+            val prefs = getSharedPreferences("app_settings_prefs", MODE_PRIVATE)
+            if (!prefs.getBoolean("notification_dialog_shown", false)) {
+                prefs.edit().putBoolean("notification_dialog_shown", true).apply()
                 OneSignal.Notifications.requestPermission(false)
             }
         }

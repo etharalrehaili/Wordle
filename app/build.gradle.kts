@@ -12,6 +12,8 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
+    alias(libs.plugins.firebase.perf)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -51,12 +53,21 @@ android {
         compose = true
         buildConfig = true
     }
+
+    packaging {
+        jniLibs {
+            // Store .so files uncompressed and page-aligned in the APK.
+            // Required for 16 KB page-size support on Android 15+ devices.
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.perf)
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
     implementation("com.google.firebase:firebase-appcheck-debug")
     implementation(libs.androidx.core.ktx)
@@ -93,6 +104,14 @@ dependencies {
     // Firebase App Check Debug Provider (for testing purposes only)
     debugImplementation("com.google.firebase:firebase-appcheck-debug:19.0.2")
 
+    // Firebase Crashlytics for crash reporting
+    implementation("com.google.firebase:firebase-crashlytics")
+
     // Google Mobile Ads SDK
     implementation("com.google.android.gms:play-services-ads:23.3.0")
+
+    // LeakCanary for memory leak detection
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+    // DataStore — needed to pre-warm caches in MyApp
+    implementation("androidx.datastore:datastore:1.2.0")
 }

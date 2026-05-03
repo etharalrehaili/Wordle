@@ -5,13 +5,12 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Encrypted SharedPreferences-backed store for local (anonymous) game stats.
- * Keys are language-prefixed so en and ar stats are tracked independently.
- */
 @Singleton
 class LocalStatsDataStore @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -50,6 +49,15 @@ class LocalStatsDataStore @Inject constructor(
 
     fun addPoints(delta: Int) {
         prefs.edit().putInt("stats_total_points", getTotalPoints() + delta).apply()
+    }
+
+    fun observeTotalPoints(): Flow<Int> = callbackFlow {
+        trySend(getTotalPoints())
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "stats_total_points") trySend(getTotalPoints())
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 
     fun clearAll() = prefs.edit().clear().apply()
