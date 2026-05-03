@@ -23,6 +23,7 @@ import com.khammin.game.domain.repository.ChallengeProgressRepository
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.profile.UpdateProfileUseCase
 import com.khammin.game.domain.usecases.profile.UploadAvatarUseCase
+import com.khammin.game.domain.usecases.stats.MigrateLocalStatsUseCase
 import com.khammin.game.presentation.profile.contract.ProfileEffect
 import com.khammin.game.presentation.profile.contract.ProfileIntent
 import com.khammin.game.presentation.profile.contract.ProfileUiState
@@ -47,6 +48,7 @@ class ProfileViewModel @Inject constructor(
     private val guestProfileDataStore: GuestProfileDataStore,
     private val challengeProgressRepository: ChallengeProgressRepository,
     private val challengeDefinitionRepository: ChallengeDefinitionRepository,
+    private val migrateLocalStatsUseCase: MigrateLocalStatsUseCase,
     private val networkUtils: NetworkUtils,
     @ApplicationContext private val context: Context,
 ) : BaseMviViewModel<ProfileIntent, ProfileUiState, ProfileEffect>(
@@ -80,7 +82,12 @@ class ProfileViewModel @Inject constructor(
             val isNowSignedIn = !user.isAnonymous
             if (wasAnonymous && isNowSignedIn) {
                 wasAnonymous = false
-                loadProfile()
+                // Run migration inline so loadProfile sees the already-merged stats.
+                // Guest stats remain visible in the UI while migration runs (seamless transition).
+                viewModelScope.launch {
+                    runCatching { migrateLocalStatsUseCase() }
+                    loadProfile(forceRefresh = true)
+                }
                 sendEffect { ProfileEffect.SignedInWithGoogle }
             }
         }
@@ -212,13 +219,12 @@ class ProfileViewModel @Inject constructor(
                 val snapshot    = challengeProgressRepository.getSnapshot(uid)
                 val completed   = definitions.filter { def -> snapshot.challenges[def.id]?.status == ChallengeStatus.COMPLETED }
                 val total       = completed.sumOf { it.points }
-                // Capture cached value before overwriting state so we can detect a mismatch.
                 val cachedPoints = uiState.value.totalPoints
-                setState { copy(totalPoints = total) }
-                // Guest users have no Strapi profile — skip reconcile entirely.
-                // For Google users: only reconcile upward. getSnapshot() can return stale data
-                // if Firestore hasn't propagated the latest challenge completion yet, which would
-                // incorrectly overwrite a valid higher Strapi value down to a stale lower one.
+                // For Google users: never lower totalPoints below the Strapi-confirmed value.
+                // The Firestore challenge snapshot can be 0 right after a guest→Google migration
+                // (challenge progress isn't migrated, only Strapi stats are), which would
+                // incorrectly overwrite the valid migrated value with 0.
+                setState { copy(totalPoints = if (isGuest) total else maxOf(total, cachedPoints)) }
                 if (!isGuest && total > cachedPoints) {
                     reconcileArPoints(uid, total)
                 }

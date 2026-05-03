@@ -2,6 +2,7 @@ package com.khammin.app
 
 import android.R
 import android.app.Activity
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -46,6 +47,21 @@ import java.util.Locale
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val preferenceViewModel: PreferencesViewModel by viewModels()
+
+    override fun attachBaseContext(newBase: Context) {
+        val code = newBase
+            .getSharedPreferences("settings", MODE_PRIVATE)
+            .getString("language_code", "") ?: ""
+        if (code.isNotEmpty()) {
+            val locale = java.util.Locale(code)
+            java.util.Locale.setDefault(locale)
+            val config = Configuration(newBase.resources.configuration)
+            config.setLocale(locale)
+            super.attachBaseContext(newBase.createConfigurationContext(config))
+        } else {
+            super.attachBaseContext(newBase)
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {

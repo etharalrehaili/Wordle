@@ -1,6 +1,5 @@
 package com.khammin.game.domain.usecases.challenges
 
-import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.perf.FirebasePerformance
 import com.khammin.game.data.local.LocalStatsDataStore
@@ -28,10 +27,7 @@ class AwardChallengePointsUseCase @Inject constructor(
         trace.start()
         try {
             val user = FirebaseAuth.getInstance().currentUser
-            if (user == null) {
-                Log.w("ChallengeDebug", "[AwardPoints] user is null — skipping")
-                return
-            }
+            if (user == null) return
 
             val definitions  = definitionRepository.getDefinitions()
             val pointsEarned = definitions
@@ -41,19 +37,14 @@ class AwardChallengePointsUseCase @Inject constructor(
             trace.putAttribute("user_type", if (user.isAnonymous) "guest" else "google")
             trace.putMetric("points_earned", pointsEarned.toLong())
 
-            Log.d("ChallengeDebug", "[AwardPoints] completedIds=$completedIds pointsEarned=$pointsEarned isAnonymous=${user.isAnonymous}")
             if (pointsEarned <= 0) return
 
             if (user.isAnonymous) {
                 localStatsDataStore.addPoints(pointsEarned)
-                Log.d("ChallengeDebug", "[AwardPoints] +$pointsEarned pts saved locally (guest)")
             } else {
                 runCatching {
                     profileRepository.addArPoints(firebaseUid = user.uid, delta = pointsEarned)
-                    Log.d("ChallengeDebug", "[AwardPoints] +$pointsEarned pts written to Strapi for uid=${user.uid}")
-                }.onFailure { e ->
-                    Log.e("ChallengeDebug", "[AwardPoints] failed to update profile", e)
-                }
+                }.onFailure { _ -> }
             }
         } finally {
             trace.stop()

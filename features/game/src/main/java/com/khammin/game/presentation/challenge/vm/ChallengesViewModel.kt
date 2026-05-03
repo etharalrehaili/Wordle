@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.util.NetworkUtils
 import com.khammin.game.domain.model.ChallengeStatus
+import com.khammin.game.data.local.CompletedChallengesStore
 import com.khammin.game.domain.usecases.challenges.GetChallengeDefinitionsUseCase
 import com.khammin.game.domain.usecases.challenges.GetChallengeProgressUseCase
 import com.khammin.game.presentation.challenge.contract.ChallengeUiItem
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class ChallengesViewModel @Inject constructor(
     private val getChallengeProgressUseCase: GetChallengeProgressUseCase,
     private val getChallengeDefinitionsUseCase: GetChallengeDefinitionsUseCase,
+    private val completedChallengesStore: CompletedChallengesStore,
     private val networkUtils: NetworkUtils,
 ) : BaseMviViewModel<ChallengesIntent, ChallengesUiState, ChallengesEffect>(
     initialState = ChallengesUiState()
@@ -113,10 +115,15 @@ class ChallengesViewModel @Inject constructor(
                 ) { definitions, snapshot ->
                     definitions to snapshot
                 }.collect { (definitions, snapshot) ->
+                    val locallyCompleted = completedChallengesStore.getAll()
                     val uiItems = definitions
                         .filter { it.isActive }
                         .map { def ->
                             val userChallenge = snapshot.challenges[def.id]
+                            // If the local store says this challenge is completed (device-level
+                            // guard), show it as COMPLETED even if Firestore has no record for
+                            // the current UID — e.g. after logout/re-login with a new UID.
+                            val isLocallyCompleted = def.id in locallyCompleted
                             ChallengeUiItem(
                                 id         = def.id,
                                 titleAr    = def.titleAr,
@@ -125,8 +132,12 @@ class ChallengesViewModel @Inject constructor(
                                 target     = def.target,
                                 difficulty = def.difficulty,
                                 iconName   = def.iconName,
-                                status     = userChallenge?.status ?: ChallengeStatus.AVAILABLE,
-                                progress   = userChallenge?.progress ?: 0,
+                                status     = when {
+                                    isLocallyCompleted -> ChallengeStatus.COMPLETED
+                                    else -> userChallenge?.status ?: ChallengeStatus.AVAILABLE
+                                },
+                                progress   = if (isLocallyCompleted) def.target
+                                             else userChallenge?.progress ?: 0,
                             )
                         }
 
