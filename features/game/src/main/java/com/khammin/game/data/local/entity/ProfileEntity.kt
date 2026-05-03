@@ -3,12 +3,6 @@ package com.khammin.game.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/**
- * Local database entity representing a cached user profile.
- * [pendingSync] is true when the record was updated offline and has not yet
- * been pushed to the server. [pendingSyncLanguage] records which language's
- * stats were changed so the sync worker sends the right payload.
- */
 @Entity(tableName = "profile_table")
 data class ProfileEntity(
     @PrimaryKey val firebaseUid: String,

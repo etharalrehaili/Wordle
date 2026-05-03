@@ -16,15 +16,12 @@ data class HomeUiState(
     val easyWordsSolved: Int = 0,
     val classicWordsSolved: Int = 0,
     val showWelcomeSheet: Boolean = false,
-    // Sheet visibility — lives in ViewModel so rotation doesn't close open sheets
     val showGameModeSheet: Boolean = false,
     val showLengthSheet: Boolean = false,
     val showMultiplayerSheet: Boolean = false,
     val showWordPickerSheet: Boolean = false,
     val showJoinRoomSheet: Boolean = false,
-    // Room creation type ("random" / "custom" / null) — survives rotation
     val createRoomType: String? = null,
-    // Text typed in JoinRoomBottomSheet — survives rotation
     val joinRoomCode: String = "",
 ) : UiState
 

@@ -27,6 +27,8 @@ coroutinesTest = "1.8.1"
 mockitoKotlin = "5.3.1"
 mockitoCore = "5.11.0"
 lifecycleProcess = "2.10.0"
+firebasePerfPlugin = "1.4.2"
+firebasePerfLib = "21.0.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -61,6 +63,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
+firebase-perf = { group = "com.google.firebase", name = "firebase-perf", version.ref = "firebasePerfLib" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -70,3 +73,5 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerfPlugin" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.3" }

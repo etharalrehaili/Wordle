@@ -5,10 +5,10 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Exclude the encrypted SQLCipher key store. The Android Keystore key that
+             decrypts it is not backed up, so restoring this file on a fresh install
+             would cause AEADBadTagException on startup. -->
+        <exclude domain="file" path="datastore/user_preferences.preferences_pb"/>
     </cloud-backup>
     <!--
     <device-transfer>

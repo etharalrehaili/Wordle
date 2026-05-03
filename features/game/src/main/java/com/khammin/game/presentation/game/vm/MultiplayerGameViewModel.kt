@@ -2,7 +2,6 @@ package com.khammin.game.presentation.game.vm
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -34,7 +33,6 @@ import com.khammin.game.domain.usecases.game.ObserveRoomUseCase
 import com.khammin.game.domain.usecases.game.RestartRoomUseCase
 import com.khammin.game.domain.usecases.game.RegisterPresenceUseCase
 import com.khammin.game.domain.usecases.game.RemoveGuestFromRoomUseCase
-import com.khammin.game.domain.usecases.game.ResetCustomRoomUseCase
 import com.khammin.game.domain.usecases.game.StartRoomUseCase
 import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
 import com.khammin.game.domain.usecases.game.UpdateSessionPointsUseCase
@@ -86,7 +84,6 @@ class MultiplayerGameViewModel @Inject constructor(
     private val validateWordUseCase: ValidateWordUseCase,
     private val startRoomUseCase: StartRoomUseCase,
     private val removeGuestFromRoomUseCase: RemoveGuestFromRoomUseCase,
-    private val resetCustomRoomUseCase: ResetCustomRoomUseCase,
     private val votePlayAgainUseCase: VotePlayAgainUseCase,
     private val updateGuestProfileUseCase: UpdateGuestProfileUseCase,
     private val updateSessionPointsUseCase: UpdateSessionPointsUseCase,
@@ -244,7 +241,6 @@ class MultiplayerGameViewModel @Inject constructor(
         val firebaseUser = auth.currentUser
         val isLoggedIn   = firebaseUser != null && !firebaseUser.isAnonymous
         val isAnonymous  = !isLoggedIn && (firebaseUser?.isAnonymous == true || myId.startsWith("guest_"))
-        Log.d("AvatarDebug", "[loadGame] authState: isLoggedIn=$isLoggedIn | isAnonymous=$isAnonymous | firebaseUser=${firebaseUser?.uid} | firebaseIsAnonymous=${firebaseUser?.isAnonymous} | firebasePhotoUrl=${firebaseUser?.photoUrl}")
 
         // For guests we can resolve the fallback name instantly; logged-in name comes from Strapi below
         val guestFallbackName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
@@ -265,20 +261,17 @@ class MultiplayerGameViewModel @Inject constructor(
                 isLoggedIn -> {
                     // Always fetch fresh from Strapi so we never show a stale cached avatar.
                     val result = getProfileUseCase(myId, forceRefresh = true)
-                    Log.d("AvatarDebug", "[loadGame] getProfileUseCase result=${result::class.simpleName} | userId=$myId")
                     if (result is Resource.Success) {
                         val name     = result.data?.name?.takeIf { it.isNotBlank() } ?: defaultMyName
                         val strapiUrl = result.data?.avatarUrl
                         val firebaseUrl = firebaseUser?.photoUrl?.toString()
                         // Fall back to Firebase Auth photo (Google profile picture) when Strapi has no avatar
                         val photoUrl = strapiUrl ?: firebaseUrl
-                        Log.d("AvatarDebug", "[loadGame] strapiAvatarUrl=$strapiUrl | firebasePhotoUrl=$firebaseUrl | resolved=$photoUrl | userId=$myId")
                         setState { copy(myName = name, avatarUrl = photoUrl) }
                         // Push to Firestore so other players see the correct name and photo
                         val pushResult = runCatching {
                             updateGuestProfileUseCase(roomId, myId, name, null, null, photoUrl)
                         }
-                        Log.d("AvatarDebug", "[loadGame] pushed to guestProfiles | photoUrl=$photoUrl | success=${pushResult.isSuccess} | userId=$myId")
                     }
                 }
                 isAnonymous -> {
@@ -287,7 +280,6 @@ class MultiplayerGameViewModel @Inject constructor(
                     val resolvedName        = saved?.name        ?: guestFallbackName
                     val resolvedAvatarColor = saved?.avatarColor
                     val resolvedAvatarEmoji = saved?.avatarEmoji
-                    Log.d("AvatarDebug", "[loadGame] anonymous branch | saved=$saved | resolvedName=$resolvedName | avatarColor=$resolvedAvatarColor | avatarEmoji=$resolvedAvatarEmoji | avatarUri=${saved?.avatarUri}")
                     if (saved != null) {
                         setState {
                             copy(
@@ -308,7 +300,6 @@ class MultiplayerGameViewModel @Inject constructor(
                             uploadAvatarUseCase(Uri.parse(saved.avatarUri), context)
                         }.getOrNull()
                         val url = (uploadResult as? Resource.Success)?.data
-                        Log.d("AvatarDebug", "[loadGame] anonymous avatar upload | localUri=${saved.avatarUri} | hostedUrl=$url | success=${uploadResult is Resource.Success}")
                         url
                     } else null
                     // Push name, emoji/color, and the hosted URL (if any) to Firestore.
@@ -361,11 +352,9 @@ class MultiplayerGameViewModel @Inject constructor(
                 val updatedWaiting = room.guestIds.map { guestId ->
                     val existing = waitingPlayers.firstOrNull { it.userId == guestId }
                     val profile  = room.guestProfiles[guestId]
-                    Log.d("AvatarDebug", "[roomObserver] guestId=$guestId | profile=$profile | existing.avatarUrl=${existing?.avatarUrl}")
                     when {
                         profile != null -> {
                             val resolvedUrl = profile["avatarUrl"]?.takeIf { it.isNotEmpty() } ?: existing?.avatarUrl
-                            Log.d("AvatarDebug", "[roomObserver] guestId=$guestId | profile[avatarUrl]=${profile["avatarUrl"]} | resolvedUrl=$resolvedUrl")
                             (existing ?: WaitingPlayer(guestId, guestNameFromId(guestId))).copy(
                                 name        = profile["name"]?.takeIf { it.isNotBlank() } ?: existing?.name ?: guestNameFromId(guestId),
                                 avatarColor = profile["avatarColor"]?.toLongOrNull() ?: existing?.avatarColor,
@@ -393,7 +382,6 @@ class MultiplayerGameViewModel @Inject constructor(
                     }
                 // For guests: apply host's saved profile if present
                 val hostProfile = room.guestProfiles[room.hostId]
-                Log.d("AvatarDebug", "[roomObserver] hostId=${room.hostId} | isHostOfRoom=$isHostOfRoom | hostProfile=$hostProfile")
                 val resolvedOpponentName = if (!isHostOfRoom && hostProfile != null)
                     hostProfile["name"] ?: opponentName else opponentName
                 val resolvedOpponentAvatarColor = if (!isHostOfRoom && hostProfile != null)
@@ -402,7 +390,6 @@ class MultiplayerGameViewModel @Inject constructor(
                     hostProfile["avatarEmoji"]?.takeIf { it.isNotEmpty() } else opponentAvatarEmoji
                 val resolvedOpponentAvatarUrl = if (!isHostOfRoom && hostProfile != null)
                     hostProfile["avatarUrl"]?.takeIf { it.isNotEmpty() } else opponentAvatarUrl
-                Log.d("AvatarDebug", "[roomObserver] resolvedOpponentAvatarUrl=$resolvedOpponentAvatarUrl | opponentAvatarUrl(prev)=$opponentAvatarUrl")
                 copy(
                     targetWord            = room.word.uppercase(),
                     wordLength            = room.wordLength,
@@ -631,7 +618,10 @@ class MultiplayerGameViewModel @Inject constructor(
                 failed      = playerState?.finishedAt != null && playerState.solved != true,
                 guessCount  = playerState?.currentRow ?: current.guessCount,
                 guessRows   = playerState?.toGuessRows(wordLen) ?: List(MAX_GUESSES) { GuessRow() },
-                totalPoints = s.sessionPoints[guestId] ?: current.totalPoints,
+                totalPoints = if (playerState?.solved != true)
+                    s.sessionPoints[guestId] ?: current.totalPoints
+                else
+                    current.totalPoints,
             )
             val updatedProgress = s.opponentsProgress + (guestId to updated)
             setState { copy(opponentsProgress = updatedProgress) }
@@ -702,7 +692,6 @@ class MultiplayerGameViewModel @Inject constructor(
     private fun fetchGuestInfo(guestId: String) {
         if (guestId.startsWith("guest_")) {
             val name = guestNameFromId(guestId)
-            Log.d("AvatarDebug", "[fetchGuestInfo] anonymous guest=$guestId | no avatar")
             updateGuestInfo(guestId, name, null)
             return
         }
@@ -711,13 +700,11 @@ class MultiplayerGameViewModel @Inject constructor(
             val name = (result as? Resource.Success)?.data?.name?.takeIf { it.isNotBlank() }
                 ?: guestNameFromId(guestId)
             val avatar = (result as? Resource.Success)?.data?.avatarUrl
-            Log.d("AvatarDebug", "[fetchGuestInfo] guestId=$guestId | strapiAvatarUrl=$avatar | profileSuccess=${result is Resource.Success}")
             updateGuestInfo(guestId, name, avatar)
         }
     }
 
     private fun updateGuestInfo(guestId: String, name: String, avatarUrl: String?) {
-        Log.d("AvatarDebug", "[updateGuestInfo] guestId=$guestId | name=$name | avatarUrl=$avatarUrl")
         setState {
             // Prefer any profile override the player has already saved (picked up via room observer)
             val existing = waitingPlayers.firstOrNull { it.userId == guestId }
@@ -726,7 +713,6 @@ class MultiplayerGameViewModel @Inject constructor(
             val resolvedEmoji = existing?.avatarEmoji
             // Prefer Firestore-sourced avatarUrl already in state over the Strapi one (may be more recent)
             val resolvedUrl = existing?.avatarUrl ?: avatarUrl
-            Log.d("AvatarDebug", "[updateGuestInfo] guestId=$guestId | existing.avatarUrl=${existing?.avatarUrl} | resolvedUrl=$resolvedUrl")
             val progress = opponentsProgress[guestId] ?: OpponentProgress()
             copy(
                 opponentsProgress = opponentsProgress + (guestId to progress.copy(

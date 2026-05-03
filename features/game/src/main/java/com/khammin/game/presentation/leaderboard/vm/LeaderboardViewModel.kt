@@ -56,13 +56,14 @@ class LeaderboardViewModel @Inject constructor(
 
             when (val result = getLeaderboardUseCase(limit = 100, language = language)) {
                 is Resource.Success -> {
+                    val filtered = result.data.filter { it.arCurrentPoints > 0 }
                     setState {
                         copy(
                             isLoading    = false,
                             isRefreshing = false,
                             isRetrying   = false,
                             noInternet   = false,
-                            players      = result.data.filter { it.arCurrentPoints > 0 }
+                            players      = filtered
                         )
                     }
                 }

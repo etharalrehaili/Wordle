@@ -7,7 +7,10 @@ import com.khammin.core.domain.model.LIGHT_MODEL
 import com.khammin.core.domain.model.ThemeModel
 import com.khammin.core.domain.repository.ThemeRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
@@ -16,13 +19,21 @@ class ThemeRepositoryImpl @Inject constructor(
     private val themeDataStore: DataStore<ThemeModel>
 ) : ThemeRepository {
 
+    // In-memory cache: populated on first read, updated on every write.
+    // Eliminates repeated runBlocking disk I/O on the main thread.
+    @Volatile private var cached: ThemeModel? = null
+
     override fun getThemes(): List<ThemeModel> = listOf(DARK_MODEL, LIGHT_MODEL)
 
     override fun setTheme(theme: ThemeModel) {
-        runBlocking { themeDataStore.updateData { theme } }
+        cached = theme
+        // Fire-and-forget — UI consistency is guaranteed by the in-memory cache.
+        CoroutineScope(Dispatchers.IO).launch {
+            themeDataStore.updateData { theme }
+        }
     }
 
     override fun getCurrentTheme(): ThemeModel {
-        return runBlocking { themeDataStore.data.first() }
+        return cached ?: runBlocking { themeDataStore.data.first() }.also { cached = it }
     }
 }

@@ -35,10 +35,23 @@ class ChallengesViewModel @Inject constructor(
 
     private val authListener = FirebaseAuth.AuthStateListener { auth ->
         val user = auth.currentUser ?: return@AuthStateListener
-        if (wasAnonymous && !user.isAnonymous) {
-            wasAnonymous = false
-            currentUid = user.uid
-            startCollecting(user.uid)
+        val uid = user.uid
+        when {
+            // New UID seen — covers two cases:
+            //   1. First launch: currentUid was null while ensureAnonymousAuth() was running;
+            //      anonymous sign-in completed after init{} already ran, so startCollecting
+            //      was never called.
+            //   2. Full sign-out then sign-in with a different account.
+            uid != currentUid -> {
+                currentUid = uid
+                wasAnonymous = user.isAnonymous
+                startCollecting(uid)
+            }
+            // Same UID but transitioned anonymous → Google (account linking).
+            wasAnonymous && !user.isAnonymous -> {
+                wasAnonymous = false
+                startCollecting(uid)
+            }
         }
     }
 

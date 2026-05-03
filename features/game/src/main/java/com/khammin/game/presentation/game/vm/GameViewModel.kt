@@ -172,7 +172,6 @@ class GameViewModel @Inject constructor(
                     runCatching {
                         val completed = evaluateChallengesUseCase(gameResult)
                         awardChallengePointsUseCase(completed)
-                    }.onFailure { e ->
                     }
                 }
             }
@@ -270,28 +269,27 @@ class GameViewModel @Inject constructor(
         if (state.hintsUsed >= state.maxHints) return
         if (state.targetWord.isEmpty()) return
 
-        // Find an index not yet correct in the current row
         val currentRowTiles = state.board[state.currentRow]
         val hintIndex = state.targetWord.indices.firstOrNull { index ->
             currentRowTiles[index].state != TileState.CORRECT
         } ?: return
 
         val hintLetter = state.targetWord[hintIndex]
-
         val newBoard = state.board.updateTile(
             row  = state.currentRow,
             col  = hintIndex,
             tile = Tile(letter = hintLetter, state = TileState.CORRECT)
         )
+        val newCol = if (hintIndex >= state.currentCol) hintIndex + 1 else state.currentCol
 
         setState {
             copy(
                 board      = newBoard,
                 hintsUsed  = hintsUsed + 1,
-                // Advance currentCol past the hint tile if needed
-                currentCol = if (hintIndex >= currentCol) hintIndex + 1 else currentCol
+                currentCol = newCol
             )
         }
+        if (newCol == state.wordLength) submitGuess()
     }
 
     private fun earnHint() {

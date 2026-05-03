@@ -14,6 +14,9 @@ android {
     defaultConfig {
         minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     buildTypes {
@@ -90,12 +93,17 @@ dependencies {
     // Encrypted SharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // SQLCipher for encrypted database
-    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    // SQLCipher for encrypted database.
+    implementation("net.zetetic:sqlcipher-android:4.15.0@aar")
+    implementation("androidx.sqlite:sqlite:2.6.2")
+
     // WorkManager + Hilt integration for offline sync
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Firebase Performance
+    implementation(libs.firebase.perf)
 
     // Haze for state management
     implementation("dev.chrisbanes.haze:haze:0.7.3")

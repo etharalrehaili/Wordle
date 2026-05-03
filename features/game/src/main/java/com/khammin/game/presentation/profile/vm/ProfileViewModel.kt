@@ -50,11 +50,27 @@ class ProfileViewModel @Inject constructor(
     private val networkUtils: NetworkUtils,
     @ApplicationContext private val context: Context,
 ) : BaseMviViewModel<ProfileIntent, ProfileUiState, ProfileEffect>(
-    initialState = ProfileUiState()
+    initialState = ProfileUiState(
+        totalPoints = if (FirebaseAuth.getInstance().currentUser?.isAnonymous == true)
+            localStatsDataStore.getTotalPoints() else 0,
+    )
 ) {
+
     init {
         loadProfile()
         observeAuthState()
+        observeGuestPoints()
+    }
+
+    private fun observeGuestPoints() {
+        viewModelScope.launch {
+            localStatsDataStore.observeTotalPoints().collect { points ->
+                val isCurrentlyGuest = FirebaseAuth.getInstance().currentUser?.isAnonymous == true
+                if (isCurrentlyGuest) {
+                    setState { copy(totalPoints = points) }
+                }
+            }
+        }
     }
 
     private fun observeAuthState() {
@@ -134,10 +150,8 @@ class ProfileViewModel @Inject constructor(
                             arWordsSolved = wordsSolved,
                         )
                     }
+                    loadTotalPoints(uid, isGuest = true)
 
-                    // Guest data loads from local storage in <10ms — faster than one frame.
-                    // Delay until at least 600ms have elapsed so the pull-to-refresh indicator
-                    // is actually visible before isRefreshing flips back to false.
                     if (forceRefresh) {
                         val elapsed = System.currentTimeMillis() - start
                         val remaining = 600L - elapsed
@@ -176,6 +190,9 @@ class ProfileViewModel @Inject constructor(
                         isGuest       = false,
                         arGamesPlayed = profile.arGamesPlayed,
                         arWordsSolved = profile.arWordsSolved,
+                        // Show the cached total immediately so it renders with the other stats.
+                        // loadTotalPoints refreshes it from challenge definitions in the background.
+                        totalPoints   = profile.arCurrentPoints,
                     )
                 }
 
@@ -188,17 +205,46 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun loadTotalPoints(uid: String) {
+    private fun loadTotalPoints(uid: String, isGuest: Boolean = false) {
         viewModelScope.launch {
             runCatching {
                 val definitions = challengeDefinitionRepository.getDefinitions()
                 val snapshot    = challengeProgressRepository.getSnapshot(uid)
-                val total = definitions
-                    .filter { def -> snapshot.challenges[def.id]?.status == ChallengeStatus.COMPLETED }
-                    .sumOf { it.points }
+                val completed   = definitions.filter { def -> snapshot.challenges[def.id]?.status == ChallengeStatus.COMPLETED }
+                val total       = completed.sumOf { it.points }
+                // Capture cached value before overwriting state so we can detect a mismatch.
+                val cachedPoints = uiState.value.totalPoints
                 setState { copy(totalPoints = total) }
-            }
+                // Guest users have no Strapi profile — skip reconcile entirely.
+                // For Google users: only reconcile upward. getSnapshot() can return stale data
+                // if Firestore hasn't propagated the latest challenge completion yet, which would
+                // incorrectly overwrite a valid higher Strapi value down to a stale lower one.
+                if (!isGuest && total > cachedPoints) {
+                    reconcileArPoints(uid, total)
+                }
+            }.onFailure { _ -> }
         }
+    }
+
+    private suspend fun reconcileArPoints(uid: String, correctTotal: Int) {
+        runCatching {
+            val profile = when (val result = getProfileUseCase(uid, forceRefresh = false)) {
+                is Resource.Success -> result.data ?: return@runCatching
+                else -> return@runCatching
+            }
+            if (profile.arCurrentPoints == correctTotal) return@runCatching
+            updateProfileUseCase(
+                documentId    = profile.documentId,
+                firebaseUid   = uid,
+                name          = profile.name,
+                avatarUrl     = profile.avatarUrl,
+                language      = "ar",
+                gamesPlayed   = profile.arGamesPlayed,
+                wordsSolved   = profile.arWordsSolved,
+                winPercentage = profile.arWinPercentage,
+                currentPoints = correctTotal,
+            )
+        }.onFailure { _ -> }
     }
 
     override fun onEvent(intent: ProfileIntent) {

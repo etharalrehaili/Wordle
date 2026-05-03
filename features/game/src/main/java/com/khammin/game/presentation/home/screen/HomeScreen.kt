@@ -23,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -181,13 +180,7 @@ fun HomeContent(
     onClearNoInternet: () -> Unit = {},
 ) {
     var countdownSeconds by remember { mutableStateOf(secondsUntilMidnight()) }
-    // lastFailedAction captures navigation lambdas so it stays local (not serialisable)
     var lastFailedAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-
-    // Auto-show welcome sheet on first launch
-//    LaunchedEffect(showWelcomeSheet) {
-//        if (showWelcomeSheet) showAuthSheet = true
-//    }
 
     if (homeUiState.noInternetError) {
         NoInternetBottomSheet(

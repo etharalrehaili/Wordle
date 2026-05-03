@@ -16,8 +16,9 @@ object AdManager {
     fun preload(context: Context) {
         if (rewardedAd != null || isLoading) return
         isLoading = true
+        // Use applicationContext so the loaded RewardedAd never captures an Activity reference.
         RewardedAd.load(
-            context,
+            context.applicationContext,
             AD_UNIT_ID,
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
@@ -49,5 +50,14 @@ object AdManager {
         }
         rewardedAd = null
         preload(activity)
+    }
+
+    /**
+     * Call from Activity.onDestroy(). Drops the loaded ad so the singleton
+     * does not hold a reference chain into the destroyed Activity.
+     */
+    fun destroy() {
+        rewardedAd = null
+        isLoading = false
     }
 }
