@@ -639,7 +639,10 @@ class MultiplayerGameViewModel @Inject constructor(
                     val finalProgress = updatedProgress.mapValues { (_, p) ->
                         if (!p.solved && !p.failed) p.copy(failed = true) else p
                     }
-                    // Accumulate session points for this round
+                    // Each guest self-writes their own points in submitGuess (even when host is
+                    // offline). The host reads sessionPoints from the room doc via observeRoom.
+                    // Use s.sessionPoints (from Firestore) as the base; only fill in entries
+                    // that aren't already there (race: guest write may not have arrived yet).
                     val newSessionPts = s.sessionPoints.toMutableMap()
                     finalProgress.forEach { (guestId, p) ->
                         val pts = if (p.solved) when (p.guessCount) {
@@ -650,12 +653,13 @@ class MultiplayerGameViewModel @Inject constructor(
                             5    -> 20
                             else -> 10
                         } else 0
-                        if (pts > 0) newSessionPts[guestId] = (newSessionPts[guestId] ?: 0) + pts
+                        // Only set if not already present — avoids double-counting when the
+                        // guest's self-write arrived before this observer fired.
+                        if (pts > 0 && !newSessionPts.containsKey(guestId)) {
+                            newSessionPts[guestId] = pts
+                        }
                     }
                     setState { copy(isGameOver = true, opponentsProgress = finalProgress, sessionPoints = newSessionPts) }
-                    viewModelScope.launch {
-                        resultHandler.updateSessionPoints(s.roomId, newSessionPts)
-                    }
                     sendEffect {
                         MultiplayerGameEffect.ShowGameDialog(
                             isWin       = anyoneSolved,
@@ -751,7 +755,10 @@ class MultiplayerGameViewModel @Inject constructor(
     private fun observeOpponentPresence(roomId: String, userId: String) {
         presenceManager.observe(roomId, userId, viewModelScope) { droppedId ->
             val s = uiState.value
-            if (s.isGameOver) return@observe
+            // In custom-word / lobby mode a guest must still react to the host dropping
+            // even after the round ends (isGameOver=true) while waiting for the next round.
+            val isGuestWaitingForHost = (s.isCustomWord || s.isLobbyMode) && !s.isHost && s.isGameOver
+            if (s.isGameOver && !isGuestWaitingForHost) return@observe
             when {
                 (s.isCustomWord || s.isLobbyMode) && s.isHost -> {
                     runCatching { removeGuestFromRoomUseCase(s.roomId, droppedId) }
@@ -831,7 +838,10 @@ class MultiplayerGameViewModel @Inject constructor(
             // Countdown reached 0 — remove player
             countdownJobs.remove(userId)
             val s = uiState.value
-            if (!s.isGameOver && s.roomId.isNotEmpty()) {
+            // Allow host-drop handling even when isGameOver if this is a guest waiting
+            // for the host to start the next round (custom-word / lobby mode).
+            val isGuestWaitingForHost = (s.isCustomWord || s.isLobbyMode) && !s.isHost && s.isGameOver
+            if ((!s.isGameOver || isGuestWaitingForHost) && s.roomId.isNotEmpty()) {
                 when {
                     (s.isCustomWord || s.isLobbyMode) && s.isHost ->
                         runCatching { removeGuestFromRoomUseCase(s.roomId, userId) }
@@ -1064,15 +1074,21 @@ class MultiplayerGameViewModel @Inject constructor(
                 if (s2.isCustomWord || s2.isLobbyMode) {
                     // ── Custom word / lobby mode: go to in-screen result lobby ─
                     setState { copy(isGameOver = true, isMyWin = solved) }
-                    if (solved && s2.isLobbyMode) {
-                        // Award points to the winner and broadcast to all players via room.winnerId
+                    if (solved) {
                         val pts = when (newRow) { 1 -> 100; 2 -> 80; 3 -> 60; 4 -> 40; 5 -> 20; else -> 10 }
                         val newSessionPts = s2.sessionPoints.toMutableMap()
                         newSessionPts[s2.myUserId] = (newSessionPts[s2.myUserId] ?: 0) + pts
                         setState { copy(sessionPoints = newSessionPts) }
                         viewModelScope.launch {
-                            resultHandler.updateSessionPoints(s2.roomId, newSessionPts)
-                            resultHandler.setLobbyWinner(s2.roomId, s2.myUserId)
+                            if (s2.isLobbyMode) {
+                                // Lobby: full-map write + set winner (host observes room.winnerId)
+                                resultHandler.updateSessionPoints(s2.roomId, newSessionPts)
+                                resultHandler.setLobbyWinner(s2.roomId, s2.myUserId)
+                            } else {
+                                // Custom word: write only this player's entry so points are saved
+                                // even when the host is offline and cannot observe the solve event.
+                                resultHandler.updatePlayerPoints(s2.roomId, s2.myUserId, newSessionPts[s2.myUserId]!!)
+                            }
                         }
                     }
                 } else {
