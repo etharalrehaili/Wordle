@@ -2,6 +2,7 @@ package com.khammin.game.presentation.game.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -34,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -52,23 +54,28 @@ import java.util.Locale
 
 @Composable
 fun CustomWordLobbyHost(
+    modifier: Modifier = Modifier,
     myName: String,
     avatarColor: Long?,
     avatarEmoji: String?,
     avatarUrl: String? = null,
     waitingPlayers: List<WaitingPlayer>,
     roomId: String,
-    onStart: (word: String) -> Unit,
-    modifier: Modifier = Modifier,
+    onStart: (word: String) -> Unit
 ) {
     var customWord by remember { mutableStateOf("") }
-
     val allReady  = waitingPlayers.isNotEmpty() && waitingPlayers.all { it.isReady }
     val canStart  = allReady && customWord.length in 4..6
     val totalPlayers = waitingPlayers.size + 1
+    val focusManager = LocalFocusManager.current
 
     LazyColumn(
-        modifier            = modifier.padding(horizontal = 16.dp),
+        modifier            = modifier.padding(horizontal = 16.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding      = PaddingValues(top = 16.dp, bottom = 32.dp),
@@ -216,7 +223,9 @@ fun CustomWordLobbyHost(
                         avatarUrl   = avatarUrl,
                     )
                     if (waitingPlayers.isEmpty()) {
+
                         HorizontalDivider(color = colors.border, thickness = 0.5.dp)
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -233,7 +242,9 @@ fun CustomWordLobbyHost(
                         }
                     } else {
                         waitingPlayers.forEach { player ->
+
                             HorizontalDivider(color = colors.border, thickness = 0.5.dp)
+
                             LobbyPlayerRow(
                                 name        = player.name,
                                 badge       = if (player.isReady)
@@ -255,7 +266,9 @@ fun CustomWordLobbyHost(
 
         // ── Start button ───────────────────────────────────────────
         item {
+
             Spacer(Modifier.height(4.dp))
+
             GameButton(
                 label    = stringResource(R.string.lobby_start_game),
                 onClick  = { onStart(customWord) },
@@ -264,7 +277,9 @@ fun CustomWordLobbyHost(
                 modifier = Modifier.fillMaxWidth()
             )
             if (!canStart) {
+
                 Spacer(Modifier.height(6.dp))
+
                 val hint = when {
                     customWord.length !in 4..6 -> stringResource(R.string.lobby_hint_enter_word)
                     waitingPlayers.isEmpty()   -> stringResource(R.string.lobby_hint_need_players)

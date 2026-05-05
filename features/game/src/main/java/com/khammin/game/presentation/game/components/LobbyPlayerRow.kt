@@ -17,12 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.game.R
 
 @Composable
 fun LobbyPlayerRow(
@@ -57,7 +59,19 @@ fun LobbyPlayerRow(
                             .clip(RoundedCornerShape(50)),
                     )
                     avatarColor != null && avatarEmoji != null ->
-                        EmojiAvatar(color = avatarColor, emoji = avatarEmoji, size = 32)
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(avatarColor).copy(alpha = 0.20f))
+                                .border(1.dp, Color(avatarColor).copy(alpha = 0.5f), RoundedCornerShape(50)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = avatarEmoji,
+                                fontSize = 16.sp,
+                            )
+                        }
                     avatarColor != null -> {
                         val circleColor = Color(avatarColor)
                         Box(
@@ -98,10 +112,7 @@ fun LobbyPlayerRow(
                             .size(32.dp)
                             .clip(RoundedCornerShape(50))
                             .background(Color.Black.copy(alpha = 0.45f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(text = "", fontSize = 14.sp)
-                    }
+                    )
                 }
             }
             Column {
@@ -115,9 +126,13 @@ fun LobbyPlayerRow(
                     val m = afkCountdown / 60
                     val s = afkCountdown % 60
                     Text(
-                        text = "Disconnected after ${m}:${s.toString().padStart(2, '0')}",
-                        color      = Color(0xFFFF6B6B),
-                        fontSize   = 10.sp,
+                        text = stringResource(
+                            R.string.lobby_disconnected_after,
+                            m.toString(),
+                            s.toString().padStart(2, '0')
+                        ),
+                        color = Color(0xFFFF6B6B),
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                     )
                 }

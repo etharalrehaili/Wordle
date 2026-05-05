@@ -162,6 +162,7 @@
     <string name="spectator_play_again_question">العب مجدداً؟</string>
     <string name="spectator_no_votes">لا أصوات بعد</string>
     <string name="spectator_vote_count">%1$d / %2$d</string>
+    <string name="lobby_disconnected_after">Disconnected after %1$s:%2$s</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>
