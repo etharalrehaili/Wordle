@@ -241,9 +241,11 @@ fun CustomWordLobbyHost(
                                 else
                                     stringResource(R.string.lobby_badge_not_ready),
                                 badgeColor  = if (player.isReady) colors.logoGreen else colors.logoPink,
-                                avatarColor = player.avatarColor,
-                                avatarEmoji = player.avatarEmoji,
-                                avatarUrl   = player.avatarUrl,
+                                avatarColor  = player.avatarColor,
+                                avatarEmoji  = player.avatarEmoji,
+                                avatarUrl    = player.avatarUrl,
+                                isAfk        = player.isAfk,
+                                afkCountdown = player.afkCountdown,
                             )
                         }
                     }

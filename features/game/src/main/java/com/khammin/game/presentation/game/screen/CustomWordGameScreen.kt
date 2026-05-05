@@ -416,6 +416,8 @@ private fun CustomWordGameContent(
                             hostAvatarColor = state.opponentAvatarColor,
                             hostAvatarEmoji = state.opponentAvatarEmoji,
                             hostAvatarUrl   = state.opponentAvatarUrl,
+                            hostIsAfk        = state.opponentsProgress[state.opponentId]?.isAfk ?: state.isOpponentAfk,
+                            hostAfkCountdown = state.opponentsProgress[state.opponentId]?.afkCountdown ?: state.opponentAfkCountdown,
                             myName          = state.myName,
                             avatarColor     = state.avatarColor,
                             avatarEmoji     = state.avatarEmoji,
@@ -446,12 +448,14 @@ private fun CustomWordGameContent(
                                 ) {
                                     items(opponents) { progress ->
                                         GuestCard(
-                                            name        = progress.name,
-                                            avatarUrl   = progress.avatarUrl,
-                                            avatarColor = progress.avatarColor,
-                                            avatarEmoji = progress.avatarEmoji,
-                                            guesses     = progress.guessRows,
-                                            wordLength  = state.wordLength.takeIf { it > 0 } ?: 4,
+                                            name         = progress.name,
+                                            avatarUrl    = progress.avatarUrl,
+                                            avatarColor  = progress.avatarColor,
+                                            avatarEmoji  = progress.avatarEmoji,
+                                            isAfk        = progress.isAfk,
+                                            afkCountdown = progress.afkCountdown,
+                                            guesses      = progress.guessRows,
+                                            wordLength   = state.wordLength.takeIf { it > 0 } ?: 4,
                                         )
                                     }
                                 }

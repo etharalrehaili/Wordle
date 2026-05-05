@@ -32,6 +32,10 @@ class MultiplayerRepositoryImpl @Inject constructor(
 
     override fun observeOpponentPresence(roomId: String, opponentId: String) =
         dataSource.observeOpponentPresence(roomId, opponentId)
+    override fun observeIsAfk(roomId: String, userId: String) =
+        dataSource.observeIsAfk(roomId, userId)
+    override fun cleanupPresence(roomId: String, userId: String) =
+        dataSource.cleanupPresence(roomId, userId)
     override suspend fun addGuestToRoom(roomId: String, guestId: String) =
         dataSource.addGuestToRoom(roomId, guestId)
     override suspend fun removeGuestFromRoom(roomId: String, guestId: String) =

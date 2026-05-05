@@ -51,6 +51,8 @@ fun CustomWordLobbyGuest(
     hostAvatarColor: Long? = null,
     hostAvatarEmoji: String? = null,
     hostAvatarUrl: String? = null,
+    hostIsAfk: Boolean = false,
+    hostAfkCountdown: Int? = null,
     myName: String,
     avatarColor: Long?,
     avatarEmoji: String?,
@@ -176,9 +178,11 @@ fun CustomWordLobbyGuest(
                         name        = hostName.ifBlank { stringResource(R.string.lobby_badge_host) },
                         badge       = stringResource(R.string.lobby_badge_host),
                         badgeColor  = colors.logoBlue,
-                        avatarColor = hostAvatarColor,
-                        avatarEmoji = hostAvatarEmoji,
-                        avatarUrl   = hostAvatarUrl,
+                        avatarColor  = hostAvatarColor,
+                        avatarEmoji  = hostAvatarEmoji,
+                        avatarUrl    = hostAvatarUrl,
+                        isAfk        = hostIsAfk,
+                        afkCountdown = hostAfkCountdown,
                     )
                     HorizontalDivider(color = colors.border, thickness = 0.5.dp)
                     LobbyPlayerRow(
@@ -196,11 +200,13 @@ fun CustomWordLobbyGuest(
                             badge       = if (player.isReady)
                                 stringResource(R.string.lobby_badge_ready)
                             else
-                                stringResource(R.string.lobby_badge_not_ready), // ← add this
-                            badgeColor  = if (player.isReady) colors.logoGreen else colors.logoPink, // ← fix color too
-                            avatarColor = player.avatarColor,
-                            avatarEmoji = player.avatarEmoji,
-                            avatarUrl   = player.avatarUrl,
+                                stringResource(R.string.lobby_badge_not_ready),
+                            badgeColor  = if (player.isReady) colors.logoGreen else colors.logoPink,
+                            avatarColor  = player.avatarColor,
+                            avatarEmoji  = player.avatarEmoji,
+                            avatarUrl    = player.avatarUrl,
+                            isAfk        = player.isAfk,
+                            afkCountdown = player.afkCountdown,
                         )
                     }
                 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 private const val RESET_TAG    = "MultiplayerReset"
@@ -21,6 +22,15 @@ class MultiplayerDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val rtdb: FirebaseDatabase
 ) : MultiplayerDataSource {
+
+    // ── Presence state tracking ───────────────────────────────────────────────
+    // key = "roomId/userId"
+    private val presenceStates    = ConcurrentHashMap<String, String>()
+    private val connectedListeners = ConcurrentHashMap<String, ValueEventListener>()
+
+    private fun userType(userId: String) =
+        if (userId.startsWith("guest_")) "guest" else "logged-in"
+    private fun ts() = System.currentTimeMillis()
 
     private val rooms = firestore.collection("rooms")
 
@@ -133,40 +143,81 @@ class MultiplayerDataSourceImpl @Inject constructor(
     }
 
     override suspend fun registerPresence(roomId: String, userId: String) {
-        Log.d("Presence", "registerPresence called | userId=$userId | roomId=$roomId")
-        val ref = rtdb.getReference("presence/$roomId/$userId")
-        try {
-            ref.setValue("online").await()
-            Log.d("Presence", "Presence set to 'online' | userId=$userId")
-            // Hard disconnect (process kill, network loss) → write "offline" instead of
-            // removing the node so observers can distinguish offline from never-connected.
-            ref.onDisconnect().setValue("offline").await()
-            Log.d("Presence", "onDisconnect registered for $userId")
-        } catch (e: Exception) {
-            Log.e("Presence", "registerPresence failed | userId=$userId | roomId=$roomId", e)
-        }
+        val key = "$roomId/$userId"
+        presenceStates[key] = "online"
+        setupConnectedPresenceListener(key, roomId, userId)
     }
 
     override suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean) {
-        val ref = rtdb.getReference("presence/$roomId/$userId")
-        try {
-            if (isForeground) {
-                ref.setValue("online").await()
-                Log.d("Presence", "Presence set to 'online' | userId=$userId")
-                // Re-register onDisconnect so the hook is always current after a reconnect.
-                ref.onDisconnect().setValue("offline").await()
-                Log.d("Presence", "onDisconnect registered for $userId")
-            } else {
-                ref.setValue("background").await()
-                Log.d("Presence", "Presence set to 'background' | userId=$userId")
-                // Keep onDisconnect() pointing to "offline" so a hard-kill while backgrounded
-                // still produces a clean "offline" value rather than leaving "background" forever.
-                ref.onDisconnect().setValue("offline").await()
-                Log.d("Presence", "onDisconnect registered for $userId")
-            }
-        } catch (e: Exception) {
-            Log.e("Presence", "updatePresenceState failed | userId=$userId | isForeground=$isForeground", e)
+        val key = "$roomId/$userId"
+        val state = if (isForeground) "online" else "background"
+        presenceStates[key] = state
+        val label = if (isForeground) "ONLINE" else "OFFLINE"
+        Log.d("PresenceDebug", "[$label] userType=${userType(userId)} | uid=$userId | time=${ts()}")
+        if (isForeground) {
+            // Reset the RTDB backoff state and force an immediate reconnect.
+            // goOnline() alone is a no-op unless goOffline() was previously called; the
+            // backoff timer keeps running. By calling goOffline() first we cancel the
+            // pending retry, then goOnline() starts a fresh connect attempt with zero delay.
+            // Must be called AFTER the caller has refreshed the auth token so RTDB
+            // authenticates successfully on the very first reconnect attempt.
+            Log.d("PresenceDebug", "[goOffline] userType=${userType(userId)} | uid=$userId | time=${ts()}")
+            rtdb.goOffline()
+            Log.d("PresenceDebug", "[goOnline] userType=${userType(userId)} | uid=$userId | time=${ts()}")
+            rtdb.goOnline()
         }
+        // Fire-and-forget — Firebase SDK queues the write and flushes when connected.
+        runCatching { rtdb.getReference("presence/$roomId/$userId").setValue(state) }
+    }
+
+    override fun cleanupPresence(roomId: String, userId: String) {
+        val key = "$roomId/$userId"
+        connectedListeners.remove(key)?.let {
+            rtdb.getReference(".info/connected").removeEventListener(it)
+        }
+        presenceStates.remove(key)
+    }
+
+    private fun setupConnectedPresenceListener(key: String, roomId: String, userId: String) {
+        val userRef      = rtdb.getReference("presence/$roomId/$userId")
+        val connectedRef = rtdb.getReference(".info/connected")
+
+        connectedListeners.remove(key)?.let { connectedRef.removeEventListener(it) }
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val isConnected = snapshot.getValue(Boolean::class.java) == true
+                val connState = if (isConnected) "connected" else "disconnected"
+                Log.d("PresenceDebug", "[.info/connected] state=$connState | userType=${userType(userId)} | uid=$userId | time=${ts()}")
+                if (!isConnected) return
+                val stateToWrite = presenceStates[key] ?: "online"
+                // Re-register server-side disconnect hook first (Firebase docs order).
+                userRef.onDisconnect().setValue("offline")
+                userRef.setValue(stateToWrite)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        connectedListeners[key] = listener
+        connectedRef.addValueEventListener(listener)
+    }
+
+    override fun observeIsAfk(roomId: String, userId: String): Flow<Boolean> = callbackFlow {
+        val ref = rtdb.getReference("presence/$roomId/$userId")
+        val listener = ref.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val raw = snapshot.getValue(String::class.java)
+                val isAfk = raw == "background" || raw == "offline"
+                // Treat "offline" the same as "background" for the 😴 indicator.
+                // On Android, the WebSocket is killed within seconds of going to background,
+                // causing onDisconnect() to write "offline" before Firebase can reconnect.
+                // Both states should show 😴 — the drop timer handles true removal.
+                val label = if (isAfk) "OFFLINE" else "ONLINE"
+                Log.d("PresenceDebug", "[isAfk→$label] raw='$raw' | userType=${userType(userId)} | uid=$userId | time=${ts()}")
+                trySend(isAfk)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     override suspend fun addGuestToRoom(roomId: String, guestId: String) {
@@ -250,24 +301,14 @@ class MultiplayerDataSourceImpl @Inject constructor(
         val listener = ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val raw = snapshot.getValue(String::class.java)
-                Log.d("Presence", "observeOpponentPresence value changed | opponentId=$opponentId | raw='$raw'")
-                // "online" and "background" are both considered connected.
-                // "offline" and null (node absent / hard disconnect) are disconnected.
+                // "online" and "background" = connected. "offline" / null = disconnected.
                 val isConnected = raw == "online" || raw == "background"
-                if (isConnected) {
-                    Log.d("Presence", "Opponent $opponentId connected - raw value: $raw")
-                } else {
-                    Log.d("Presence", "Opponent $opponentId disconnected - raw value: $raw")
-                }
+                val label = if (isConnected) "ONLINE" else "OFFLINE"
+                Log.d("PresenceDebug", "[presence→$label] raw='$raw' | userType=${userType(opponentId)} | uid=$opponentId | time=${ts()}")
                 trySend(isConnected)
             }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("Presence", "observeOpponentPresence listener cancelled | opponentId=$opponentId | error=${error.message}")
-            }
+            override fun onCancelled(error: DatabaseError) {}
         })
-        awaitClose {
-            Log.d("Presence", "observeOpponentPresence cleanup - removing listener | opponentId=$opponentId")
-            ref.removeEventListener(listener)
-        }
+        awaitClose { ref.removeEventListener(listener) }
     }
 }

@@ -49,6 +49,8 @@ fun GuestCard(
     avatarColor: Long? = null,
     avatarEmoji: String? = null,
     isLoading: Boolean = false,
+    isAfk: Boolean = false,
+    afkCountdown: Int? = null,
     guesses: List<GuessRow> = listOf(
         GuessRow(listOf('S','L','A','T'), listOf(Types.CORRECT, Types.ABSENT,  Types.ABSENT,  Types.PRESENT)),
         GuessRow(listOf('S','O','U','N'), listOf(Types.CORRECT, Types.CORRECT, Types.ABSENT,  Types.ABSENT)),
@@ -137,6 +139,16 @@ fun GuestCard(
                         fontSize  = 24.sp,
                     )
                 }
+                if (isAfk) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.45f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(text = "", fontSize = 22.sp)
+                    }
+                }
             }
 
             if (isLoading) {
@@ -158,6 +170,17 @@ fun GuestCard(
                     maxLines      = 1,
                     overflow      = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
+                if (afkCountdown != null) {
+                    val m = afkCountdown / 60
+                    val s = afkCountdown % 60
+                    Text(
+                        text = "Disconnected after ${m}:${s.toString().padStart(2, '0')}",
+                        color      = Color(0xFFFF6B6B),
+                        fontSize   = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines   = 1,
+                    )
+                }
             }
         }
 
