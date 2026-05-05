@@ -304,6 +304,14 @@ class MultiplayerDataSourceImpl @Inject constructor(
             .await()
     }
 
+    override suspend fun updatePlayerSessionPoints(roomId: String, userId: String, pts: Int) {
+        // Write only this player's entry — safe when multiple players write concurrently
+        // and does not overwrite other players' points.
+        rooms.document(roomId)
+            .update("sessionPoints.$userId", pts)
+            .await()
+    }
+
     override suspend fun setLobbyWinner(roomId: String, winnerId: String) {
         rooms.document(roomId)
             .update("winnerId", winnerId)

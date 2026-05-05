@@ -52,6 +52,8 @@ class MultiplayerRepositoryImpl @Inject constructor(
         dataSource.updateGuestProfile(roomId, userId, name, avatarColor, avatarEmoji, avatarUrl)
     override suspend fun updateSessionPoints(roomId: String, sessionPoints: Map<String, Int>) =
         dataSource.updateSessionPoints(roomId, sessionPoints)
+    override suspend fun updatePlayerSessionPoints(roomId: String, userId: String, pts: Int) =
+        dataSource.updatePlayerSessionPoints(roomId, userId, pts)
     override suspend fun setLobbyWinner(roomId: String, winnerId: String) =
         dataSource.setLobbyWinner(roomId, winnerId)
     override suspend fun setPlayerReady(roomId: String, userId: String, isReady: Boolean) =
