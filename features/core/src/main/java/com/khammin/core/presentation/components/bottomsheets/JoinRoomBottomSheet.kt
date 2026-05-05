@@ -55,11 +55,12 @@ import com.khammin.core.presentation.theme.GameDesignTheme.colors
 fun JoinRoomBottomSheet(
     onJoin: (String) -> Unit,
     onDismiss: () -> Unit,
+    roomCode: String = "",
+    onRoomCodeChange: (String) -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    var roomCode by remember { mutableStateOf("") }
 
     val containsArabic = roomCode.any { it in '\u0600'..'\u06FF' }
     val isValid = roomCode.trim().length == 6 && !containsArabic
@@ -156,7 +157,7 @@ fun JoinRoomBottomSheet(
 
                 OutlinedTextField(
                     value         = roomCode,
-                    onValueChange = { if (it.length <= 6) roomCode = it.uppercase() },
+                    onValueChange = { if (it.length <= 6) onRoomCodeChange(it.uppercase()) },
                     placeholder   = {
                         Text(
                             text  = "ABC123",

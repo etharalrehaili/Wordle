@@ -62,6 +62,17 @@ fun GameTopBar(
             .fillMaxWidth()
             .padding(horizontal = spacing.md, vertical = spacing.xs)
             .clip(RoundedCornerShape(20.dp))
+            .then(
+                if (showBackground)
+                    Modifier
+                        .background(color = colors.topBarBackground)
+                        .border(
+                            width = 1.dp,
+                            color = colors.topBarBorder,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                else Modifier
+            )
             .height(56.dp),
         contentAlignment = Alignment.Center,
     ) {
