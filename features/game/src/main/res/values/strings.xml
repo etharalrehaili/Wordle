@@ -192,4 +192,9 @@
     <string name="rejoin_go_home">Go Home</string>
 
     <string name="ad_not_ready">Ad not ready, please try again</string>
+
+    <!-- Self-disconnected sheet -->
+    <string name="self_disconnected_title">You\'ve been disconnected</string>
+    <string name="self_disconnected_subtitle">You were offline for too long. Head back home and start a new game.</string>
+    <string name="self_disconnected_go_home">Back to Home</string>
 </resources>
