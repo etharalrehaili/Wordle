@@ -173,4 +173,6 @@
     <string name="spectator_result_failed">%1$s didn\'t guess it</string>
     <string name="spectator_result_back_home">Back Home</string>
 
+    <string name="lobby_disconnected_after">Disconnected after %1$s:%2$s</string>
+
 </resources>

@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
-import com.khammin.game.R
+import com.khammin.core.R as CoreRes
 
 @Composable
 fun LobbyPlayerRow(
@@ -127,7 +127,7 @@ fun LobbyPlayerRow(
                     val s = afkCountdown % 60
                     Text(
                         text = stringResource(
-                            R.string.lobby_disconnected_after,
+                            CoreRes.string.lobby_disconnected_after,
                             m.toString(),
                             s.toString().padStart(2, '0')
                         ),

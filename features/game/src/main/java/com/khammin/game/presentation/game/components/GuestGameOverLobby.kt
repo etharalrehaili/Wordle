@@ -104,7 +104,7 @@ fun GuestGameOverLobby(
                     )
                     Text(
                         text       = if (isWin) stringResource(CoreRes.string.spectator_result_you_guessed)
-                                     else stringResource(CoreRes.string.result_lose_title),
+                        else stringResource(CoreRes.string.result_lose_title),
                         color      = accentColor,
                         fontSize   = 18.sp,
                         fontWeight = FontWeight.ExtraBold,
@@ -188,7 +188,19 @@ fun GuestGameOverLobby(
                                 )
                                 when {
                                     player.avatarColor != null && player.avatarEmoji != null ->
-                                        EmojiAvatar(color = player.avatarColor, emoji = player.avatarEmoji, size = 32)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(player.avatarColor).copy(alpha = 0.20f))
+                                                .border(1.dp, Color(player.avatarColor).copy(alpha = 0.5f), CircleShape),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Text(
+                                                text     = player.avatarEmoji,
+                                                fontSize = 16.sp,
+                                            )
+                                        }
                                     player.avatarColor != null -> {
                                         val c = Color(player.avatarColor)
                                         Box(
