@@ -81,12 +81,22 @@ class MultiplayerGameViewModel @Inject constructor(
 
     private var gameStartTime = 0L
     private val isAppForegroundFlow = MutableStateFlow(true)
+    // Timestamp (ms) when the app last went to background; 0 = never or already foregrounded.
+    private var backgroundAt: Long = 0L
 
     init {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
                 isAppForegroundFlow.value = true
                 val s = uiState.value
+                // Self-disconnect kick: if we were in an active game and offline for > 60 seconds,
+                // show the "You've been disconnected" sheet instead of resuming.
+                val offlineDuration = if (backgroundAt > 0L) System.currentTimeMillis() - backgroundAt else 0L
+                backgroundAt = 0L
+                if (offlineDuration > 60_000L && s.roomId.isNotEmpty() && !s.isGameOver) {
+                    sendEffect { MultiplayerGameEffect.SelfDisconnected }
+                    return
+                }
                 if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
                         if (s.isAnonymous) {
@@ -113,6 +123,7 @@ class MultiplayerGameViewModel @Inject constructor(
             }
             override fun onStop(owner: LifecycleOwner) {
                 isAppForegroundFlow.value = false
+                backgroundAt = System.currentTimeMillis()
                 val s = uiState.value
                 if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
@@ -746,7 +757,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     runCatching { removeGuestFromRoomUseCase(s.roomId, droppedId) }
                 }
                 (s.isCustomWord || s.isLobbyMode) && !s.isHost -> {
-                    if (!s.isHostLeft) {
+                    if (droppedId == s.opponentId && !s.isHostLeft) {
                         setState { copy(isHostLeft = true) }
                         sendEffect { MultiplayerGameEffect.HostLeftRoom }
                     }
@@ -825,10 +836,11 @@ class MultiplayerGameViewModel @Inject constructor(
                     (s.isCustomWord || s.isLobbyMode) && s.isHost ->
                         runCatching { removeGuestFromRoomUseCase(s.roomId, userId) }
                     (s.isCustomWord || s.isLobbyMode) && !s.isHost -> {
-                        if (!s.isHostLeft) {
+                        if (userId == s.opponentId && !s.isHostLeft) {
                             setState { copy(isHostLeft = true) }
                             sendEffect { MultiplayerGameEffect.HostLeftRoom }
                         }
+                        // co-guest dropped — host handles their removal via removeGuestFromRoomUseCase
                     }
                     else -> sendEffect { MultiplayerGameEffect.OpponentDisconnected }
                 }

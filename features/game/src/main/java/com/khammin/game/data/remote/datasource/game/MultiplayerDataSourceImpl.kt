@@ -1,6 +1,7 @@
 package com.khammin.game.data.remote.datasource.game
 
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -20,16 +21,24 @@ private const val RESET_TAG    = "MultiplayerReset"
 
 class MultiplayerDataSourceImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val rtdb: FirebaseDatabase
+    private val rtdb: FirebaseDatabase,
+    private val auth: FirebaseAuth,
 ) : MultiplayerDataSource {
 
     // ── Presence state tracking ───────────────────────────────────────────────
     // key = "roomId/userId"
-    private val presenceStates    = ConcurrentHashMap<String, String>()
-    private val connectedListeners = ConcurrentHashMap<String, ValueEventListener>()
+    private val presenceStates      = ConcurrentHashMap<String, String>()
+    private val connectedListeners  = ConcurrentHashMap<String, ValueEventListener>()
+    private val disconnectedTimestamps = ConcurrentHashMap<String, Long>()
 
-    private fun userType(userId: String) =
-        if (userId.startsWith("guest_")) "guest" else "logged-in"
+    // "guest_" prefix covers manually-assigned guest IDs; isAnonymous covers
+    // Firebase anonymous auth users whose UIDs look like regular Firebase UIDs.
+    private fun userType(userId: String): String {
+        if (userId.startsWith("guest_")) return "guest"
+        val current = auth.currentUser
+        if (current != null && current.uid == userId && current.isAnonymous) return "guest"
+        return "logged-in"
+    }
     private fun ts() = System.currentTimeMillis()
 
     private val rooms = firestore.collection("rooms")
@@ -187,9 +196,14 @@ class MultiplayerDataSourceImpl @Inject constructor(
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val isConnected = snapshot.getValue(Boolean::class.java) == true
-                val connState = if (isConnected) "connected" else "disconnected"
-                Log.d("PresenceDebug", "[.info/connected] state=$connState | userType=${userType(userId)} | uid=$userId | time=${ts()}")
-                if (!isConnected) return
+                if (!isConnected) {
+                    disconnectedTimestamps[key] = ts()
+                    Log.d("PresenceDebug", "[.info/connected] state=disconnected | userType=${userType(userId)} | uid=$userId | time=${ts()}")
+                    return
+                }
+                val disconnectedAt = disconnectedTimestamps.remove(key) ?: 0L
+                val offlineDuration = if (disconnectedAt > 0L) ts() - disconnectedAt else 0L
+                Log.d("PresenceDebug", "[.info/connected] state=connected | offlineDuration=${offlineDuration}ms | userType=${userType(userId)} | uid=$userId | time=${ts()}")
                 val stateToWrite = presenceStates[key] ?: "online"
                 // Re-register server-side disconnect hook first (Firebase docs order).
                 userRef.onDisconnect().setValue("offline")

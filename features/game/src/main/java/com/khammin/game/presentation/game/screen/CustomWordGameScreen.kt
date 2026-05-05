@@ -79,6 +79,7 @@ import com.khammin.game.presentation.game.components.CustomWordLobbyHost
 import com.khammin.game.presentation.game.components.GuestGameOverLobby
 import com.khammin.game.presentation.game.components.HostLeftBottomSheet
 import com.khammin.game.presentation.game.components.RejoinBottomSheet
+import com.khammin.game.presentation.game.components.SelfDisconnectedBottomSheet
 import com.khammin.game.presentation.game.components.ResultButton
 import com.khammin.game.presentation.game.components.SpectatorView
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
@@ -113,6 +114,7 @@ fun CustomWordGameScreen(
     var showHostLeftSheet by remember { mutableStateOf(false) }
     var showAllPlayersLeftSheet by remember { mutableStateOf(false) }
     var showRejoinSheet by remember { mutableStateOf(false) }
+    var showSelfDisconnectedSheet by remember { mutableStateOf(false) }
     var showNewWordSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -143,6 +145,7 @@ fun CustomWordGameScreen(
                 is MultiplayerGameEffect.HostLeftRoom -> showHostLeftSheet = true
                 is MultiplayerGameEffect.AllPlayersLeft -> showAllPlayersLeftSheet = true
                 is MultiplayerGameEffect.ShowRejoinSheet -> showRejoinSheet = true
+                is MultiplayerGameEffect.SelfDisconnected -> showSelfDisconnectedSheet = true
                 else -> Unit
             }
         }
@@ -205,6 +208,13 @@ fun CustomWordGameScreen(
                 viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
             },
         )
+    }
+
+    if (showSelfDisconnectedSheet) {
+        SelfDisconnectedBottomSheet(onGoHome = {
+            showSelfDisconnectedSheet = false
+            viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
+        })
     }
 
     if (state.isNoInternet) {

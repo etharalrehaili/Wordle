@@ -190,4 +190,9 @@
     <string name="rejoin_go_home">الصفحة الرئيسية</string>
 
     <string name="ad_not_ready">الإعلان غير جاهز، حاول مرة أخرى</string>
+
+    <!-- Self-disconnected sheet -->
+    <string name="self_disconnected_title">انقطع اتصالك</string>
+    <string name="self_disconnected_subtitle">كنت غير متصل لفترة طويلة. عُد للرئيسية وابدأ لعبة جديدة.</string>
+    <string name="self_disconnected_go_home">العودة للرئيسية</string>
 </resources>

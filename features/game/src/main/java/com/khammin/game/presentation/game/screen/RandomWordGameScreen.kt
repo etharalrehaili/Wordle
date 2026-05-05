@@ -71,6 +71,7 @@ import com.khammin.game.presentation.game.components.RandomWordGameOverLobby
 import com.khammin.game.presentation.game.components.RandomWordLobbyGuest
 import com.khammin.game.presentation.game.components.RandomWordLobbyHost
 import com.khammin.game.presentation.game.components.RejoinBottomSheet
+import com.khammin.game.presentation.game.components.SelfDisconnectedBottomSheet
 import com.khammin.game.presentation.game.components.ResultButton
 import com.khammin.game.presentation.game.components.RoomCodeCard
 import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
@@ -104,6 +105,7 @@ fun RandomWordGameScreen(
     var showHostLeftSheet by remember { mutableStateOf(false) }
     var showAllPlayersLeftSheet by remember { mutableStateOf(false) }
     var showRejoinSheet by remember { mutableStateOf(false) }
+    var showSelfDisconnectedSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val opponentGuesses = state.opponentState?.toGuessRows(state.wordLength)
@@ -138,6 +140,7 @@ fun RandomWordGameScreen(
                 is MultiplayerGameEffect.HostLeftRoom -> showHostLeftSheet = true
                 is MultiplayerGameEffect.AllPlayersLeft -> showAllPlayersLeftSheet = true
                 is MultiplayerGameEffect.ShowRejoinSheet -> showRejoinSheet = true
+                is MultiplayerGameEffect.SelfDisconnected -> showSelfDisconnectedSheet = true
                 else -> Unit
             }
         }
@@ -200,6 +203,13 @@ fun RandomWordGameScreen(
                 viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
             },
         )
+    }
+
+    if (showSelfDisconnectedSheet) {
+        SelfDisconnectedBottomSheet(onGoHome = {
+            showSelfDisconnectedSheet = false
+            viewModel.onEvent(MultiplayerGameIntent.LeaveMatch)
+        })
     }
 
     if (state.isNoInternet) {

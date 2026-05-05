@@ -98,6 +98,7 @@ sealed interface MultiplayerGameEffect : UiEffect {
     data object AllPlayersLeft : MultiplayerGameEffect
     data class GuestLeftRoom(val guestName: String) : MultiplayerGameEffect
     data object ShowRejoinSheet : MultiplayerGameEffect
+    data object SelfDisconnected : MultiplayerGameEffect
 }
 
 sealed class MultiplayerGameIntent : UiIntent {
