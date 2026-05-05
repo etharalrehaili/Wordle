@@ -26,11 +26,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.khammin.core.R
 import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.PlayerAvatar
 import com.khammin.core.presentation.components.WORD_LENGTH
@@ -47,6 +51,8 @@ fun GuestCard(
     avatarColor: Long? = null,
     avatarEmoji: String? = null,
     isLoading: Boolean = false,
+    isAfk: Boolean = false,
+    afkCountdown: Int? = null,
     guesses: List<GuessRow> = listOf(
         GuessRow(listOf('S','L','A','T'), listOf(Types.CORRECT, Types.ABSENT,  Types.ABSENT,  Types.PRESENT)),
         GuessRow(listOf('S','O','U','N'), listOf(Types.CORRECT, Types.CORRECT, Types.ABSENT,  Types.ABSENT)),
@@ -95,6 +101,12 @@ fun GuestCard(
                             .alpha(shimmerAlpha)
                             .background(colors.surface)
                     )
+                    avatarUrl != null -> PlayerAvatar(
+                        name      = name,
+                        avatarUrl = avatarUrl,
+                        modifier  = Modifier.fillMaxSize(),
+                        fontSize  = 24.sp,
+                    )
                     avatarColor != null && avatarEmoji != null -> {
                         val circleColor = Color(avatarColor)
                         Box(
@@ -124,10 +136,20 @@ fun GuestCard(
                     }
                     else -> PlayerAvatar(
                         name      = name,
-                        avatarUrl = avatarUrl,
+                        avatarUrl = null,
                         modifier  = Modifier.fillMaxSize(),
                         fontSize  = 24.sp,
                     )
+                }
+                if (isAfk) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.45f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(text = "", fontSize = 22.sp)
+                    }
                 }
             }
 
@@ -150,6 +172,21 @@ fun GuestCard(
                     maxLines      = 1,
                     overflow      = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
+                if (afkCountdown != null) {
+                    val m = afkCountdown / 60
+                    val s = afkCountdown % 60
+                    Text(
+                        text = stringResource(
+                            R.string.lobby_disconnected_after,
+                            m.toString(),
+                            s.toString().padStart(2, '0')
+                        ),
+                        color      = Color(0xFFFF6B6B),
+                        fontSize   = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines   = 1,
+                    )
+                }
             }
         }
 
@@ -167,6 +204,9 @@ private fun MiniBoard(
     wordLength: Int,
     modifier: Modifier = Modifier
 ) {
+    val correctColor = colors.correct
+    val purpleColor  = colors.purpleButton
+
     Column(
         verticalArrangement = Arrangement.spacedBy(3.dp),
         modifier = modifier
@@ -179,18 +219,40 @@ private fun MiniBoard(
                     val filled = guess.letters.getOrNull(colIndex) != null
 
                     val cellColor = when (type) {
-                        Types.CORRECT -> colors.correct
-                        Types.PRESENT -> colors.present
-                        Types.ABSENT  -> colors.absent
-                        Types.SIMILAR  -> Color.Transparent // handled by KeyContainer's diagonal split
-                        Types.DEFAULT -> if (filled) colors.borderActive else colors.border
+                        Types.CORRECT  -> colors.correct
+                        Types.PRESENT  -> colors.present
+                        Types.ABSENT   -> colors.absent
+                        Types.SIMILAR  -> Color.Transparent
+                        Types.DEFAULT  -> if (filled) colors.borderActive else colors.border
                     }
 
+                    val shape = RoundedCornerShape(3.dp)
                     Box(
                         modifier = Modifier
                             .size(14.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(cellColor)
+                            .clip(shape)
+                            .then(
+                                if (type == Types.SIMILAR) {
+                                    Modifier.drawBehind {
+                                        val w = size.width
+                                        val h = size.height
+                                        drawPath(
+                                            path = Path().apply {
+                                                moveTo(0f, 0f); lineTo(w, 0f); lineTo(0f, h); close()
+                                            },
+                                            color = correctColor
+                                        )
+                                        drawPath(
+                                            path = Path().apply {
+                                                moveTo(w, 0f); lineTo(w, h); lineTo(0f, h); close()
+                                            },
+                                            color = purpleColor
+                                        )
+                                    }
+                                } else {
+                                    Modifier.background(cellColor)
+                                }
+                            )
                     )
                 }
             }

@@ -1,25 +1,29 @@
 package com.khammin.game.presentation.navigation
 
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.khammin.onboarding.OnboardingScreen
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.google.firebase.auth.FirebaseAuth
+import com.khammin.game.presentation.home.vm.HomeViewModel
 import com.khammin.game.presentation.profile.screen.ProfileScreen
-import com.khammin.authentication.presentation.contract.AuthIntent
-import com.khammin.authentication.presentation.login.LoginScreen
-import com.khammin.authentication.presentation.resetpassword.SendEmailScreen
-import com.khammin.authentication.presentation.signup.SignUpScreen
-import com.khammin.authentication.presentation.vm.AuthViewModel
 import com.khammin.core.presentation.components.enums.AppColorTheme
 import com.khammin.core.presentation.components.enums.AppLanguage
-import com.khammin.game.presentation.challenge.screen.ChallengeScreen
+import com.khammin.game.presentation.challenge.screen.ChallengesScreen
 import com.khammin.game.presentation.game.screen.GameScreen
 import com.khammin.game.presentation.game.screen.MultiplayerGameScreen
 import com.khammin.game.presentation.home.screen.HomeScreen
@@ -28,10 +32,14 @@ import com.khammin.game.presentation.settings.screen.SettingsScreen
 import com.khammin.game.presentation.settings.vm.SettingsViewModel
 import com.khammin.game.presentation.profile.contract.ProfileIntent
 import com.khammin.game.presentation.profile.vm.ProfileViewModel
+import com.khammin.core.presentation.components.bottomsheets.LanguageSelectionBottomSheet
+import com.khammin.game.presentation.preferences.contract.PreferencesIntent
+import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
 import com.khammin.game.presentation.settings.contract.SettingsIntent
-import com.khammin.game.presentation.settings.screen.SupportScreen
+import com.khammin.game.presentation.support.screen.SupportScreen
 import kotlinx.serialization.Serializable
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.navGraph(
     navController: NavHostController,
@@ -41,16 +49,6 @@ fun NavGraphBuilder.navGraph(
     currentTheme: () -> AppColorTheme
 ) {
 
-    composable<Route.OnboardingScreen> {
-        OnboardingScreen(
-            onNavigateToHome = {
-                navController.navigate(Route.HomeScreen) {
-                    popUpTo(Route.OnboardingScreen) { inclusive = true }
-                }
-            }
-        )
-    }
-
     composable<Route.HomeScreen> {
 
         HomeScreen(
@@ -59,8 +57,8 @@ fun NavGraphBuilder.navGraph(
                     launchSingleTop = true
                 }
             },
-            onMultiplayerClick = { roomId, isHost, userId, isCustomWord ->
-                navController.navigate(Route.MultiplayerGameScreen(roomId, isHost, userId, isCustomWord)) {
+            onMultiplayerClick = { roomId, isHost, userId, isCustomWord, isLobbyMode ->
+                navController.navigate(Route.MultiplayerGameScreen(roomId, isHost, userId, isCustomWord, isLobbyMode)) {
                     launchSingleTop = true
                 }
             },
@@ -79,25 +77,11 @@ fun NavGraphBuilder.navGraph(
                     launchSingleTop = true
                 }
             },
-            onSupportClick = {
-                navController.navigate(Route.SupportScreen) {
-                    launchSingleTop = true
-                }
-            },
-            onLoginWithEmail = {
-                navController.navigate(Route.LoginScreen) {
-                    launchSingleTop = true
-                }
-            },
-            onSignUpClick = {
-                navController.navigate(Route.SignUpScreen) {
-                    launchSingleTop = true
-                }
-            },
             onThemeChanged    = onThemeChanged,
             onLanguageChanged = onLanguageChanged,
         )
     }
+
     composable<Route.GameScreen> { backStackEntry ->
         val route = backStackEntry.toRoute<Route.GameScreen>()
         GameScreen(
@@ -123,15 +107,47 @@ fun NavGraphBuilder.navGraph(
             isHost          = route.isHost,
             userId          = route.userId,
             isCustomWord    = route.isCustomWord,
+            isLobbyMode     = route.isLobbyMode,
         )
     }
 
     composable<Route.ChallengeScreen> {
-        ChallengeScreen(
+        val context = LocalContext.current
+        val homeViewModel: HomeViewModel = hiltViewModel()
+
+        val webClientId = remember {
+            val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+            if (resId != 0) context.getString(resId) else null
+        }
+
+        val googleSignInClient = remember(webClientId) {
+            webClientId?.let { clientId ->
+                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(clientId)
+                    .requestEmail()
+                    .build()
+                GoogleSignIn.getClient(context, gso)
+            }
+        }
+
+        val googleSignInLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                account.idToken?.let { idToken -> homeViewModel.signInWithGoogle(idToken) }
+            } catch (_: ApiException) { }
+        }
+
+        ChallengesScreen(
             onClose = {
                 if (navController.previousBackStackEntry != null) {
                     navController.popBackStack()
                 }
+            },
+            onSignInWithGoogle = {
+                googleSignInClient?.let { googleSignInLauncher.launch(it.signInIntent) }
             },
             currentLanguage = currentLanguage(),
         )
@@ -149,12 +165,39 @@ fun NavGraphBuilder.navGraph(
     }
 
     composable<Route.ProfileScreen> {
+        val context = LocalContext.current
         val viewModel: ProfileViewModel = hiltViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
+        val homeViewModel: HomeViewModel = hiltViewModel()
+
+        val webClientId = remember {
+            val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+            if (resId != 0) context.getString(resId) else null
+        }
+
+        val googleSignInClient = remember(webClientId) {
+            webClientId?.let { clientId ->
+                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(clientId)
+                    .requestEmail()
+                    .build()
+                GoogleSignIn.getClient(context, gso)
+            }
+        }
+
+        val googleSignInLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                account.idToken?.let { idToken -> homeViewModel.signInWithGoogle(idToken) }
+            } catch (_: ApiException) { }
+        }
 
         ProfileScreen(
             uiState            = state,
-            uiEffect = viewModel.uiEffect,
+            uiEffect           = viewModel.uiEffect,
             onBack = {
                 if (navController.previousBackStackEntry != null) {
                     navController.popBackStack()
@@ -166,11 +209,19 @@ fun NavGraphBuilder.navGraph(
             onNameChanged      = { viewModel.onEvent(ProfileIntent.OnNameChanged(it)) },
             onAvatarChanged    = { viewModel.onEvent(ProfileIntent.OnAvatarChanged(it)) },
             onSettingsClick    = { navController.navigate(Route.SettingsScreen) },
+            onSignInWithGoogle      = { viewModel.onEvent(ProfileIntent.OnSignInWithGoogleClick) },
+            onSignInWithGoogleLaunch = { googleSignInClient?.let { googleSignInLauncher.launch(it.signInIntent) } },
+            onDismissNoInternet     = { viewModel.onEvent(ProfileIntent.DismissNoInternet) },
+            onRefresh               = { viewModel.refresh() },
         )
     }
 
     composable<Route.SettingsScreen> {
         val viewModel: SettingsViewModel = hiltViewModel()
+        val settingsUiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val preferencesViewModel: PreferencesViewModel = hiltViewModel()
+        val preferencesUiState by preferencesViewModel.uiState.collectAsStateWithLifecycle()
+        var showLanguageSheet by remember { mutableStateOf(false) }
 
         SettingsScreen(
             onBack = {
@@ -178,15 +229,32 @@ fun NavGraphBuilder.navGraph(
                     navController.popBackStack()
                 }
             },
-            onChangePasswordClick = { navController.navigate(Route.ResetPasswordScreen) },
-            onSignOutClick        = { viewModel.onEvent(SettingsIntent.OnSignOutClick) },
-            uiEffect              = viewModel.uiEffect,
-            onSignOutSuccess      = {
+            onSignOutClick  = { viewModel.onEvent(SettingsIntent.OnSignOutClick) },
+            onLanguageClick = { showLanguageSheet = true },
+            onSupportClick  = {
+                navController.navigate(Route.SupportScreen) {
+                    launchSingleTop = true
+                }
+            },
+            isGuest          = settingsUiState.isGuest,
+            uiEffect         = viewModel.uiEffect,
+            onSignOutSuccess = {
                 navController.navigate(Route.HomeScreen) {
                     popUpTo(0) { inclusive = true }
                 }
             },
         )
+
+        if (showLanguageSheet) {
+            LanguageSelectionBottomSheet(
+                selectedLanguage   = preferencesUiState.selectedLanguage,
+                onLanguageSelected = { lang ->
+                    preferencesViewModel.onEvent(PreferencesIntent.ChangeLanguage(lang))
+                    onLanguageChanged(lang)
+                },
+                onDismiss = { showLanguageSheet = false },
+            )
+        }
     }
 
     composable<Route.SupportScreen> {
@@ -199,92 +267,6 @@ fun NavGraphBuilder.navGraph(
         )
     }
 
-    composable<Route.LoginScreen> {
-        val viewModel: AuthViewModel = hiltViewModel()
-        val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-        LoginScreen(
-            email             = state.email,
-            password          = state.password,
-            emailError        = state.emailError,
-            passwordError     = state.passwordError,
-            isLoading         = state.isLoading,
-            uiEffect          = viewModel.uiEffect,
-            onBack = {
-                if (navController.previousBackStackEntry != null) {
-                    navController.popBackStack()
-                }
-            },
-            onEmailChanged    = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
-            onPasswordChanged = { viewModel.onEvent(AuthIntent.OnPasswordChanged(it)) },
-            onLoginClick      = { viewModel.onEvent(AuthIntent.OnLoginClick) },
-            onNavigateToHome  = {
-                navController.navigate(Route.HomeScreen) {
-                    popUpTo(Route.LoginScreen) { inclusive = true }
-                }
-            },
-            onNavigateToSignUp= {
-                navController.navigate(Route.SignUpScreen) {
-                    popUpTo(Route.LoginScreen) { inclusive = true }
-                }
-            },
-            onForgotPasswordClick = { navController.navigate(Route.ResetPasswordScreen) },
-        )
-    }
-
-    composable<Route.ResetPasswordScreen> {
-        val viewModel: AuthViewModel = hiltViewModel()
-        val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-        // Determine if coming from settings (user is logged in)
-        val isLoggedIn = FirebaseAuth
-            .getInstance().currentUser != null
-
-        SendEmailScreen(
-            email            = state.email,
-            emailError       = state.emailError,
-            isLoading        = state.isLoading,
-            uiEffect         = viewModel.uiEffect,
-            isEmailEditable  = !isLoggedIn,
-            onBack = {
-                if (navController.previousBackStackEntry != null) {
-                    navController.popBackStack()
-                }
-            },
-            onEmailChanged   = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
-            onSendEmailClick = { viewModel.onEvent(AuthIntent.OnSendEmailClicked) },
-        )
-    }
-
-    composable<Route.SignUpScreen> {
-        val viewModel: AuthViewModel = hiltViewModel()
-        val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-        SignUpScreen(
-            email                    = state.email,
-            password                 = state.password,
-            confirmPassword          = state.confirmPassword,
-            isLoading                = state.isLoading,
-            emailError               = state.emailError,
-            passwordError            = state.passwordError,
-            confirmPasswordError     = state.confirmPasswordError,
-            uiEffect                 = viewModel.uiEffect,
-            onBack = {
-                if (navController.previousBackStackEntry != null) {
-                    navController.popBackStack()
-                }
-            },
-            onEmailChanged           = { viewModel.onEvent(AuthIntent.OnEmailChanged(it)) },
-            onPasswordChanged        = { viewModel.onEvent(AuthIntent.OnPasswordChanged(it)) },
-            onConfirmPasswordChanged = { viewModel.onEvent(AuthIntent.OnConfirmPasswordChanged(it)) },
-            onSignUpClick            = { viewModel.onEvent(AuthIntent.OnSignUpClick) },
-            onNavigateToLogin        = {
-                navController.navigate(Route.LoginScreen) {
-                    popUpTo(Route.SignUpScreen) { inclusive = true }
-                }
-            },
-        )
-    }
 
 }
 
@@ -302,6 +284,7 @@ sealed interface Route {
         val isHost: Boolean = false,
         val userId: String = "",
         val isCustomWord: Boolean = false,
+        val isLobbyMode: Boolean = false,
     ) : Route
 
     @Serializable
@@ -311,22 +294,10 @@ sealed interface Route {
     data object LeaderboardScreen : Route
 
     @Serializable
-    data object OnboardingScreen : Route
-
-    @Serializable
     data object ProfileScreen : Route
 
     @Serializable
     data object SettingsScreen : Route
-
-    @Serializable
-    data object LoginScreen : Route
-
-    @Serializable
-    data object SignUpScreen : Route
-
-    @Serializable
-    data object ResetPasswordScreen : Route
 
     @Serializable
     data object SupportScreen : Route

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.R
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,11 +58,7 @@ fun LeaveGameBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(colors.buttonPink, colors.buttonTeal)
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -71,6 +68,7 @@ fun LeaveGameBottomSheet(
                     .padding(top = 36.dp, bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Icon
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -78,8 +76,8 @@ fun LeaveGameBottomSheet(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    colors.buttonPink.copy(alpha = 0.25f),
-                                    colors.buttonPink.copy(alpha = 0.10f),
+                                    colors.logoPink.copy(alpha = 0.25f),
+                                    colors.logoPink.copy(alpha = 0.10f),
                                 )
                             )
                         ),
@@ -88,7 +86,7 @@ fun LeaveGameBottomSheet(
                     Icon(
                         imageVector        = Icons.AutoMirrored.Outlined.ExitToApp,
                         contentDescription = null,
-                        tint               = colors.buttonPink,
+                        tint               = colors.logoPink,
                         modifier           = Modifier.size(36.dp)
                     )
                 }
@@ -117,23 +115,19 @@ fun LeaveGameBottomSheet(
                 Spacer(Modifier.height(32.dp))
 
                 GameButton(
-                    label           = stringResource(R.string.leave_game_confirm),
-                    backgroundColor = colors.buttonPink,
-                    contentColor    = colors.title,
-                    showBorder      = false,
-                    onClick         = onConfirm,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.leave_game_confirm),
+                    onClick  = onConfirm,
+                    variant  = GameButtonVariant.Ghost,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(12.dp))
 
                 GameButton(
-                    label           = stringResource(R.string.leave_game_stay),
-                    backgroundColor = colors.surface,
-                    contentColor    = colors.title,
-                    showBorder      = true,
-                    onClick         = onDismiss,
-                    modifier        = Modifier.fillMaxWidth()
+                    label    = stringResource(R.string.leave_game_stay),
+                    onClick  = onDismiss,
+                    variant  = GameButtonVariant.Primary,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

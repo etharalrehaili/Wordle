@@ -1,11 +1,24 @@
 package com.khammin.game.presentation.profile.vm
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import java.io.ByteArrayOutputStream
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.util.Resource
 import com.khammin.game.R
+import com.khammin.game.data.local.GuestProfileDataStore
+import com.khammin.game.data.local.LocalStatsDataStore
+import com.khammin.game.domain.model.ChallengeStatus
+import com.khammin.game.domain.repository.ChallengeDefinitionRepository
+import com.khammin.game.domain.repository.ChallengeProgressRepository
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.profile.UpdateProfileUseCase
 import com.khammin.game.domain.usecases.profile.UploadAvatarUseCase
@@ -14,63 +27,174 @@ import com.khammin.game.presentation.profile.contract.ProfileIntent
 import com.khammin.game.presentation.profile.contract.ProfileUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import androidx.core.graphics.scale
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
     private val uploadAvatarUseCase: UploadAvatarUseCase,
+    private val localStatsDataStore: LocalStatsDataStore,
+    private val guestProfileDataStore: GuestProfileDataStore,
+    private val challengeProgressRepository: ChallengeProgressRepository,
+    private val challengeDefinitionRepository: ChallengeDefinitionRepository,
     @ApplicationContext private val context: Context,
 ) : BaseMviViewModel<ProfileIntent, ProfileUiState, ProfileEffect>(
     initialState = ProfileUiState()
 ) {
     init {
-        // Load the user's profile as soon as the ViewModel is created
         loadProfile()
+        observeAuthState()
     }
 
-    /**
-     * Fetches the current user's profile from the backend.
-     */
-    private fun loadProfile() {
-        viewModelScope.launch {
-            val user = FirebaseAuth.getInstance().currentUser ?: return@launch
-            val uid   = user.uid
-            val email = user.email ?: uid
+    private fun observeAuthState() {
+        var wasAnonymous = FirebaseAuth.getInstance().currentUser?.isAnonymous == true
+        FirebaseAuth.getInstance().addAuthStateListener { auth ->
+            val user = auth.currentUser ?: return@addAuthStateListener
+            val isNowSignedIn = !user.isAnonymous
+            if (wasAnonymous && isNowSignedIn) {
+                wasAnonymous = false
+                loadProfile()
+                sendEffect { ProfileEffect.SignedInWithGoogle }
+            }
+        }
+    }
 
-            // Profile is guaranteed to exist by the time the user navigates here
-            // (HomeViewModel creates it on login), so just load it
-            val profile = when (val result = getProfileUseCase(uid)) {
-                is Resource.Success -> result.data ?: return@launch
-                is Resource.Error   -> {
-                    sendEffect { ProfileEffect.ShowError(result.message ?: context.getString(R.string.error_generic)) }
+    fun refresh() {
+        setState { copy(isRefreshing = true) }
+        loadProfile(forceRefresh = true)
+    }
+
+    private suspend fun awaitCurrentUser(): FirebaseUser? = suspendCancellableCoroutine { cont ->
+        val auth = FirebaseAuth.getInstance()
+        // Fast path — user already known.
+        val current = auth.currentUser
+        if (current != null) {
+            cont.resume(current)
+            return@suspendCancellableCoroutine
+        }
+        // Slow path — Firebase hasn't finished loading the cached session yet.
+        // addAuthStateListener fires immediately (or once auth is ready) with the true state.
+        var fired = false
+        val listener = FirebaseAuth.AuthStateListener { a ->
+            if (!fired && cont.isActive) {
+                fired = true
+                cont.resume(a.currentUser)
+            }
+        }
+        auth.addAuthStateListener(listener)
+        cont.invokeOnCancellation { auth.removeAuthStateListener(listener) }
+    }
+
+    private fun loadProfile(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            val start = System.currentTimeMillis()
+            try {
+                // On refresh, Firebase auth may still be initializing. Wait for the first
+                // definitive auth state rather than bailing out with "reason=no user".
+                val user: FirebaseUser? = if (forceRefresh && FirebaseAuth.getInstance().currentUser == null) {
+                    awaitCurrentUser()
+                } else {
+                    FirebaseAuth.getInstance().currentUser
+                }
+
+                if (user == null) {
                     return@launch
                 }
-                else -> return@launch
+                val uid = user.uid
+
+                if (user.isAnonymous) {
+                    // Guest path — all data comes from local DataStore (no Firestore involved).
+                    val saved = guestProfileDataStore.getProfile()
+                    val displayName = saved?.name?.takeIf { it.isNotBlank() }
+                        ?: "GUEST-${uid.take(5).uppercase()}"
+
+                    val gamesPlayed = localStatsDataStore.getGamesPlayed("ar")
+                    val wordsSolved = localStatsDataStore.getWordsSolved("ar")
+                    val totalPoints = localStatsDataStore.getTotalPoints()
+
+                    setState {
+                        copy(
+                            name          = displayName,
+                            avatarUrl     = saved?.avatarUri,
+                            email         = "",
+                            isGuest       = true,
+                            totalPoints   = totalPoints,
+                            arGamesPlayed = gamesPlayed,
+                            arWordsSolved = wordsSolved,
+                        )
+                    }
+
+                    // Guest data loads from local storage in <10ms — faster than one frame.
+                    // Delay until at least 600ms have elapsed so the pull-to-refresh indicator
+                    // is actually visible before isRefreshing flips back to false.
+                    if (forceRefresh) {
+                        val elapsed = System.currentTimeMillis() - start
+                        val remaining = 600L - elapsed
+                        if (remaining > 0) delay(remaining)
+                    }
+
+                    return@launch
+                }
+
+                // Google-account path — stats come from the Firestore-backed profile (cached in Room).
+                val email = user.email ?: uid
+
+                val profile = when (val result = getProfileUseCase(uid, forceRefresh)) {
+                    is Resource.Success -> result.data ?: run {
+                        sendEffect { ProfileEffect.ShowError(context.getString(R.string.error_generic)) }
+                        return@launch
+                    }
+                    is Resource.Error -> {
+                        sendEffect { ProfileEffect.ShowError(result.message ?: context.getString(R.string.error_generic)) }
+                        return@launch
+                    }
+                    else -> {
+                        return@launch
+                    }
+                }
+
+                val displayName = profile.name.ifBlank { email.substringBefore("@") }
+
+                setState {
+                    copy(
+                        profileId     = profile.id,
+                        documentId    = profile.documentId,
+                        name          = displayName,
+                        email         = email,
+                        avatarUrl     = profile.avatarUrl,
+                        isGuest       = false,
+                        arGamesPlayed = profile.arGamesPlayed,
+                        arWordsSolved = profile.arWordsSolved,
+                    )
+                }
+
+                loadTotalPoints(uid)
+
+            } finally {
+                // Always clear loading indicators — even if an early return or exception occurs.
+                setState { copy(isLoading = false, isRefreshing = false) }
             }
+        }
+    }
 
-            val displayName = profile.name.ifBlank { email.substringBefore("@") }
-
-            setState {
-                copy(
-                    profileId        = profile.id,
-                    documentId       = profile.documentId,
-                    name             = displayName,
-                    email            = email,
-                    avatarUrl        = profile.avatarUrl,
-                    // English stats
-                    enGamesPlayed    = profile.enGamesPlayed,
-                    enWordsSolved    = profile.enWordsSolved,
-                    enWinPercentage  = profile.enWinPercentage.toInt(),
-                    enCurrentPoints  = profile.enCurrentPoints,
-                    // Arabic stats
-                    arGamesPlayed    = profile.arGamesPlayed,
-                    arWordsSolved    = profile.arWordsSolved,
-                    arWinPercentage  = profile.arWinPercentage.toInt(),
-                    arCurrentPoints  = profile.arCurrentPoints,
-                )
+    private fun loadTotalPoints(uid: String) {
+        viewModelScope.launch {
+            runCatching {
+                val definitions = challengeDefinitionRepository.getDefinitions()
+                val snapshot    = challengeProgressRepository.getSnapshot(uid)
+                val total = definitions
+                    .filter { def -> snapshot.challenges[def.id]?.status == ChallengeStatus.COMPLETED }
+                    .sumOf { it.points }
+                setState { copy(totalPoints = total) }
             }
         }
     }
@@ -78,33 +202,22 @@ class ProfileViewModel @Inject constructor(
     override fun onEvent(intent: ProfileIntent) {
         when (intent) {
 
-            // Enter edit mode and initialize the temporary edit name with the current profile name
             ProfileIntent.OnEditProfileClick -> setState {
                 copy(isEditMode = true, editName = name)
             }
 
-            // Cancel editing and clear the temporary edit state
             ProfileIntent.OnCancelEditClick -> setState {
                 copy(isEditMode = false, editName = "")
             }
 
-            // Update the temporary name field as the user types
             is ProfileIntent.OnNameChanged -> setState {
                 copy(editName = intent.name)
             }
 
-            // Store the selected image URI locally until the user saves
             is ProfileIntent.OnAvatarChanged -> setState {
                 copy(pendingAvatarUri = intent.avatarUri)
             }
 
-            /**
-             * Save profile changes:
-             * 1. Validate the display name is not blank
-             * 2. Upload the avatar image if a new one was picked
-             * 3. Send the updated profile to the backend
-             * 4. Update local state on success
-             */
             ProfileIntent.OnSaveProfileClick -> {
                 val trimmed = uiState.value.editName.trim()
 
@@ -119,51 +232,78 @@ class ProfileViewModel @Inject constructor(
                 }
 
                 val state = uiState.value
-
-                // ── Check if anything actually changed ────────────────────
                 val nameChanged   = trimmed != state.name
                 val avatarChanged = state.pendingAvatarUri != null
 
                 if (!nameChanged && !avatarChanged) {
-                    // Nothing changed — just exit edit mode silently
                     setState { copy(isEditMode = false, editName = "") }
                     return
                 }
 
-                viewModelScope.launch {
-                    setState { copy(isLoading = true) }
-                    val state = uiState.value
+                if (state.isGuest) {
+                    // Guest: copy avatar to internal storage (stable path) then persist locally
+                    viewModelScope.launch {
+                        setState { copy(isSaving = true) }
 
-                    // Upload avatar if the user picked a new image, otherwise keep the existing URL
-                    val avatarUrl = if (state.pendingAvatarUri != null) {
-                        when (val upload = uploadAvatarUseCase(state.pendingAvatarUri, context)) {
-                            is Resource.Success -> upload.data
+                        val avatarUriString = if (state.pendingAvatarUri != null) {
+                            copyAvatarToInternalStorage(state.pendingAvatarUri) ?: state.avatarUrl
+                        } else {
+                            state.avatarUrl
+                        }
+
+                        guestProfileDataStore.saveProfile(
+                            name        = trimmed,
+                            avatarColor = null,
+                            avatarEmoji = null,
+                            avatarUri   = avatarUriString,
+                        )
+
+                        setState {
+                            copy(
+                                name             = trimmed,
+                                avatarUrl        = avatarUriString,
+                                pendingAvatarUri = null,
+                                isEditMode       = false,
+                                editName         = "",
+                                isSaving         = false,
+                            )
+                        }
+                        sendEffect { ProfileEffect.ProfileSaved }
+                    }
+                    return
+                }
+
+                // Google user: upload avatar + update Strapi
+                viewModelScope.launch {
+                    setState { copy(isSaving = true) }
+                    val freshState = uiState.value
+
+                    val avatarUrl = if (freshState.pendingAvatarUri != null) {
+                        val compressedUri = compressImageUri(context, freshState.pendingAvatarUri)
+                        val uploadResult = uploadAvatarUseCase(compressedUri, context)
+                        when (uploadResult) {
+                            is Resource.Success -> uploadResult.data
                             is Resource.Error   -> {
-                                setState { copy(isLoading = false) }
-                                sendEffect { ProfileEffect.ShowError(upload.message ?: context.getString(
-                                    R.string.error_upload_failed)) }
+                                setState { copy(isSaving = false) }
+                                sendEffect { ProfileEffect.ShowError(uploadResult.message ?: context.getString(R.string.error_upload_failed)) }
                                 return@launch
                             }
-                            else -> state.avatarUrl
+                            else -> freshState.avatarUrl
                         }
                     } else {
-                        state.avatarUrl
+                        freshState.avatarUrl
                     }
 
-                    // Send the full updated profile to the backend
-                    when (val result = updateProfileUseCase(
-                        documentId    = state.documentId,
-                        firebaseUid = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    val result = updateProfileUseCase(
+                        documentId    = freshState.documentId,
+                        firebaseUid   = FirebaseAuth.getInstance().currentUser?.uid ?: "",
                         name          = trimmed,
                         avatarUrl     = avatarUrl,
                         language      = "en",
-                        gamesPlayed   = state.enGamesPlayed,
-                        wordsSolved   = state.enWordsSolved,
-                        winPercentage = state.enWinPercentage.toDouble(),
-                        currentPoints = state.enCurrentPoints,
-                    )) {
+                    )
+
+                    when (result) {
                         is Resource.Success -> {
-                            // Apply saved values to the UI state and exit edit mode
                             setState {
                                 copy(
                                     name             = trimmed,
@@ -171,15 +311,14 @@ class ProfileViewModel @Inject constructor(
                                     pendingAvatarUri = null,
                                     isEditMode       = false,
                                     editName         = "",
-                                    isLoading        = false,
+                                    isSaving         = false,
                                 )
                             }
                             sendEffect { ProfileEffect.ProfileSaved }
                         }
                         is Resource.Error -> {
-                            setState { copy(isLoading = false) }
-                            sendEffect { ProfileEffect.ShowError(result.message ?: context.getString(
-                                R.string.error_generic)) }
+                            setState { copy(isSaving = false) }
+                            sendEffect { ProfileEffect.ShowError(result.message ?: context.getString(R.string.error_generic)) }
                         }
                         else -> Unit
                     }
@@ -187,4 +326,40 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+
+    private suspend fun compressImageUri(context: Context, uri: Uri): Uri =
+        withContext(Dispatchers.IO) {
+            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+            } else {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            }
+            val scaled = bitmap.scale(minOf(bitmap.width, 512), minOf(bitmap.height, 512))
+            val stream = ByteArrayOutputStream()
+            scaled.compress(Bitmap.CompressFormat.JPEG, 60, stream)
+            val bytes = stream.toByteArray()
+
+            val tempFile = File(context.cacheDir, "avatar_upload_temp.jpg")
+            tempFile.writeBytes(bytes)
+            tempFile.toUri()
+        }
+
+    private suspend fun copyAvatarToInternalStorage(uri: Uri): String? =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                // Delete old guest avatar file if one exists
+                val existing = guestProfileDataStore.getProfile()?.avatarUri
+                if (existing != null) {
+                    val oldFile = File(Uri.parse(existing).path ?: "")
+                    if (oldFile.exists()) oldFile.delete()
+                }
+
+                val inputStream = context.contentResolver.openInputStream(uri) ?: return@runCatching null
+                val dest = File(context.filesDir, "guest_avatar.jpg")
+                dest.outputStream().use { inputStream.copyTo(it) }
+                inputStream.close()
+                dest.toUri().toString()
+            }.getOrNull()
+        }
 }

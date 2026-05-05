@@ -16,11 +16,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.core.R as CoreRes
 
 @Composable
 fun LobbyPlayerRow(
@@ -29,6 +33,9 @@ fun LobbyPlayerRow(
     badgeColor: Color = colors.buttonTeal,
     avatarColor: Long? = null,
     avatarEmoji: String? = null,
+    avatarUrl: String? = null,
+    isAfk: Boolean = false,
+    afkCountdown: Int? = null,
 ) {
     Row(
         modifier = Modifier
@@ -41,49 +48,95 @@ fun LobbyPlayerRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            when {
-                avatarColor != null && avatarEmoji != null ->
-                    EmojiAvatar(color = avatarColor, emoji = avatarEmoji, size = 32)
-                avatarColor != null -> {
-                    val circleColor = Color(avatarColor)
-                    Box(
+            Box(contentAlignment = Alignment.Center) {
+                when {
+                    avatarUrl != null -> AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(50)),
+                    )
+                    avatarColor != null && avatarEmoji != null ->
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(avatarColor).copy(alpha = 0.20f))
+                                .border(1.dp, Color(avatarColor).copy(alpha = 0.5f), RoundedCornerShape(50)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = avatarEmoji,
+                                fontSize = 16.sp,
+                            )
+                        }
+                    avatarColor != null -> {
+                        val circleColor = Color(avatarColor)
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(circleColor.copy(alpha = 0.20f))
+                                .border(1.dp, circleColor.copy(alpha = 0.5f), RoundedCornerShape(50)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = name.take(1).uppercase(),
+                                color = circleColor,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    else -> Box(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(50))
-                            .background(circleColor.copy(alpha = 0.20f))
-                            .border(1.dp, circleColor.copy(alpha = 0.5f), RoundedCornerShape(50)),
+                            .background(badgeColor.copy(alpha = 0.15f))
+                            .border(1.dp, badgeColor.copy(alpha = 0.3f), RoundedCornerShape(50)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = name.take(1).uppercase(),
-                            color = circleColor,
+                            color = badgeColor,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                         )
                     }
                 }
-                else -> Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(badgeColor.copy(alpha = 0.15f))
-                        .border(1.dp, badgeColor.copy(alpha = 0.3f), RoundedCornerShape(50)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = name.take(1).uppercase(),
-                        color = badgeColor,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                if (isAfk) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.Black.copy(alpha = 0.45f)),
                     )
                 }
             }
-            Text(
-                text = name,
-                color = colors.title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-            )
+            Column {
+                Text(
+                    text = name,
+                    color = colors.title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                if (afkCountdown != null) {
+                    val m = afkCountdown / 60
+                    val s = afkCountdown % 60
+                    Text(
+                        text = stringResource(
+                            CoreRes.string.lobby_disconnected_after,
+                            m.toString(),
+                            s.toString().padStart(2, '0')
+                        ),
+                        color = Color(0xFFFF6B6B),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
         }
         if (badge != null) {
             Box(

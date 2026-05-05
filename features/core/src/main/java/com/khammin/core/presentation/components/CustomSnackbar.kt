@@ -23,31 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.presentation.preview.GameDarkBackgroundPreview
-
+import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 private data class SnackbarStyle(
     val iconBackground: Color,
     val icon: ImageVector,
     val progressColor: Color,
 )
-
-private fun snackbarStyleFor(type: SnackbarType) = when (type) {
-    SnackbarType.SUCCESS -> SnackbarStyle(
-        iconBackground = Color(0xFF4CAF50),
-        icon            = Icons.Default.Check,
-        progressColor  = Color(0xFF4CAF50),
-    )
-    SnackbarType.ERROR -> SnackbarStyle(
-        iconBackground = Color(0xFFF44336),
-        icon            = Icons.Default.Close,
-        progressColor  = Color(0xFFF44336),
-    )
-    SnackbarType.WARNING -> SnackbarStyle(
-        iconBackground = Color(0xFFFF9800),
-        icon            = Icons.Default.Warning,
-        progressColor  = Color(0xFFFF9800),
-    )
-}
 
 @Composable
 fun CustomSnackbar(
@@ -56,40 +38,53 @@ fun CustomSnackbar(
     durationMillis: Int = 4_000,
     onDismiss: () -> Unit = {},
 ) {
-    val style = snackbarStyleFor(type)
+
+    val style = when (type) {
+        SnackbarType.SUCCESS -> SnackbarStyle(
+            iconBackground = colors.snackbarSuccess,
+            icon           = Icons.Default.Check,
+            progressColor  = colors.snackbarSuccess,
+        )
+        SnackbarType.ERROR -> SnackbarStyle(
+            iconBackground = colors.snackbarError,
+            icon           = Icons.Default.Close,
+            progressColor  = colors.snackbarError,
+        )
+        SnackbarType.WARNING -> SnackbarStyle(
+            iconBackground = colors.snackbarWarning,
+            icon           = Icons.Default.Warning,
+            progressColor  = colors.snackbarWarning,
+        )
+    }
 
     var started by remember { mutableStateOf(false) }
     val progress by animateFloatAsState(
-        targetValue = if (started) 1f else 0f,
-        animationSpec  = tween(durationMillis = durationMillis, easing = LinearEasing),
+        targetValue      = if (started) 1f else 0f,
+        animationSpec    = tween(durationMillis = durationMillis, easing = LinearEasing),
         finishedListener = { onDismiss() },
-        label          = "snackbar_progress",
+        label            = "snackbar_progress",
     )
 
-    LaunchedEffect(Unit) {
-        started = true
-    }
+    LaunchedEffect(Unit) { started = true }
 
     Surface(
-        modifier      = Modifier
+        modifier        = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
-        shape         = RoundedCornerShape(12.dp),
-        color         = Color.White,
+        shape           = RoundedCornerShape(12.dp),
+        color           = colors.surface,
         shadowElevation = 6.dp,
         tonalElevation  = 0.dp,
     ) {
         Column {
-            // ── Content row ──────────────────────────────────────────────────
             Row(
-                modifier        = Modifier
+                modifier          = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Icon bubble
                 Box(
-                    modifier        = Modifier
+                    modifier         = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
                         .background(style.iconBackground),
@@ -105,10 +100,9 @@ fun CustomSnackbar(
 
                 Spacer(Modifier.width(14.dp))
 
-                // Message
                 Text(
                     text       = message,
-                    color      = Color(0xFF1A1A1A),
+                    color      = colors.title,
                     fontSize   = 15.sp,
                     fontWeight = FontWeight.Medium,
                     modifier   = Modifier.weight(1f),
@@ -116,7 +110,6 @@ fun CustomSnackbar(
 
                 Spacer(Modifier.width(8.dp))
 
-                // Dismiss button
                 IconButton(
                     onClick  = onDismiss,
                     modifier = Modifier.size(24.dp),
@@ -124,18 +117,18 @@ fun CustomSnackbar(
                     Icon(
                         imageVector        = Icons.Default.Close,
                         contentDescription = "Dismiss",
-                        tint               = Color(0xFF9E9E9E),
+                        tint               = colors.body,
                         modifier           = Modifier.size(16.dp),
                     )
                 }
             }
 
-            // ── Progress bar ─────────────────────────────────────────────────
+            // ── Progress bar ──────────────────────────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(3.dp)
-                    .background(Color(0xFFE0E0E0)),
+                    .background(colors.divider),
             ) {
                 Box(
                     modifier = Modifier

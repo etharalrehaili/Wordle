@@ -1,6 +1,7 @@
 package com.khammin.core.presentation.components.bottomsheets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +34,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -42,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.R
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,21 +55,25 @@ import com.khammin.core.presentation.theme.GameDesignTheme.colors
 fun JoinRoomBottomSheet(
     onJoin: (String) -> Unit,
     onDismiss: () -> Unit,
+    roomCode: String = "",
+    onRoomCodeChange: (String) -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    var roomCode by remember { mutableStateOf("") }
 
-    // Local validation (instant, no network)
     val containsArabic = roomCode.any { it in '\u0600'..'\u06FF' }
     val isValid = roomCode.trim().length == 6 && !containsArabic
 
-    // Combined error: local takes priority over server error
+    var hasAttempted by remember { mutableStateOf(false) }
+
     val displayError = when {
         containsArabic -> stringResource(R.string.join_room_error_arabic)
-        else           -> errorMessage  // from ViewModel (not found / already used)
+        hasAttempted && roomCode.trim().length < 6 -> stringResource(R.string.join_room_error_length)
+        else -> errorMessage
     }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -75,7 +85,13 @@ fun JoinRoomBottomSheet(
         Column(
             modifier            = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                    })
+                },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Top accent strip
@@ -83,11 +99,7 @@ fun JoinRoomBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(colors.buttonPink, colors.buttonTeal)
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             Column(
@@ -105,8 +117,8 @@ fun JoinRoomBottomSheet(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    colors.buttonTeal.copy(alpha = 0.25f),
-                                    colors.buttonPink.copy(alpha = 0.10f),
+                                    colors.logoBlue.copy(alpha = 0.20f),
+                                    colors.logoTeal.copy(alpha = 0.08f),
                                 )
                             )
                         ),
@@ -115,7 +127,7 @@ fun JoinRoomBottomSheet(
                     Icon(
                         imageVector        = Icons.Outlined.MeetingRoom,
                         contentDescription = null,
-                        tint               = colors.buttonTeal,
+                        tint               = colors.logoBlue,
                         modifier           = Modifier.size(36.dp)
                     )
                 }
@@ -145,7 +157,7 @@ fun JoinRoomBottomSheet(
 
                 OutlinedTextField(
                     value         = roomCode,
-                    onValueChange = { if (it.length <= 6) roomCode = it.uppercase() },
+                    onValueChange = { if (it.length <= 6) onRoomCodeChange(it.uppercase()) },
                     placeholder   = {
                         Text(
                             text  = "ABC123",
@@ -165,14 +177,17 @@ fun JoinRoomBottomSheet(
                         imeAction      = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = { if (isValid) onJoin(roomCode.trim()) }
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (isValid) onJoin(roomCode.trim())
+                        }
                     ),
-                    colors  = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = colors.buttonTeal,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor   = colors.logoBlue,
                         unfocusedBorderColor = colors.border,
                         focusedTextColor     = colors.title,
                         unfocusedTextColor   = colors.title,
-                        cursorColor          = colors.buttonTeal,
+                        cursorColor          = colors.logoBlue,
                     ),
                     shape    = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
@@ -183,7 +198,7 @@ fun JoinRoomBottomSheet(
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text      = displayError,
-                        color     = colors.buttonPink,
+                        color     = colors.logoPink,
                         fontSize  = 13.sp,
                         textAlign = TextAlign.Center,
                         modifier  = Modifier.fillMaxWidth()
@@ -196,25 +211,27 @@ fun JoinRoomBottomSheet(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(colors.buttonTeal),
+                            .height(64.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(colors.buttonPrimaryBg),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            color       = colors.title,
+                            color       = Color.White,
                             modifier    = Modifier.size(22.dp),
                             strokeWidth = 2.5.dp,
                         )
                     }
                 } else {
                     GameButton(
-                        label           = stringResource(R.string.join_room_join),
-                        backgroundColor = if (isValid) colors.buttonTeal else colors.border,
-                        contentColor    = colors.title,
-                        showBorder      = false,
-                        onClick         = { if (isValid) onJoin(roomCode.trim()) },
-                        modifier        = Modifier.fillMaxWidth()
+                        label    = stringResource(R.string.join_room_join),
+                        enabled  = roomCode.isNotEmpty(),
+                        onClick = {
+                            hasAttempted = true
+                            if (isValid) onJoin(roomCode.trim())
+                        },
+                        variant  = GameButtonVariant.Primary,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }

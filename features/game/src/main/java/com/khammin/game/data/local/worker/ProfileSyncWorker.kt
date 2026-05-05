@@ -8,11 +8,6 @@ import com.khammin.game.domain.repository.ProfileRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
-/**
- * WorkManager worker that pushes locally-saved profile updates to the server.
- * Scheduled by [ProfileRepositoryImpl] whenever an update is saved offline.
- * WorkManager automatically waits for [NetworkType.CONNECTED] before running.
- */
 @HiltWorker
 class ProfileSyncWorker @AssistedInject constructor(
     @Assisted context: Context,

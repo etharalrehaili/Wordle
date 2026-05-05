@@ -17,13 +17,19 @@ interface MultiplayerDataSource {
     suspend fun restartRoom(roomId: String, newWord: String, wordLength: Int, roundNumber: Int = 1, totalPoints: Map<String, Int> = emptyMap())
     suspend fun claimRestart(roomId: String)
     suspend fun registerPresence(roomId: String, userId: String)
+    suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean)
     fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean>
+    fun observeIsAfk(roomId: String, userId: String): Flow<Boolean>
+    fun cleanupPresence(roomId: String, userId: String)
     suspend fun addGuestToRoom(roomId: String, guestId: String)
     suspend fun removeGuestFromRoom(roomId: String, guestId: String)
     suspend fun startRoom(roomId: String)
     suspend fun resetCustomRoom(roomId: String)
     suspend fun votePlayAgain(roomId: String, userId: String)
     suspend fun unvotePlayAgain(roomId: String, userId: String)
-    suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?)
+    suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?, avatarUrl: String? = null)
     suspend fun updateSessionPoints(roomId: String, sessionPoints: Map<String, Int>)
+    suspend fun updatePlayerSessionPoints(roomId: String, userId: String, pts: Int)
+    suspend fun setLobbyWinner(roomId: String, winnerId: String)
+    suspend fun setPlayerReady(roomId: String, userId: String, isReady: Boolean)
 }

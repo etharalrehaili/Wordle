@@ -4,12 +4,12 @@
     <string name="verify_email_title">البريد الإلكتروني غير مُفعَّل</string>
     <string name="verify_email_message">يرجى التحقق من بريدك الإلكتروني قبل الوصول إلى هذه الميزة. تحقق من صندوق الوارد للحصول على رابط التحقق.</string>
     <string name="ok">حسنًا</string>
-    <string name="welcome_to">مرحبًا بك في</string>
-    <string name="Khammin">خمّن</string>
     <string name="quick_play">لعب سريع</string>
     <string name="take_challenge">تحدي</string>
     <string name="leaderboard">قائمة المتصدرين</string>
-    <string name="home_description">خمّن الكلمة المخفية</string>
+    <string name="home_title_start">اكتشف\u0020</string>
+    <string name="home_title_bold">الكلمة</string>
+    <string name="home_subtitle">كل تخمين يقربك من الإجابة</string>
     <string name="wordle_letters">العب</string>
 
     <!-- Countdown -->
@@ -18,6 +18,31 @@
     <!-- Challenge Screen -->
     <string name="challenge_next_word_label">الكلمة الجديدة ستكون متاحة خلال</string>
     <string name="not_in_word_list">ليست في قائمة الكلمات</string>
+    <string name="challenge_no_challenge_today">لا يوجد تحدي اليوم</string>
+    <string name="challenge_status_play">العب</string>
+    <string name="challenge_status_in_progress">جارٍ</string>
+    <string name="challenge_status_completed">مكتمل</string>
+    <string name="difficulty_beginner">سهل</string>
+    <string name="difficulty_intermediate">متوسط</string>
+    <string name="difficulty_expert">صعب</string>
+    <string name="difficulty_badge_beginner">مبتدئ</string>
+    <string name="difficulty_badge_intermediate">متوسط</string>
+    <string name="difficulty_badge_expert">خبير</string>
+    <string name="challenge_guess_4">خمّن الكلمة في اقل من ٤ محاولات</string>
+    <string name="challenge_guess_6">خمّن الكلمة في ٦ محاولات</string>
+    <string name="challenge_guess_2min">خمّن في أقل من دقيقتين</string>
+    <string name="challenge_guess_streak">٣ إجابات صحيحة متتالية</string>
+    <string name="challenge_guess_expert">خمّن بدون أي تلميحات</string>
+    <string name="challenge_first_guess">خمّن الكلمة من المحاولة الأولى</string>
+    <string name="challenge_play_3_games">العب ٣ مباريات متتالية</string>
+    <string name="challenge_win_multiplayer">اربح مباراة متعددة اللاعبين</string>
+    <string name="challenge_5_letter_word">خمّن كلمة من ٥ حروف</string>
+    <string name="challenge_guess_1min">خمّن الكلمة في أقل من دقيقة</string>
+    <string name="challenge_guess_2_tries">خمّن الكلمة في محاولتين</string>
+    <string name="challenge_win_5_multiplayer">اربح ٥ مباريات متعددة اللاعبين</string>
+    <string name="challenge_perfect_week">العب كل يوم لمدة أسبوع</string>
+    <string name="challenge_30s">خمّن الكلمة في ٣٠ ثانية</string>
+    <string name="challenges_title">التحديات</string>
 
     <!-- Leaderboard Screen -->
     <string name="filter_all_time">كل الأوقات</string>
@@ -26,10 +51,15 @@
     <string name="leaderboard_rankings">الترتيب</string>
     <string name="leaderboard_your_position">مرتبتك</string>
     <string name="leaderboard_no_winners">لا يوجد فائزون بعد، كن أول من يفوز!</string>
+    <string name="leaderboard_no_internet_title">لا يوجد اتصال بالإنترنت</string>
+    <string name="leaderboard_no_internet_subtitle">تحقق من اتصالك وحاول مجدداً</string>
+    <string name="leaderboard_try_again">حاول مجدداً</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">الإعدادات</string>
-    <string name="settings_account_section">إعدادات الحساب</string>
+    <string name="settings_preferences_section">التفضيلات</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_notifications_subtitle">تنبيهات التحديات الأسبوعية</string>    <string name="settings_account_section">إعدادات الحساب</string>
     <string name="settings_app_section">إعدادات التطبيق</string>
     <string name="settings_support_section">الدعم</string>
     <string name="settings_change_password">تغيير كلمة المرور</string>
@@ -41,6 +71,13 @@
     <string name="sign_out_confirm">نعم، سجّل الخروج</string>
     <string name="sign_out_cancel">إلغاء</string>
 
+    <!-- Support Screen -->
+    <string name="support_title">الدعم</string>
+    <string name="support_header_title">شاركني رأيك!</string>
+    <string name="support_header_body">أسعد بسماع آراءكم وملاحظاتكم تساعد في تطوير التطبيق\nتواصلوا معي في حسابي على LinkedIn</string>
+    <string name="support_linkedin_name">ايثار الرحيلي</string>
+    <string name="support_linkedin_handle">linkedin.com/in/ethar-alrehaili</string>
+
     <!-- Profile Screen -->
     <string name="profile_total_points">إجمالي النقاط</string>
     <string name="profile_edit_button">تعديل الملف</string>
@@ -51,6 +88,10 @@
     <string name="profile_stat_solved">عدد مرات الفوز</string>
     <string name="profile_stat_win_rate">نسبة الفوز</string>
     <string name="profile_updated_successfully">تم تحديث الملف الشخصي بنجاح</string>
+    <string name="signed_in_successfully">تم تسجيل الدخول بنجاح</string>
+    <string name="profile_guest_banner_title">لا تفقد تقدمك!</string>
+    <string name="profile_guest_banner_subtitle">سجّل دخولك لحفظ نقاطك وظهورك في قائمة المتصدرين</string>
+    <string name="profile_sign_in_google">الدخول بحساب Google</string>
     <string name="profile_stat_arabic">عربي</string>
     <string name="profile_stat_english">إنجليزي</string>
     <string name="error_name_too_long">الاسم يجب أن لا يتجاوز 25 حرفاً</string>
@@ -61,13 +102,66 @@
     <string name="multiplayer_room_tap_copy">اضغط للنسخ</string>
     <string name="room_code_copied_label">رمز الغرفة</string>
     <string name="multiplayer_result_title">النتائج</string>
-    <string name="spectator_round">الجولة %1$d</string>
-    <string name="spectator_votes">👋  أصوات اللعب مجدداً: %1$d / %2$d</string>
-    <string name="spectator_solved">تم الحل في %1$d ✓  ·  %2$d نقطة</string>
-    <string name="spectator_failed">فشل ✗</string>
+    <string name="spectator_round">الجولة %1$s</string>
+    <string name="spectator_votes"> أصوات اللعب مجدداً: %1$d / %2$d</string>
+    <string name="spectator_solved">%1$s نقطة</string>
+    <string name="spectator_failed">فشل</string>
     <string name="spectator_waiting_guess">في الانتظار…</string>
-    <string name="spectator_guess_progress">%1$d/%2$d</string>
-    <string name="spectator_total_points">المجموع: %1$d نقطة</string>
+    <string name="spectator_guess_progress">%1$s/%2$s</string>
+    <string name="spectator_total_points">المجموع: %1$s نقطة</string>
+    <string name="multiplayer_waiting_for_players">في انتظار انضمام اللاعبين…</string>
+    <string name="multiplayer_waiting_for_host">في انتظار المضيف لبدء اللعبة…</string>
+    <string name="multiplayer_players_count">اللاعبون (%1$d/3)</string>
+    <string name="lobby_start_game">ابدأ اللعبة</string>
+    <string name="lobby_ready">جاهز</string>
+    <string name="lobby_ready_done">جاهز!</string>
+    <string name="lobby_badge_ready">جاهز</string>
+    <string name="lobby_waiting_ready">في انتظار جاهزية جميع اللاعبين…</string>
+    <string name="lobby_you">أنت</string>
+    <string name="lobby_badge_host">مضيف</string>
+    <string name="lobby_waiting_for_players">في انتظار انتهاء جميع اللاعبين…</string>
+    <string name="profile_edit">تعديل</string>
+    <string name="profile_display_name">اسم اللاعب</string>
+    <string name="profile_avatar_color">اختر اللون</string>
+    <string name="profile_avatar_emoji">اختر الرمز</string>
+    <string name="profile_save">حفظ</string>
+    <string name="profile_close">إغلاق</string>
+    <string name="profile_you">أنت</string>
+    <string name="all_players_left_title">الغرفة فارغة</string>
+    <string name="all_players_left_subtitle">يبدو أن الجميع غادر. عُد للرئيسية وابدأ لعبة جديدة!</string>
+    <string name="host_left_title">المضيف غادر الغرفة</string>
+    <string name="host_left_subtitle">أنهى المضيف الجلسة. عُد للرئيسية وابدأ لعبة جديدة!</string>
+    <string name="host_left_go_home">العودة للرئيسية</string>
+    <string name="lobby_round">الجولة %1$s</string>
+    <string name="lobby_you_won">فزت! 🎉</string>
+    <string name="lobby_you_lost">خسرت!</string>
+    <string name="lobby_winner_won">%1$s فاز بهذه الجولة</string>
+    <string name="lobby_the_word_was">كانت الكلمة</string>
+    <string name="lobby_leaderboard">لوحة المتصدرين</string>
+    <string name="lobby_play_again">العب مجدداً</string>
+    <string name="lobby_waiting_next_round">في انتظار المضيف لبدء الجولة التالية…</string>
+    <string name="lobby_leave">مغادرة</string>
+    <string name="lobby_pts">%1$d نقطة</string>
+    <string name="lobby_badge_you_label">أنت</string>
+    <string name="lobby_voted_play_again">صوّتَ للعب مجدداً!</string>
+    <string name="lobby_cancel_vote">إلغاء التصويت</string>
+    <string name="lobby_play_again_question">العب مجدداً؟</string>
+    <string name="lobby_player_voted">لاعب واحد صوّت</string>
+    <string name="lobby_players_voted">%1$d لاعبين صوّتوا</string>
+    <string name="custom_word_hint">كلمتك السرية (4–6 أحرف)</string>
+    <string name="custom_word_valid">الطول صحيح</string>
+    <string name="custom_word_invalid_length">يجب أن يكون 4–6 أحرف</string>
+    <string name="custom_word_players_count">اللاعبون (%1$d/4)</string>
+    <string name="lobby_badge_not_ready">غير جاهز</string>
+    <string name="lobby_hint_enter_word">أدخل كلمة للبدء</string>
+    <string name="lobby_hint_need_players">يجب أن ينضم لاعب واحد على الأقل للبدء</string>
+    <string name="lobby_hint_wait_ready">في انتظار استعداد جميع اللاعبين</string>
+    <string name="lobby_hint_tap_ready">اضغط جاهز عندما تكون مستعداً للعب</string>
+    <string name="lobby_guest_waiting_subtitle">سيبدأ المضيف اللعبة بمجرد استعداد الجميع</string>
+    <string name="custom_word_players_count_4">اللاعبون (%1$d/4)</string>
+    <string name="spectator_play_again_question">العب مجدداً؟</string>
+    <string name="spectator_no_votes">لا أصوات بعد</string>
+    <string name="spectator_vote_count">%1$d / %2$d</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">كانت الكلمة</string>
@@ -75,8 +169,30 @@
     <string name="result_close">إغلاق</string>
     <string name="hint_message">Hint: the letter \'%1$c\' is at position %2$d</string>
 
+    <!-- Join Room Error Messages -->
+    <string name="join_error_not_found_hint">الغرفة غير موجودة. تحقق من الرمز وحاول مجدداً.</string>
+    <string name="join_error_not_found">الغرفة غير موجودة.</string>
+    <string name="join_error_game_ended">انتهت هذه اللعبة بالفعل.</string>
+    <string name="join_error_game_started">هذه اللعبة قد بدأت بالفعل.</string>
+    <string name="join_error_room_full_max4">الغرفة ممتلئة (الحد الأقصى 4 لاعبين).</string>
+    <string name="join_error_room_full_max3">الغرفة ممتلئة (الحد الأقصى 3 لاعبين).</string>
+    <string name="join_error_room_full">هذه الغرفة ممتلئة بالفعل.</string>
+
     <!-- Error Messages -->
     <string name="error_name_empty">يرجى إدخال الاسم</string>
     <string name="error_upload_failed">فشل الرفع</string>
     <string name="error_generic">خطأ</string>
+
+    <!-- Rejoin sheet -->
+    <string name="rejoin_title">غادرت الغرفة</string>
+    <string name="rejoin_subtitle">انقطع اتصالك. هل تريد الانضمام مجدداً؟</string>
+    <string name="rejoin_button">انضم مجدداً</string>
+    <string name="rejoin_go_home">الصفحة الرئيسية</string>
+
+    <string name="ad_not_ready">الإعلان غير جاهز، حاول مرة أخرى</string>
+
+    <!-- Self-disconnected sheet -->
+    <string name="self_disconnected_title">انقطع اتصالك</string>
+    <string name="self_disconnected_subtitle">كنت غير متصل لفترة طويلة. عُد للرئيسية وابدأ لعبة جديدة.</string>
+    <string name="self_disconnected_go_home">العودة للرئيسية</string>
 </resources>

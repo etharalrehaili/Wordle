@@ -14,6 +14,9 @@ data class WaitingPlayer(
     val avatarUrl: String? = null,
     val avatarColor: Long? = null,
     val avatarEmoji: String? = null,
+    val isReady: Boolean = false,
+    val isAfk: Boolean = false,
+    val afkCountdown: Int? = null,
 )
 
 data class OpponentProgress(
@@ -26,6 +29,8 @@ data class OpponentProgress(
     val guessCount: Int = 0,
     val guessRows: List<GuessRow> = List(MAX_GUESSES) { GuessRow() },
     val totalPoints: Int = 0,
+    val isAfk: Boolean = false,
+    val afkCountdown: Int? = null,
 )
 
 data class MultiplayerGameUiState(
@@ -68,9 +73,17 @@ data class MultiplayerGameUiState(
     // Local avatar (anonymous users only); null = no custom avatar chosen yet
     val avatarColor: Long? = null,
     val avatarEmoji: String? = null,
+    // Firebase account photo for logged-in (non-anonymous) users
+    val avatarUrl: String? = null,
     val isAnonymous: Boolean = false,
+    val isLobbyMode: Boolean = false,
     // Session-cumulative points per player (guestId -> pts), updated after each round
     val sessionPoints: Map<String, Int> = emptyMap(),
+    // Name of the player who won the current lobby-mode round (empty if current user won)
+    val lobbyWinnerName: String = "",
+    val isNoInternet: Boolean = false,
+    val isOpponentAfk: Boolean = false,
+    val opponentAfkCountdown: Int? = null,
 ) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {
@@ -84,6 +97,8 @@ sealed interface MultiplayerGameEffect : UiEffect {
     data object HostLeftRoom : MultiplayerGameEffect
     data object AllPlayersLeft : MultiplayerGameEffect
     data class GuestLeftRoom(val guestName: String) : MultiplayerGameEffect
+    data object ShowRejoinSheet : MultiplayerGameEffect
+    data object SelfDisconnected : MultiplayerGameEffect
 }
 
 sealed class MultiplayerGameIntent : UiIntent {
@@ -93,6 +108,7 @@ sealed class MultiplayerGameIntent : UiIntent {
         val isHost: Boolean,
         val myUserId: String = "",
         val isCustomWord: Boolean = false,
+        val isLobbyMode: Boolean = false,
         val defaultMyName: String = "You",
         val defaultGuestName: String = "Guest",
     ) : MultiplayerGameIntent()
@@ -105,9 +121,13 @@ sealed class MultiplayerGameIntent : UiIntent {
     data class StartMatchWithWord(val word: String) : MultiplayerGameIntent()
     data class PlayAgainCustomWord(val newWord: String) : MultiplayerGameIntent()
     data object VotePlayAgain : MultiplayerGameIntent()
+    data object PlayAgainLobbyMode : MultiplayerGameIntent()
+    data object RejoinRoom : MultiplayerGameIntent()
     data class UpdateGuestProfile(
         val name: String,
         val avatarColor: Long?,
         val avatarEmoji: String?,
     ) : MultiplayerGameIntent()
+    data object RetryConnectivity : MultiplayerGameIntent()
+    data object SetReady : MultiplayerGameIntent()
 }

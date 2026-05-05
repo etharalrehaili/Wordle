@@ -7,7 +7,10 @@ import com.khammin.core.domain.model.ENGLISH_MODEL
 import com.khammin.core.domain.model.LanguageModel
 import com.khammin.core.domain.repository.LanguageRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
@@ -16,13 +19,26 @@ class LanguageRepositoryImpl @Inject constructor(
     private val languageDataStore: DataStore<LanguageModel>
 ) : LanguageRepository {
 
+    // In-memory cache: populated on first read, updated on every write.
+    // Eliminates repeated runBlocking disk I/O on the main thread.
+    @Volatile private var cached: LanguageModel? = null
+
+    // Synchronous storage used by attachBaseContext (runs before DataStore is warmed up).
+    private val prefs = appContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+
     override fun getLanguages(): List<LanguageModel> = listOf(ENGLISH_MODEL, ARABIC_MODEL)
 
     override fun setLanguage(language: LanguageModel) {
-        runBlocking { languageDataStore.updateData { language } }
+        cached = language
+        // Write synchronously so attachBaseContext can read it on the next cold start.
+        prefs.edit().putString("language_code", language.code).apply()
+        // Fire-and-forget — UI consistency is guaranteed by the in-memory cache.
+        CoroutineScope(Dispatchers.IO).launch {
+            languageDataStore.updateData { language }
+        }
     }
 
     override fun getCurrentLanguage(): LanguageModel {
-        return runBlocking { languageDataStore.data.first() }
+        return cached ?: runBlocking { languageDataStore.data.first() }.also { cached = it }
     }
 }

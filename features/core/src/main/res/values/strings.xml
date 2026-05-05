@@ -23,22 +23,22 @@
 
     <!-- Wordle Info Bottom Sheet -->
     <string name="info_how_to_play">How To Play</string>
-    <string name="info_guess_title">Guess the WORDLE in 6 tries.</string>
-    <string name="info_rule_1">Each guess must be a valid %d-letter word.</string>
-    <string name="info_rule_2">The color of the tiles will change to show how close your guess was.</string>
+    <string name="info_guess_title">Guess the WORDLE in 6 tries</string>
+    <string name="info_rule_1">Each guess must be a valid %d-letter word</string>
+    <string name="info_rule_2">The color of the tiles will change to show how close your guess was</string>
     <string name="info_examples">Examples</string>
-    <string name="info_example_1_desc"> is in the word and in the correct spot.</string>
-    <string name="info_example_2_desc"> is in the word but in the wrong spot.</string>
+    <string name="info_example_1_desc"> is in the word and in the correct spot</string>
+    <string name="info_example_2_desc"> is in the word but in the wrong spot</string>
     <string name="info_example_1_letter">ك</string>
     <string name="info_example_1_letters">كتاب</string>
     <string name="info_example_2_letter">د</string>
     <string name="info_example_2_letters">صديق</string>
     <string name="info_example_3_letter">ق</string>
     <string name="info_example_3_letters">رفيق</string>
-    <string name="info_example_3_desc"> is not in the word in any spot.</string>
+    <string name="info_example_3_desc"> is not in the word in any spot</string>
     <string name="info_example_4_letter">ه</string>
     <string name="info_example_4_letters">ورده</string>
-    <string name="info_example_4_desc"> is in the word but check the letter shape (ة / ه).</string>
+    <string name="info_example_4_desc"> is in the word but check the letter shape (ة / ه)</string>
     <string name="info_new_wordle">A new challenge word will be available each day!</string>
 
     <!-- challenge -->
@@ -52,10 +52,10 @@
 
     <!-- Auth Bottom Sheet -->
     <string name="auth_join_title">Join the Challenge</string>
-    <string name="auth_join_subtitle">Sign in to compete with players around the world</string>
+    <string name="auth_join_subtitle">Sign in to save your progress and appear on the leaderboard</string>
     <string name="auth_continue_with">continue with</string>
-    <string name="auth_login_email">Login with Email</string>
-    <string name="auth_create_account">Create an Account</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_continue_as_guest">Continue as Guest</string>
 
     <!-- Game Results Bottom Sheet -->
     <string name="game_result_word_was">The word was</string>
@@ -94,11 +94,12 @@
     <string name="join_room_subtitle">Enter the 6-character code shared by your friend</string>
     <string name="join_room_placeholder">ABC123</string>
     <string name="join_room_error_arabic">Invalid code. Use English characters only.</string>
+    <string name="join_room_error_length">Code should be 6 digits</string>
     <string name="join_room_joining">Joining…</string>
     <string name="join_room_join">Join</string>
 
     <!-- Leave Game Bottom Sheet -->
-    <string name="leave_game_title">Leave match</string>
+    <string name="leave_game_title">Leave Room</string>
     <string name="leave_game_subtitle">Are you sure you want to leave?</string>
     <string name="leave_game_confirm">Yes, leave</string>
     <string name="leave_game_stay">Stay</string>
@@ -111,13 +112,13 @@
 
     <!-- Multiplayer Mode Bottom Sheet -->
     <string name="multiplayer_mode_title">Multiplayer</string>
-    <string name="multiplayer_mode_subtitle">Challenge a friend to a word duel</string>
+    <string name="multiplayer_mode_subtitle">Play against a friend</string>
     <string name="multiplayer_mode_creating">Creating…</string>
     <string name="multiplayer_mode_create_room">Create Room</string>
     <string name="multiplayer_mode_join_room">Join Room</string>
 
     <!-- Create Room Word Bottom Sheet -->
-    <string name="create_room_word_title">Choose the Word</string>
+    <string name="create_room_word_title">Create Room</string>
     <string name="create_room_word_subtitle">Pick how the secret word will be selected for this room</string>
     <string name="create_room_random_title">Random Word</string>
     <string name="create_room_random_subtitle">Fetch a random word from the word list</string>
@@ -139,6 +140,13 @@
     <string name="spectator_title">You set the word!</string>
     <string name="spectator_watching">Watching %s play…</string>
     <string name="spectator_waiting">Waiting for your opponent to join…</string>
+
+    <!-- Game Top Bar -->
+    <string name="top_bar_points_label">%1$s PTS</string>
+    <string name="top_bar_hint_watch_ad">Ad</string>
+    <string name="top_bar_switch_to_light">Switch to light mode</string>
+    <string name="top_bar_switch_to_dark">Switch to dark mode</string>
+    <string name="top_bar_hint_remaining">Use hint (%1$d remaining)</string>
 
     <!-- Theme and Language options -->
     <string name="theme_dark">Dark</string>
@@ -164,5 +172,7 @@
     <string name="spectator_result_left">%1$s left the game</string>
     <string name="spectator_result_failed">%1$s didn\'t guess it</string>
     <string name="spectator_result_back_home">Back Home</string>
+
+    <string name="lobby_disconnected_after">Disconnected after %1$s:%2$s</string>
 
 </resources>

@@ -1,53 +1,36 @@
 package com.khammin.game.presentation.game.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.khammin.core.R as CoreRes
 import com.khammin.core.presentation.components.MAX_GUESSES
+import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.components.multiplayer.GuestCard
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.OpponentProgress
+import java.util.Locale
 
 @Composable
 fun SpectatorView(
@@ -56,29 +39,24 @@ fun SpectatorView(
     wordLength: Int,
     opponentsProgress: Map<String, OpponentProgress>,
     roundNumber: Int = 1,
-    playAgainVoteCount: Int = 0,
-    playAgainVotes: List<String> = emptyList(),
-    totalGuests: Int = 0,
-    onPlayAgain: () -> Unit = {}
+    onPlayAgain: () -> Unit = {},
 ) {
     val roundOver = opponentsProgress.isNotEmpty() &&
             (opponentsProgress.values.any { it.solved } || opponentsProgress.values.all { it.failed })
 
     Column(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier            = modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Round label
         Text(
-            text          = "Round $roundNumber",
-            color         = colors.buttonTeal,
+            text          = stringResource(R.string.spectator_round, String.format(Locale.US, "%d", roundNumber)),
+            color         = colors.logoBlue,
             fontSize      = 13.sp,
             fontWeight    = FontWeight.Bold,
             letterSpacing = 0.5.sp,
         )
 
-        // Word tiles
         if (word.isNotEmpty()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -90,7 +68,7 @@ fun SpectatorView(
                             .size(36.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(colors.surface)
-                            .border(1.5.dp, colors.buttonTeal, RoundedCornerShape(8.dp)),
+                            .border(1.5.dp, colors.logoBlue, RoundedCornerShape(8.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -104,18 +82,9 @@ fun SpectatorView(
             }
         }
 
-        // Vote panel (visible only when the round is over)
-        if (roundOver && totalGuests > 0) {
-            VotePanel(
-                playAgainVotes    = playAgainVotes,
-                totalGuests       = totalGuests,
-                opponentsProgress = opponentsProgress,
-            )
-        }
-
         if (opponentsProgress.isEmpty()) {
             Text(
-                text      = stringResource(CoreRes.string.spectator_waiting),
+                text      = stringResource(R.string.spectator_waiting),
                 color     = colors.body.copy(alpha = 0.65f),
                 fontSize  = 14.sp,
                 textAlign = TextAlign.Center,
@@ -140,15 +109,20 @@ fun SpectatorView(
                         5    -> 20
                         else -> 10
                     } else 0
+
                     val statusText = when {
-                        progress.solved          -> "Solved in ${progress.guessCount} ·  $points pts"
-                        progress.failed          -> "Failed"
-                        progress.guessCount == 0 -> "Waiting…"
-                        else                     -> "${progress.guessCount}/${MAX_GUESSES}"
+                        progress.solved -> stringResource(R.string.spectator_solved, String.format(
+                            Locale.US, "%d", points))
+                        progress.failed          -> stringResource(R.string.spectator_failed)
+                        progress.guessCount == 0 -> stringResource(R.string.spectator_waiting_guess)
+                        else                     -> stringResource(R.string.spectator_guess_progress,
+                            String.format(Locale.US, "%d", progress.guessCount),
+                            String.format(Locale.US, "%d", MAX_GUESSES))
                     }
+
                     val statusColor = when {
-                        progress.solved -> colors.buttonTeal
-                        progress.failed -> colors.buttonPink
+                        progress.solved -> colors.logoGreen
+                        progress.failed -> colors.logoPink
                         else            -> colors.body.copy(alpha = 0.55f)
                     }
 
@@ -158,12 +132,14 @@ fun SpectatorView(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         GuestCard(
-                            name        = progress.name,
-                            avatarUrl   = progress.avatarUrl,
-                            avatarColor = progress.avatarColor,
-                            avatarEmoji = progress.avatarEmoji,
-                            guesses     = progress.guessRows,
-                            wordLength  = wordLength,
+                            name         = progress.name,
+                            avatarUrl    = progress.avatarUrl,
+                            avatarColor  = progress.avatarColor,
+                            avatarEmoji  = progress.avatarEmoji,
+                            guesses      = progress.guessRows,
+                            wordLength   = wordLength,
+                            isAfk        = progress.isAfk,
+                            afkCountdown = progress.afkCountdown,
                         )
                         Column(
                             horizontalAlignment = Alignment.End,
@@ -183,9 +159,10 @@ fun SpectatorView(
                                     fontWeight = FontWeight.SemiBold,
                                 )
                             }
-                            if (progress.totalPoints > 0) {
+                            val runningTotal = progress.totalPoints + points
+                            if (runningTotal > 0) {
                                 Text(
-                                    text       = "Total: ${progress.totalPoints} pts",
+                                    text = stringResource(R.string.spectator_total_points, String.format(java.util.Locale.US, "%d", runningTotal)),
                                     color      = colors.body.copy(alpha = 0.5f),
                                     fontSize   = 10.sp,
                                     fontWeight = FontWeight.Medium,
@@ -197,162 +174,19 @@ fun SpectatorView(
             }
         }
 
-        Button(
-            onClick  = onPlayAgain,
-            enabled  = roundOver,
-            modifier = Modifier
-                .wrapContentWidth()
-                .height(48.dp)
-                .padding(horizontal = 32.dp),
-            shape  = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor         = colors.buttonTeal,
-                disabledContainerColor = colors.buttonTeal.copy(alpha = 0.3f),
-            ),
-        ) {
-            Text(
-                text       = stringResource(CoreRes.string.result_play_again),
-                fontSize   = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color      = colors.background,
+        if (roundOver) {
+            GameButton(
+                label    = stringResource(R.string.lobby_play_again),
+                onClick  = onPlayAgain,
+                variant  = GameButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 }
 
-@Composable
-private fun VotePanel(
-    playAgainVotes: List<String>,
-    totalGuests: Int,
-    opponentsProgress: Map<String, OpponentProgress>,
-) {
-    val fraction = if (totalGuests > 0) playAgainVotes.size.toFloat() / totalGuests else 0f
-    val animatedFraction by animateFloatAsState(
-        targetValue   = fraction,
-        animationSpec = tween(500),
-        label         = "voteProgress",
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.surface)
-            .border(1.dp, colors.border, RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        // Header: label + count
-        Row(
-            modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically,
-        ) {
-            Text(
-                text       = "Play again?",
-                color      = colors.title,
-                fontSize   = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text       = "${playAgainVotes.size} / $totalGuests",
-                color      = colors.buttonTeal,
-                fontSize   = 13.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        // Progress bar
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(colors.border),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animatedFraction)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(colors.buttonTeal),
-            )
-        }
-
-        // Voter avatar bubbles
-        if (playAgainVotes.isNotEmpty()) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy((-8).dp),
-                verticalAlignment     = Alignment.CenterVertically,
-            ) {
-                playAgainVotes.forEach { voterId ->
-                    val voter = opponentsProgress[voterId]
-                    key(voterId) {
-                        var visible by remember { mutableStateOf(false) }
-                        LaunchedEffect(Unit) { visible = true }
-                        AnimatedVisibility(
-                            visible = visible,
-                            enter   = scaleIn(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness    = Spring.StiffnessMedium,
-                                )
-                            ) + fadeIn(tween(150)),
-                        ) {
-                            VoterBubble(
-                                name        = voter?.name ?: "?",
-                                avatarColor = voter?.avatarColor,
-                                avatarEmoji = voter?.avatarEmoji,
-                            )
-                        }
-                    }
-                }
-            }
-        } else {
-            Text(
-                text     = "No votes yet",
-                color    = colors.body.copy(alpha = 0.4f),
-                fontSize = 11.sp,
-            )
-        }
-    }
-}
-
-@Composable
-internal fun VoterBubble(
-    name: String,
-    avatarColor: Long?,
-    avatarEmoji: String?,
-    size: Int = 32,
-) {
-    Box(
-        modifier = Modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .border(2.dp, colors.background, CircleShape)
-            .background(
-                if (avatarColor != null) Color(avatarColor).copy(alpha = 0.25f)
-                else colors.buttonTeal.copy(alpha = 0.20f)
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (avatarColor != null && avatarEmoji != null) {
-            Text(text = avatarEmoji, fontSize = (size * 0.44f).sp)
-        } else {
-            val tint = if (avatarColor != null) Color(avatarColor) else colors.buttonTeal
-            Text(
-                text       = name.take(1).uppercase(),
-                color      = tint,
-                fontSize   = (size * 0.38f).sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-}
-
-// --- Preview Data ---
 private val previewProgressSolved = OpponentProgress(
-    name        = "Alice / أليس",
+    name        = "Alice",
     avatarColor = 0xFF00BCD4,
     avatarEmoji = "🐱",
     solved      = true,
@@ -363,7 +197,7 @@ private val previewProgressSolved = OpponentProgress(
 )
 
 private val previewProgressFailed = OpponentProgress(
-    name        = "Bob / بوب",
+    name        = "Bob",
     avatarColor = 0xFFE91E8C,
     avatarEmoji = "🐶",
     solved      = false,
@@ -374,7 +208,7 @@ private val previewProgressFailed = OpponentProgress(
 )
 
 private val previewProgressPlaying = OpponentProgress(
-    name        = "Charlie / تشارلي",
+    name        = "Charlie",
     avatarColor = 0xFF9C27B0,
     avatarEmoji = "🦊",
     solved      = false,
@@ -395,9 +229,7 @@ fun SpectatorViewActivePreview() {
             "2" to previewProgressFailed,
             "3" to previewProgressPlaying,
         ),
-        roundNumber       = 2,
-        playAgainVotes    = listOf("1"),
-        totalGuests       = 3,
+        roundNumber = 2,
     )
 }
 

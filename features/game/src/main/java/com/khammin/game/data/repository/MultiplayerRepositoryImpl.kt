@@ -27,9 +27,15 @@ class MultiplayerRepositoryImpl @Inject constructor(
     override suspend fun claimRestart(roomId: String) = dataSource.claimRestart(roomId)
     override suspend fun registerPresence(roomId: String, userId: String) =
         dataSource.registerPresence(roomId, userId)
+    override suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean) =
+        dataSource.updatePresenceState(roomId, userId, isForeground)
 
     override fun observeOpponentPresence(roomId: String, opponentId: String) =
         dataSource.observeOpponentPresence(roomId, opponentId)
+    override fun observeIsAfk(roomId: String, userId: String) =
+        dataSource.observeIsAfk(roomId, userId)
+    override fun cleanupPresence(roomId: String, userId: String) =
+        dataSource.cleanupPresence(roomId, userId)
     override suspend fun addGuestToRoom(roomId: String, guestId: String) =
         dataSource.addGuestToRoom(roomId, guestId)
     override suspend fun removeGuestFromRoom(roomId: String, guestId: String) =
@@ -42,8 +48,14 @@ class MultiplayerRepositoryImpl @Inject constructor(
         dataSource.votePlayAgain(roomId, userId)
     override suspend fun unvotePlayAgain(roomId: String, userId: String) =
         dataSource.unvotePlayAgain(roomId, userId)
-    override suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?) =
-        dataSource.updateGuestProfile(roomId, userId, name, avatarColor, avatarEmoji)
+    override suspend fun updateGuestProfile(roomId: String, userId: String, name: String, avatarColor: Long?, avatarEmoji: String?, avatarUrl: String?) =
+        dataSource.updateGuestProfile(roomId, userId, name, avatarColor, avatarEmoji, avatarUrl)
     override suspend fun updateSessionPoints(roomId: String, sessionPoints: Map<String, Int>) =
         dataSource.updateSessionPoints(roomId, sessionPoints)
+    override suspend fun updatePlayerSessionPoints(roomId: String, userId: String, pts: Int) =
+        dataSource.updatePlayerSessionPoints(roomId, userId, pts)
+    override suspend fun setLobbyWinner(roomId: String, winnerId: String) =
+        dataSource.setLobbyWinner(roomId, winnerId)
+    override suspend fun setPlayerReady(roomId: String, userId: String, isReady: Boolean) =
+        dataSource.setPlayerReady(roomId, userId, isReady)
 }

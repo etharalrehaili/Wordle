@@ -4,13 +4,40 @@
     <string name="verify_email_title">Email Not Verified</string>
     <string name="verify_email_message">Please verify your email address before accessing this feature. Check your inbox for a verification link.</string>
     <string name="ok">OK</string>
-    <string name="welcome_to">Welcome To</string>
-    <string name="Khammin">KHAMMIN</string>
     <string name="quick_play">Quick Play</string>
     <string name="take_challenge">Take Challenge</string>
     <string name="leaderboard">Leaderboard</string>
-    <string name="home_description">Get a chance to guess the hidden word</string>
+    <string name="home_title_start">Guess the\u0020</string>
+    <string name="home_title_bold">Word</string>
+    <string name="home_subtitle">Each guess brings you closer to the word</string>
     <string name="wordle_letters">Play</string>
+
+    <!-- Challenge Screen -->
+    <string name="challenge_no_challenge_today">No challenge for today</string>
+    <string name="challenge_status_play">PLAY</string>
+    <string name="challenge_status_in_progress">IN PROGRESS</string>
+    <string name="challenge_status_completed">COMPLETED</string>
+    <string name="difficulty_beginner">Easy</string>
+    <string name="difficulty_intermediate">Medium</string>
+    <string name="difficulty_expert">Hard</string>
+    <string name="difficulty_badge_beginner">BEGINNER</string>
+    <string name="difficulty_badge_intermediate">INTERMEDIATE</string>
+    <string name="difficulty_badge_expert">EXPERT</string>
+    <string name="challenge_guess_4">Guess the word in less than 4 guesses</string>
+    <string name="challenge_guess_6">Guess the word in 6 tries</string>
+    <string name="challenge_guess_2min">Guess in less than 2 minutes</string>
+    <string name="challenge_guess_streak">3 correct guesses in a row</string>
+    <string name="challenge_guess_expert">Guess without any hints</string>
+    <string name="challenge_first_guess">Guess the word on the first try</string>
+    <string name="challenge_play_3_games">Play 3 games in a row</string>
+    <string name="challenge_win_multiplayer">Win a multiplayer match</string>
+    <string name="challenge_5_letter_word">Guess a 5-letter word</string>
+    <string name="challenge_guess_1min">Guess the word in under 1 minute</string>
+    <string name="challenge_guess_2_tries">Guess the word in 2 tries</string>
+    <string name="challenge_win_5_multiplayer">Win 5 multiplayer matches</string>
+    <string name="challenge_perfect_week">Play every day for a week</string>
+    <string name="challenge_30s">Guess the word in 30 seconds</string>
+    <string name="challenges_title">Challenges</string>
 
     <!-- Countdown -->
     <string name="countdown_next_word">Next word available in</string>
@@ -23,20 +50,35 @@
     <string name="leaderboard_rankings">Rankings</string>
     <string name="leaderboard_your_position">Your position</string>
     <string name="leaderboard_no_winners">No winners yet, try to be the first one!</string>
+    <string name="leaderboard_no_internet_title">No Internet Connection</string>
+    <string name="leaderboard_no_internet_subtitle">Please check your connection and try again</string>
+    <string name="leaderboard_try_again">Try Again</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
+    <string name="settings_preferences_section">Preferences</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_subtitle">Weekly challenge alerts</string>
     <string name="settings_account_section">Account Settings</string>
     <string name="settings_app_section">App Settings</string>
     <string name="settings_support_section">Support</string>
     <string name="settings_change_password">Change Password</string>
-    <string name="settings_notifications">Notifications</string>
     <string name="settings_support">Support</string>
     <string name="settings_sign_out">Sign Out</string>
     <string name="sign_out_title">Sign Out</string>
     <string name="sign_out_subtitle">Are you sure you want to sign out?</string>
     <string name="sign_out_confirm">Yes, Sign Out</string>
     <string name="sign_out_cancel">Cancel</string>
+
+    <!-- Support Screen -->
+    <string name="support_title">Support</string>
+    <string name="support_header_title">Share Your Thoughts!</string>
+    <string name="support_header_body">I\'d love to hear your thoughts, your feedback helps improve the app! Reach out to me on my LinkedIn profile.</string>
+    <string name="support_linkedin_name">Ethar Alrehaili</string>
+    <string name="support_linkedin_handle">linkedin.com/in/ethar-alrehaili</string>
+    <string name="support_linkedin_url">https://www.linkedin.com/in/ethar-alrehaili/</string>
+    <string name="support_linkedin_logo_text">in</string>
 
     <!-- Profile Screen -->
     <string name="profile_total_points">Total Points</string>
@@ -48,6 +90,10 @@
     <string name="profile_stat_solved">Solved</string>
     <string name="profile_stat_win_rate">Win Rate</string>
     <string name="profile_updated_successfully">Profile Updated Successfully</string>
+    <string name="signed_in_successfully">Signed in successfully</string>
+    <string name="profile_guest_banner_title">Don\'t lose your progress!</string>
+    <string name="profile_guest_banner_subtitle">Sign in to save your points and appear on the leaderboard</string>
+    <string name="profile_sign_in_google">Sign in with Google</string>
     <string name="profile_stat_arabic">ar</string>
     <string name="profile_stat_english">en</string>
     <string name="error_name_too_long">Name must not exceed 25 characters</string>
@@ -58,13 +104,66 @@
     <string name="multiplayer_room_tap_copy">Tap to copy</string>
     <string name="room_code_copied_label">Room Code</string>
     <string name="multiplayer_result_title">RESULTS</string>
-    <string name="spectator_round">Round %1$d</string>
-    <string name="spectator_votes">👋  Votes for play again: %1$d / %2$d</string>
-    <string name="spectator_solved">Solved in %1$d  ·  %2$d pts</string>
-    <string name="spectator_failed">Failed ✗</string>
+    <string name="spectator_round">Round %1$s</string>
+    <string name="spectator_votes">Votes for play again: %1$d / %2$d</string>
+    <string name="spectator_solved">%1$s pts</string>
+    <string name="spectator_failed">Failed</string>
     <string name="spectator_waiting_guess">Waiting…</string>
-    <string name="spectator_guess_progress">%1$d/%2$d</string>
-    <string name="spectator_total_points">Total: %1$d pts</string>
+    <string name="spectator_guess_progress">%1$s/%2$s</string>
+    <string name="spectator_total_points">Total: %1$s pts</string>
+    <string name="multiplayer_waiting_for_players">Waiting for players to join…</string>
+    <string name="multiplayer_waiting_for_host">Waiting for host to start…</string>
+    <string name="multiplayer_players_count">Players (%1$d/3)</string>
+    <string name="lobby_start_game">Start Game</string>
+    <string name="lobby_ready">Ready</string>
+    <string name="lobby_ready_done">Ready!</string>
+    <string name="lobby_badge_ready">READY</string>
+    <string name="lobby_waiting_ready">Waiting for all players to be ready…</string>
+    <string name="lobby_you">You</string>
+    <string name="lobby_badge_host">HOST</string>
+    <string name="profile_edit">Edit</string>
+    <string name="profile_display_name">Display name</string>
+    <string name="profile_avatar_color">Pick a color</string>
+    <string name="profile_avatar_emoji">Pick an emoji</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_close">Close</string>
+    <string name="profile_you">You</string>
+    <string name="all_players_left_title">The room is empty</string>
+    <string name="all_players_left_subtitle">Looks like everyone left. Head back home and start a new game!</string>
+    <string name="host_left_title">Host left the room</string>
+    <string name="host_left_subtitle">The host ended the session. Head back and start a new game!</string>
+    <string name="host_left_go_home">Back to Home</string>
+    <string name="lobby_round">Round %1$s</string>
+    <string name="lobby_you_won">You Won! 🎉</string>
+    <string name="lobby_you_lost">You Lost!</string>
+    <string name="lobby_winner_won">%1$s won this round</string>
+    <string name="lobby_the_word_was">The word was</string>
+    <string name="lobby_leaderboard">Leaderboard</string>
+    <string name="lobby_play_again">Play Again</string>
+    <string name="lobby_waiting_next_round">Waiting for host to start the next round…</string>
+    <string name="lobby_waiting_for_players">Waiting for all players to finish…</string>
+    <string name="lobby_leave">Leave</string>
+    <string name="lobby_pts">%1$d pts</string>
+    <string name="lobby_badge_you_label">You</string>
+    <string name="lobby_voted_play_again">Voted to play again!</string>
+    <string name="lobby_cancel_vote">Cancel vote</string>
+    <string name="lobby_play_again_question">Play Again?</string>
+    <string name="lobby_player_voted">%1$d player voted</string>
+    <string name="lobby_players_voted">%1$d players voted</string>
+    <string name="custom_word_hint">Your secret word (4–6 letters)</string>
+    <string name="custom_word_valid">Valid length</string>
+    <string name="custom_word_invalid_length">Must be 4–6 letters</string>
+    <string name="custom_word_players_count">Players (%1$d/4)</string>
+    <string name="lobby_badge_not_ready">NOT READY</string>
+    <string name="lobby_hint_enter_word">Enter a word to start</string>
+    <string name="lobby_hint_need_players">Need at least 1 player to join</string>
+    <string name="lobby_hint_wait_ready">Waiting for all players to be ready</string>
+    <string name="lobby_hint_tap_ready">Tap Ready when you\'re set to play</string>
+    <string name="lobby_guest_waiting_subtitle">The host will start the game once everyone is ready</string>
+    <string name="custom_word_players_count_4">Players (%1$d/4)</string>
+    <string name="spectator_play_again_question">Play again?</string>
+    <string name="spectator_no_votes">No votes yet</string>
+    <string name="spectator_vote_count">%1$d / %2$d</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>
@@ -72,10 +171,30 @@
     <string name="result_close">Close</string>
     <string name="hint_message">Hint: the letter \'%1$c\' is at position %2$d</string>
 
+    <!-- Join Room Error Messages -->
+    <string name="join_error_not_found_hint">Room not found. Check the code and try again.</string>
+    <string name="join_error_not_found">Room not found.</string>
+    <string name="join_error_game_ended">This game has already ended.</string>
+    <string name="join_error_game_started">This game has already started.</string>
+    <string name="join_error_room_full_max4">This room is full (maximum 4 players).</string>
+    <string name="join_error_room_full_max3">This room is full (maximum 3 players).</string>
+    <string name="join_error_room_full">This room is already full.</string>
+
     <!-- Error Messages -->
     <string name="error_name_empty">Name cannot be empty</string>
     <string name="error_upload_failed">Upload failed</string>
     <string name="error_generic">Error</string>
 
+    <!-- Rejoin sheet -->
+    <string name="rejoin_title">You left the room</string>
+    <string name="rejoin_subtitle">You were disconnected from the room. Want to rejoin?</string>
+    <string name="rejoin_button">Rejoin</string>
+    <string name="rejoin_go_home">Go Home</string>
 
+    <string name="ad_not_ready">Ad not ready, please try again</string>
+
+    <!-- Self-disconnected sheet -->
+    <string name="self_disconnected_title">You\'ve been disconnected</string>
+    <string name="self_disconnected_subtitle">You were offline for too long. Head back home and start a new game.</string>
+    <string name="self_disconnected_go_home">Back to Home</string>
 </resources>

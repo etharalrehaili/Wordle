@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -63,215 +63,224 @@ fun WordLengthSelectionBottomSheet(
         dragHandle       = null,
         shape            = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
 
-            // ── Top accent strip ──────────────────────────────────────
+        // ── Top accent strip ──────────────────────────────────────
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                colors.buttonPink,
-                                colors.buttonTeal,
-                            )
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
-            // ── Main content ──────────────────────────────────────────
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .padding(horizontal = 24.dp)
-                    .padding(top = 24.dp, bottom = 36.dp),
+                    .padding(top = 16.dp, bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
 
-            // ── Pill handle ───────────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .width(40.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(colors.divider)
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── Header ────────────────────────────────────────────────
-            WordleText(
-                text       = stringResource(R.string.word_length_title),
-                color      = colors.title,
-                fontSize   = GameDesignTheme.typography.displaySmall,
-                fontWeight = FontWeight.ExtraBold,
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            WordleText(
-                text     = stringResource(R.string.word_length_subtitle),
-                color    = colors.body.copy(alpha = 0.75f),
-                fontSize = GameDesignTheme.typography.labelMedium,
-            )
-
-            Spacer(Modifier.height(28.dp))
-
-            // ── Cards ─────────────────────────────────────────────────
-            data class LengthOption(
-                val length: Int,
-                val accentColor: androidx.compose.ui.graphics.Color,
-                val tagRes: Int,
-                val isUnlocked: Boolean,
-                val progressCurrent: Int,
-                val progressRequired: Int,
-                val requirementRes: Int,
-            )
-
-            val options = listOf(
-                LengthOption(4, colors.buttonTaupe, R.string.word_length_easy,
-                    isUnlocked = true, 0, 0, R.string.word_length_easy),
-                LengthOption(5, colors.buttonTeal, R.string.word_length_classic,
-                    isUnlocked = classicUnlocked,
-                    progressCurrent  = easyWordsSolved.coerceAtMost(CLASSIC_UNLOCK_THRESHOLD),
-                    progressRequired = CLASSIC_UNLOCK_THRESHOLD,
-                    requirementRes   = R.string.word_length_classic_requirement),
-                LengthOption(6, colors.buttonPink, R.string.word_length_hard,
-                    isUnlocked = hardUnlocked,
-                    progressCurrent  = classicWordsSolved.coerceAtMost(HARD_UNLOCK_THRESHOLD),
-                    progressRequired = HARD_UNLOCK_THRESHOLD,
-                    requirementRes   = R.string.word_length_hard_requirement),
-            )
-
-            options.forEach { option ->
-                val (length, accentColor, tag, isUnlocked, progressCurrent, progressRequired) = option
-
+                // ── Pill handle ───────────────────────────────────────────
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .alpha(if (isUnlocked) 1f else 0.85f)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(accentColor.copy(alpha = 0.1f))
-                        .border(
-                            width = 1.5.dp,
-                            color = accentColor.copy(alpha = 0.30f),
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                        .then(
-                            if (!isUnlocked) {
-                                Modifier.drawBehind {
-                                    drawLine(
-                                        color       = accentColor.copy(alpha = 0.4f),
-                                        start       = androidx.compose.ui.geometry.Offset(0f, size.height),
-                                        end         = androidx.compose.ui.geometry.Offset(size.width, 0f),
-                                        strokeWidth = 2.dp.toPx()
-                                    )
-                                }
-                            } else Modifier
-                        )
-                        .then(
-                            if (isUnlocked) Modifier.clickable { onLengthSelected(length) }
-                            else Modifier
-                        )
-                        .padding(horizontal = 20.dp, vertical = 16.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        .width(40.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(colors.divider)
+                )
 
-                        // Tag + lock/arrow icon
-                        Row(
-                            modifier              = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment     = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
-                                    .background(accentColor.copy(alpha = 0.3f))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                Spacer(Modifier.height(12.dp))
+
+                // ── Header ────────────────────────────────────────────────
+                WordleText(
+                    text       = stringResource(R.string.word_length_title),
+                    color      = colors.title,
+                    fontSize   = GameDesignTheme.typography.displaySmall,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                WordleText(
+                    text     = stringResource(R.string.word_length_subtitle),
+                    color    = colors.body.copy(alpha = 0.75f),
+                    fontSize = GameDesignTheme.typography.labelMedium,
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                // ── Cards ─────────────────────────────────────────────────
+                data class LengthOption(
+                    val length: Int,
+                    val accentColor: androidx.compose.ui.graphics.Color,
+                    val tagRes: Int,
+                    val isUnlocked: Boolean,
+                    val progressCurrent: Int,
+                    val progressRequired: Int,
+                    val requirementRes: Int,
+                )
+
+                val options = listOf(
+                    LengthOption(
+                        length          = 4,
+                        accentColor     = colors.logoBlue,
+                        tagRes          = R.string.word_length_easy,
+                        isUnlocked      = true,
+                        progressCurrent = 0,
+                        progressRequired = 0,
+                        requirementRes  = R.string.word_length_easy
+                    ),
+                    LengthOption(
+                        length          = 5,
+                        accentColor     = colors.logoGreen,
+                        tagRes          = R.string.word_length_classic,
+                        isUnlocked      = classicUnlocked,
+                        progressCurrent  = easyWordsSolved.coerceAtMost(CLASSIC_UNLOCK_THRESHOLD),
+                        progressRequired = CLASSIC_UNLOCK_THRESHOLD,
+                        requirementRes   = R.string.word_length_classic_requirement
+                    ),
+                    LengthOption(
+                        length          = 6,
+                        accentColor     = colors.logoPink,
+                        tagRes          = R.string.word_length_hard,
+                        isUnlocked      = hardUnlocked,
+                        progressCurrent  = classicWordsSolved.coerceAtMost(HARD_UNLOCK_THRESHOLD),
+                        progressRequired = HARD_UNLOCK_THRESHOLD,
+                        requirementRes   = R.string.word_length_hard_requirement
+                    ),
+                )
+
+                options.forEach { option ->
+                    val (length, accentColor, tag, isUnlocked, progressCurrent, progressRequired) = option
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .alpha(if (isUnlocked) 1f else 0.85f)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(accentColor.copy(alpha = 0.1f))
+                            .border(
+                                width = 1.5.dp,
+                                color = accentColor.copy(alpha = 0.30f),
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .then(
+                                if (!isUnlocked) {
+                                    Modifier.drawBehind {
+                                        drawLine(
+                                            color       = accentColor.copy(alpha = 0.4f),
+                                            start       = androidx.compose.ui.geometry.Offset(0f, size.height),
+                                            end         = androidx.compose.ui.geometry.Offset(size.width, 0f),
+                                            strokeWidth = 2.dp.toPx()
+                                        )
+                                    }
+                                } else Modifier
+                            )
+                            .then(
+                                if (isUnlocked) Modifier.clickable { onLengthSelected(length) }
+                                else Modifier
+                            )
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+                            // Tag + lock/arrow icon
+                            Row(
+                                modifier              = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment     = Alignment.CenterVertically
                             ) {
-                                WordleText(
-                                    text          = stringResource(tag),
-                                    color         = accentColor,
-                                    fontSize      = GameDesignTheme.typography.labelSmall,
-                                    fontWeight    = FontWeight.Bold,
-                                    letterSpacing = 1.sp,
-                                )
-                            }
-
-                            if (isUnlocked) {
-                                Icon(
-                                    imageVector        = Icons.AutoMirrored.Outlined.ArrowForwardIos,
-                                    contentDescription = null,
-                                    tint               = accentColor,
-                                    modifier           = Modifier.size(14.dp)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector        = Icons.Outlined.Lock,
-                                    contentDescription = null,
-                                    tint               = accentColor,
-                                    modifier           = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-
-                        // Letter squares preview
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            repeat(length) {
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(accentColor.copy(alpha = 0.18f))
-                                        .border(
-                                            1.dp,
-                                            accentColor.copy(alpha = 0.40f),
-                                            RoundedCornerShape(8.dp)
-                                        )
+                                        .clip(RoundedCornerShape(50))
+                                        .background(accentColor.copy(alpha = 0.3f))
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    WordleText(
+                                        text          = stringResource(tag),
+                                        color         = accentColor,
+                                        fontSize      = GameDesignTheme.typography.labelSmall,
+                                        fontWeight    = FontWeight.Bold,
+                                        letterSpacing = 1.sp,
+                                    )
+                                }
+
+                                if (isUnlocked) {
+                                    Icon(
+                                        imageVector        = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                                        contentDescription = null,
+                                        tint               = accentColor,
+                                        modifier           = Modifier.size(14.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector        = Icons.Outlined.Lock,
+                                        contentDescription = null,
+                                        tint               = accentColor,
+                                        modifier           = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+
+                            // Letter squares preview
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                repeat(length) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(accentColor.copy(alpha = 0.18f))
+                                            .border(
+                                                1.dp,
+                                                accentColor.copy(alpha = 0.40f),
+                                                RoundedCornerShape(8.dp)
+                                            )
+                                    )
+                                }
+
+                                Spacer(Modifier.weight(1f))
+
+                                WordleText(
+                                    text       = "$length",
+                                    color      = accentColor,
+                                    fontSize   = GameDesignTheme.typography.displayMedium,
+                                    fontWeight = FontWeight.ExtraBold,
                                 )
                             }
 
-                            Spacer(Modifier.weight(1f))
-
-                            WordleText(
-                                text       = "$length",
-                                color      = accentColor,
-                                fontSize   = GameDesignTheme.typography.displayMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
-                        }
-
-                        // Progress bar + requirement text for locked modes
-                        if (!isUnlocked) {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                WordleText(
-                                    text       = stringResource(option.requirementRes, progressCurrent, progressRequired),
-                                    color      = colors.body,
-                                    fontSize   = GameDesignTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                                LinearProgressIndicator(
-                                    progress        = { progressCurrent.toFloat() / progressRequired },
-                                    modifier        = Modifier
-                                        .fillMaxWidth()
-                                        .height(4.dp)
-                                        .clip(RoundedCornerShape(50)),
-                                    color           = accentColor,
-                                    trackColor      = accentColor.copy(alpha = 0.2f),
-                                )
+                            // Progress bar + requirement text for locked modes
+                            if (!isUnlocked) {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    WordleText(
+                                        text       = stringResource(option.requirementRes, progressCurrent, progressRequired),
+                                        color      = colors.body,
+                                        fontSize   = GameDesignTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                    LinearProgressIndicator(
+                                        progress        = { progressCurrent.toFloat() / progressRequired },
+                                        modifier        = Modifier
+                                            .fillMaxWidth()
+                                            .height(4.dp)
+                                            .clip(RoundedCornerShape(50)),
+                                        color           = accentColor,
+                                        trackColor      = accentColor.copy(alpha = 0.2f),
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(8.dp))
+                }
             }
         }
     }
 }
-    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @GameLightBackgroundPreview

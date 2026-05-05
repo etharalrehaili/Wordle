@@ -36,7 +36,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +48,7 @@ import com.khammin.core.presentation.components.PlayerCard
 import com.khammin.core.presentation.components.PodiumPlayer
 import com.khammin.core.presentation.components.TopThreePodium
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.components.buttons.SegmentedButton
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.LeaderboardFilter
@@ -104,8 +104,6 @@ fun LeaderboardContent(
             title            = stringResource(R.string.leaderboard),
             endIcon          = Icons.Filled.Close,
             onEndIconClicked = onClose,
-            containerColor   = Color.Transparent,
-            showBackground     = false,
             modifier           = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding(),
@@ -124,7 +122,7 @@ fun LeaderboardContent(
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            color       = colors.buttonTeal,
+                            color       = colors.logoBlue,
                             strokeWidth = 2.dp,
                         )
                     }
@@ -147,27 +145,35 @@ fun LeaderboardContent(
                                 modifier           = Modifier.size(48.dp)
                             )
                             WordleText(
-                                text      = "No Internet Connection",
+                                text = stringResource(R.string.leaderboard_no_internet_title),
                                 color     = colors.title,
                                 fontSize  = typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                             )
                             WordleText(
-                                text      = "Please check your connection and try again",
+                                text = stringResource(R.string.leaderboard_no_internet_subtitle),
                                 color     = colors.body.copy(alpha = 0.5f),
                                 fontSize  = typography.labelMedium,
                                 textAlign = TextAlign.Center,
                             )
+
                             Spacer(Modifier.height(8.dp))
-                            GameButton(
-                                label           = "Try Again",
-                                backgroundColor = colors.buttonTeal,
-                                contentColor    = colors.title,
-                                showBorder      = false,
-                                onClick         = { onIntent(LeaderboardIntent.ChangeLanguage(uiState.language)) },
-                                modifier        = Modifier.fillMaxWidth()
-                            )
+
+                            if (uiState.isRetrying) {
+                                CircularProgressIndicator(
+                                    color       = colors.logoBlue,
+                                    strokeWidth = 2.dp,
+                                    modifier    = Modifier.size(32.dp)
+                                )
+                            } else {
+                                GameButton(
+                                    label    = stringResource(R.string.leaderboard_try_again),
+                                    onClick  = { onIntent(LeaderboardIntent.Retry) },
+                                    variant  = GameButtonVariant.Primary,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }
@@ -372,13 +378,13 @@ fun LeaderboardContent(
                                     name = player.name,
                                     points = player.arCurrentPoints,
                                     avatarUrl = player.avatarUrl,
-                                    borderColor = if (isMe) colors.buttonTeal else colors.buttonTaupe,
+                                    borderColor = if (isMe) colors.logoBlue else colors.logoGreen,
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp)
                                         .padding(bottom = 8.dp)
                                         .then(
                                             if (isMe) Modifier.background(
-                                                color = colors.buttonTeal.copy(alpha = 0.20f),
+                                                color = colors.logoBlue.copy(alpha = 0.20f),
                                                 shape = RoundedCornerShape(16.dp),
                                             ) else Modifier
                                         )
@@ -409,7 +415,7 @@ fun LeaderboardContent(
                                             Icon(
                                                 imageVector = Icons.Outlined.PersonPin,
                                                 contentDescription = null,
-                                                tint = colors.buttonPink.copy(alpha = 0.6f),
+                                                tint = colors.logoPink.copy(alpha = 0.6f),
                                                 modifier = Modifier.size(14.dp)
                                             )
                                             WordleText(
@@ -425,12 +431,12 @@ fun LeaderboardContent(
                                             name = me.name,
                                             points      = me.arCurrentPoints,
                                             avatarUrl = me.avatarUrl,
-                                            borderColor = colors.buttonPink,
+                                            borderColor = colors.logoPink,
                                             modifier = Modifier
                                                 .padding(horizontal = 16.dp)
                                                 .padding(bottom = 16.dp)
                                                 .background(
-                                                    color = colors.buttonPink.copy(alpha = 0.05f),
+                                                    color = colors.logoPink.copy(alpha = 0.05f),
                                                     shape = RoundedCornerShape(16.dp),
                                                 )
                                         )

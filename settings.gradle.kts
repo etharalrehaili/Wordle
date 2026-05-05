@@ -16,6 +16,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://www.zetetic.net/maven/releases") }
     }
 }
 
@@ -24,6 +25,4 @@ include(":app")
 include(":features")
 include(":features:core")
 include(":features:game")
-include(":features:onboarding")
 include(":features:authentication")
-include(":features:profile")

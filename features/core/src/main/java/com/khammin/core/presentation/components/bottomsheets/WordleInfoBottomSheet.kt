@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,7 +27,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -54,21 +54,16 @@ fun WordleInfoBottomSheet(
         dragHandle       = null,
         shape            = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
 
-            // ── Top accent strip ──────────────────────────────────────
+        // ── Top accent strip ──────────────────────────────────────
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                colors.buttonPink,
-                                colors.buttonTeal,
-                            )
-                        )
-                    )
+                    .background(brush = colors.logoStripBrush)
             )
 
             // ── Main content ──────────────────────────────────────────
@@ -162,16 +157,6 @@ fun WordleInfoBottomSheet(
                         letter      = stringResource(R.string.info_example_4_letter).first(),
                         description = stringResource(R.string.info_example_4_desc),
                     )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                    HorizontalDivider(color = colors.divider, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text  = stringResource(R.string.info_new_wordle),
-                        color = colors.body,
-                        fontSize = 14.sp
-                    )
                 }
             }
         }
@@ -229,16 +214,16 @@ private fun ExampleRow(
                             }
                         } else {
                             Modifier.background(
-                                color = if (isHighlighted) color else Color(0xFF1A2535),
+                                color = if (isHighlighted) color else wordleColors.emptyTile,
                                 shape = tileShape
                             )
                         }
                     )
             ) {
                 Text(
-                    text = letter.toString(),
-                    color = Color.White,
-                    fontSize = 18.sp,
+                    text       = letter.toString(),
+                    color      = if (isHighlighted) Color.White else wordleColors.title,
+                    fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
             }

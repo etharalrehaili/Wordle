@@ -6,9 +6,14 @@ import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
+import com.khammin.game.domain.model.GameMode
+import com.khammin.game.domain.model.GameResult
+import com.khammin.game.domain.usecases.challenges.AwardChallengePointsUseCase
+import com.khammin.game.domain.usecases.challenges.EvaluateChallengesUseCase
 import com.khammin.game.domain.usecases.game.GetWordsUseCase
 import com.khammin.game.domain.usecases.game.RecordWinUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
+import com.khammin.game.domain.usecases.stats.RecordGameUseCase
 import com.khammin.game.presentation.game.contract.GameEffect
 import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
@@ -22,9 +27,15 @@ class GameViewModel @Inject constructor(
     private val getWordsUseCase: GetWordsUseCase,
     private val recordWinUseCase: RecordWinUseCase,
     private val validateWordUseCase: ValidateWordUseCase,
+    private val evaluateChallengesUseCase: EvaluateChallengesUseCase,
+    private val awardChallengePointsUseCase: AwardChallengePointsUseCase,
+    private val recordGameUseCase: RecordGameUseCase,
 ) : BaseMviViewModel<GameIntent, GameUiState, GameEffect>(
     initialState = GameUiState()
 ) {
+
+    /** Epoch-millis when the current game session started (reset on load/restart). */
+    private var gameStartTime = 0L
 
     override fun onEvent(intent: GameIntent) {
         when (intent) {
@@ -34,10 +45,14 @@ class GameViewModel @Inject constructor(
             is GameIntent.SubmitGuess  -> submitGuess()
             is GameIntent.RestartGame  -> restartGame()
             is GameIntent.UseHint      -> useHint()
+            is GameIntent.EarnHint -> earnHint()
         }
     }
 
     private fun loadWords(language: String, wordLength: Int) {
+        val current = uiState.value
+        if (current.wordList.isNotEmpty() && current.wordLength == wordLength && current.targetWord.isNotEmpty()) return
+
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
             when (val result = getWordsUseCase(language, wordLength)) {
@@ -53,6 +68,7 @@ class GameViewModel @Inject constructor(
                             board      = List(MAX_GUESSES) { List(wordLength) { Tile() } }
                         )
                     }
+                    gameStartTime = System.currentTimeMillis()
                 }
                 is Resource.Error -> {
                     setState { copy(isLoading = false, error = result.message) }
@@ -109,7 +125,7 @@ class GameViewModel @Inject constructor(
             val normalizedGuess  = rawGuess.normalizeForWordle()
             val normalizedTarget = state.targetWord.normalizeForWordle()
             val isValid = normalizedGuess == normalizedTarget ||
-                validateWordUseCase(rawGuess, state.language, state.wordList)
+                    validateWordUseCase(rawGuess, state.language, state.wordList)
             setState { copy(isValidating = false) }
 
             if (!isValid) {
@@ -139,7 +155,25 @@ class GameViewModel @Inject constructor(
 
             if (isWin || isLast) {
                 if (isWin) recordWinUseCase(s.wordLength)
+                viewModelScope.launch { recordGameUseCase(s.language, isWin) }
                 sendEffect { GameEffect.ShowGameDialog(isWin = isWin, targetWord = s.targetWord) }
+                val elapsed = if (gameStartTime > 0L)
+                    (System.currentTimeMillis() - gameStartTime) / 1000L else Long.MAX_VALUE
+                viewModelScope.launch {
+                    val gameResult = GameResult(
+                        isWin             = isWin,
+                        guessCount        = s.currentRow + 1,
+                        timeTakenSeconds  = elapsed,
+                        wordLength        = s.wordLength,
+                        gameMode          = GameMode.SOLO,
+                        hintsUsed         = s.hintsUsed,
+                        language          = s.language,
+                    )
+                    runCatching {
+                        val completed = evaluateChallengesUseCase(gameResult)
+                        awardChallengePointsUseCase(completed)
+                    }
+                }
             }
         }
     }
@@ -150,10 +184,12 @@ class GameViewModel @Inject constructor(
             GameUiState(
                 wordLength = state.wordLength,
                 wordList   = state.wordList,
+                language   = state.language,
                 targetWord = state.wordList.randomOrNull()?.normalizeForWordle() ?: "",
                 board      = List(MAX_GUESSES) { List(state.wordLength) { Tile() } }
             )
         }
+        gameStartTime = System.currentTimeMillis()
     }
 
     /**
@@ -233,28 +269,33 @@ class GameViewModel @Inject constructor(
         if (state.hintsUsed >= state.maxHints) return
         if (state.targetWord.isEmpty()) return
 
-        // Find an index not yet correct in the current row
         val currentRowTiles = state.board[state.currentRow]
         val hintIndex = state.targetWord.indices.firstOrNull { index ->
             currentRowTiles[index].state != TileState.CORRECT
         } ?: return
 
         val hintLetter = state.targetWord[hintIndex]
-
         val newBoard = state.board.updateTile(
             row  = state.currentRow,
             col  = hintIndex,
             tile = Tile(letter = hintLetter, state = TileState.CORRECT)
         )
+        val newCol = if (hintIndex >= state.currentCol) hintIndex + 1 else state.currentCol
 
         setState {
             copy(
                 board      = newBoard,
                 hintsUsed  = hintsUsed + 1,
-                // Advance currentCol past the hint tile if needed
-                currentCol = if (hintIndex >= currentCol) hintIndex + 1 else currentCol
+                currentCol = newCol
             )
         }
+        if (newCol == state.wordLength) submitGuess()
+    }
+
+    private fun earnHint() {
+        // Give +1 hint then immediately use it
+        setState { copy(maxHints = maxHints + 1) }
+        useHint()
     }
 
 }

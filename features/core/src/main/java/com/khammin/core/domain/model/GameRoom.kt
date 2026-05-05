@@ -14,6 +14,7 @@ data class GameRoom(
     val leftBy: String = "",
     val failedBy: String = "",
     @JvmField var isCustomWord: Boolean = false,
+    @JvmField var isLobbyMode: Boolean = false,
     val playAgainVotes: List<String> = emptyList(), // guestIds who voted to play again
     val roundNumber: Int = 1,
     val totalPoints: Map<String, Int> = emptyMap(), // guestId -> cumulative points (legacy)

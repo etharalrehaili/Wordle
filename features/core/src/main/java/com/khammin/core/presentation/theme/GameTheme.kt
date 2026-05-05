@@ -92,6 +92,24 @@ data class WordleColors(
     val buttonTaupeBrush: Brush,
     val cardBackground: Color,
     val cardBorder: Color,
+    val buttonPrimaryBg: Color,
+    val buttonPrimaryContent: Color,
+    val buttonMutedBg: Color,
+    val buttonMutedContent: Color,
+    val buttonGhostBorder: Color,
+    val buttonGhostContent: Color,
+    val logoStripBrush: Brush,
+    val logoBlue: Color,
+    val logoGreen: Color,
+    val logoPink: Color,
+    val tileDefault: Color,
+    val emptyTile: Color,
+    val snackbarSuccess: Color,
+    val snackbarError: Color,
+    val snackbarWarning: Color,
+    val logoOrange: Color,
+    val logoTeal: Color,
+    val logoPurple: Color,
 )
 
 val DarkWordleColors = WordleColors(
@@ -129,6 +147,26 @@ val DarkWordleColors = WordleColors(
     buttonTaupeBrush = DarkButtonPinkBottomBrush,
     cardBackground = DarkCardBackground,
     cardBorder     = DarkCardBorder,
+    buttonPrimaryBg      = ButtonPrimaryBg,
+    buttonPrimaryContent = ButtonPrimaryContent,
+    buttonMutedBg        = ButtonMutedBgDark,
+    buttonMutedContent   = ButtonMutedContentDark,
+    buttonGhostBorder    = ButtonGhostBorder,
+    buttonGhostContent   = ButtonGhostContentDark,
+    logoStripBrush = Brush.horizontalGradient(
+        colors = listOf(LogoBlue, LogoPink, LogoGreen)
+    ),
+    logoBlue  = LogoBlue,
+    logoGreen = LogoGreen,
+    logoPink  = LogoPink,
+    tileDefault = TileDefault,
+    emptyTile = DarkEmptyTile,
+    snackbarSuccess = LogoGreen,
+    snackbarError   = LogoPink,
+    snackbarWarning = LogoOrange,
+    logoOrange = LogoOrange,
+    logoTeal   = LogoTeal,
+    logoPurple = LogoPurple,
 )
 
 val LightWordleColors = WordleColors(
@@ -166,6 +204,26 @@ val LightWordleColors = WordleColors(
     buttonTaupeBrush = LightButtonPinkBottomBrush,
     cardBackground = LightCardBackground,
     cardBorder     = LightCardBorder,
+    buttonPrimaryBg      = ButtonPrimaryBg,
+    buttonPrimaryContent = ButtonPrimaryContent,
+    buttonMutedBg        = ButtonMutedBgLight,
+    buttonMutedContent   = ButtonMutedContentLight,
+    buttonGhostBorder    = ButtonGhostBorder,
+    buttonGhostContent   = ButtonGhostContentLight,
+    logoStripBrush = Brush.horizontalGradient(
+        colors = listOf(LogoBlue, LogoPink, LogoGreen)
+    ),
+    logoBlue  = LogoBlue,
+    logoGreen = LogoGreen,
+    logoPink  = LogoPink,
+    tileDefault = TileDefault,
+    emptyTile = LightEmptyTile,
+    snackbarSuccess = LogoGreen,
+    snackbarError   = LogoPink,
+    snackbarWarning = LogoOrange,
+    logoOrange = LogoOrange,
+    logoTeal   = LogoTeal,
+    logoPurple = LogoPurple,
 )
 
 val LocalWordleColors = compositionLocalOf { DarkWordleColors }

@@ -15,6 +15,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import android.util.Log
 import javax.inject.Inject
 
 /**
@@ -27,7 +28,14 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
 
     /** Queries Strapi for a profile with matching firebaseUid. Returns first result or null. */
     override suspend fun getProfile(firebaseUid: String): ProfileItem? {
-        return api.getProfile(firebaseUid).data.firstOrNull()
+        Log.d("ProfilePerf", "getProfile query → GET /profiles?filters[firebaseUid][\$eq]=$firebaseUid")
+        val response = api.getProfile(firebaseUid)
+        Log.d("ProfilePerf", "getProfile raw response → count=${response.data.size} items=${
+            response.data.map { "id=${it.id} docId=${it.documentId} uid=${it.firebaseUid} name=${it.name}" }
+        }")
+        val result = response.data.firstOrNull()
+        if (result == null) Log.d("ProfilePerf", "getProfile → returned null (empty data list)")
+        return result
     }
 
     /** Creates a new profile in Strapi with the user's Firebase UID and display name. */
@@ -111,6 +119,72 @@ class ProfileRemoteDataSourceImpl @Inject constructor(
 
         val relativePath = api.uploadAvatar(part).first().url
         return "${KeyManager.getBaseHost()}$relativePath"
+    }
+
+    override suspend fun syncProfile(
+        documentId: String,
+        firebaseUid: String,
+        name: String,
+        avatarUrl: String?,
+        enGamesPlayed: Int,
+        enWordsSolved: Int,
+        enWinPercentage: Double,
+        enCurrentPoints: Int,
+        enLastPlayedAt: String?,
+        arGamesPlayed: Int,
+        arWordsSolved: Int,
+        arWinPercentage: Double,
+        arCurrentPoints: Int,
+        arLastPlayedAt: String?,
+    ): ProfileItem {
+        val data = UpdateProfileData(
+            name            = name,
+            avatarUrl       = avatarUrl,
+            enGamesPlayed   = enGamesPlayed,
+            enWordsSolved   = enWordsSolved,
+            enWinPercentage = enWinPercentage,
+            enCurrentPoints = enCurrentPoints,
+            enLastPlayedAt  = enLastPlayedAt,
+            arGamesPlayed   = arGamesPlayed,
+            arWordsSolved   = arWordsSolved,
+            arWinPercentage = arWinPercentage,
+            arCurrentPoints = arCurrentPoints,
+            arLastPlayedAt  = arLastPlayedAt,
+        )
+        return api.updateProfile(documentId, UpdateProfileRequest(data)).data
+    }
+
+    override suspend fun syncProfile(
+        documentId: String,
+        firebaseUid: String,
+        name: String,
+        avatarUrl: String?,
+        enGamesPlayed: Int,
+        enWordsSolved: Int,
+        enWinPercentage: Double,
+        enCurrentPoints: Int,
+        enLastPlayedAt: String?,
+        arGamesPlayed: Int,
+        arWordsSolved: Int,
+        arWinPercentage: Double,
+        arCurrentPoints: Int,
+        arLastPlayedAt: String?,
+    ): ProfileItem {
+        val data = UpdateProfileData(
+            name            = name,
+            avatarUrl       = avatarUrl,
+            enGamesPlayed   = enGamesPlayed,
+            enWordsSolved   = enWordsSolved,
+            enWinPercentage = enWinPercentage,
+            enCurrentPoints = enCurrentPoints,
+            enLastPlayedAt  = enLastPlayedAt,
+            arGamesPlayed   = arGamesPlayed,
+            arWordsSolved   = arWordsSolved,
+            arWinPercentage = arWinPercentage,
+            arCurrentPoints = arCurrentPoints,
+            arLastPlayedAt  = arLastPlayedAt,
+        )
+        return api.updateProfile(documentId, UpdateProfileRequest(data)).data
     }
 
     /** Fetches top [limit] profiles from Strapi sorted by currentPoints descending. */

@@ -28,8 +28,12 @@ object DatabaseModule {
         migrator: DatabaseEncryptionMigrator,
     ): AppDatabase {
         migrator.migrateIfNeeded(context, "wordle_db")
+        val factory = keyManager.getSupportFactory()
+        if (keyManager.wasKeyRecovered) {
+            context.deleteDatabase("wordle_db")
+        }
         return Room.databaseBuilder(context, AppDatabase::class.java, "wordle_db")
-            .openHelperFactory(keyManager.getSupportFactory())
+            .openHelperFactory(factory)
             .addMigrations(AppDatabase.MIGRATION_3_4)
             .fallbackToDestructiveMigration(true)
             .build()

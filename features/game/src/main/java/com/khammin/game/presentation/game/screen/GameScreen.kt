@@ -1,12 +1,9 @@
 package com.khammin.game.presentation.game.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -17,16 +14,17 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
@@ -133,6 +131,21 @@ fun GameContent(
     val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val resultSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    // Timer: reset when a new word is loaded, stop when the game ends
+    var timerSeconds by remember { mutableIntStateOf(0) }
+    LaunchedEffect(uiState.targetWord) {
+        timerSeconds = 0
+    }
+    LaunchedEffect(uiState.isGameOver, uiState.targetWord) {
+        if (!uiState.isGameOver && uiState.targetWord.isNotEmpty()) {
+            while (true) {
+                delay(1000L)
+                timerSeconds++
+            }
+        }
+    }
+    val timerText = String.format(java.util.Locale.US, "%02d:%02d", timerSeconds / 60, timerSeconds % 60)
+
     val guessRows = uiState.board.map { row ->
         GuessRow(
             letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
@@ -142,13 +155,13 @@ fun GameContent(
 
     val keyStates = uiState.keyboardStates.mapValues { (_, tileState) -> tileState.toTypes() }
 
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             GameTopBar(
+                title = timerText,
                 endIcon = Icons.Filled.Close,
                 startIcon = Icons.Filled.Info,
                 hintIcon = Icons.Filled.Lightbulb,
@@ -156,7 +169,6 @@ fun GameContent(
                 onEndIconClicked = onClose,
                 onStartIconClicked = onInfoClick,
                 onHintClicked = { onIntent(GameIntent.UseHint) },
-                showBackground = false,
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding(),
@@ -191,18 +203,6 @@ fun GameContent(
                         .fillMaxWidth()
                         .weight(1f)
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    thickness = 1.dp,
-                    color = colors.body.copy(alpha = 0f)
-                )
-
-                Spacer(modifier = Modifier.height(140.dp))
 
             }
 

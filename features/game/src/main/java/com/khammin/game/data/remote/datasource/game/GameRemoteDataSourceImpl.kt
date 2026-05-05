@@ -1,5 +1,6 @@
 package com.khammin.game.data.remote.datasource.game
 
+import android.util.Log
 import com.khammin.game.data.remote.api.GameApiService
 import com.khammin.game.data.remote.model.ValidateWordRequest
 import com.khammin.game.data.remote.model.WordItem
@@ -28,7 +29,11 @@ class GameRemoteDataSourceImpl @Inject constructor(
     }
 
     override suspend fun validateWord(word: String, language: String): Boolean {
-        return api.validateWord(ValidateWordRequest(word = word, language = language)).isValid
+        val request = ValidateWordRequest(word = word, language = language)
+        Log.d("WordValidation", "API_REQUEST word='${request.word}'  language='${request.language}'  unicode=${request.word.map { "U+%04X".format(it.code) }}")
+        val response = api.validateWord(request)
+        Log.d("WordValidation", "API_RESPONSE isValid=${response.isValid}")
+        return response.isValid
     }
 
     private companion object {
