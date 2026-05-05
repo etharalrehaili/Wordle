@@ -132,12 +132,14 @@ fun SpectatorView(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         GuestCard(
-                            name        = progress.name,
-                            avatarUrl   = progress.avatarUrl,
-                            avatarColor = progress.avatarColor,
-                            avatarEmoji = progress.avatarEmoji,
-                            guesses     = progress.guessRows,
-                            wordLength  = wordLength,
+                            name         = progress.name,
+                            avatarUrl    = progress.avatarUrl,
+                            avatarColor  = progress.avatarColor,
+                            avatarEmoji  = progress.avatarEmoji,
+                            guesses      = progress.guessRows,
+                            wordLength   = wordLength,
+                            isAfk        = progress.isAfk,
+                            afkCountdown = progress.afkCountdown,
                         )
                         Column(
                             horizontalAlignment = Alignment.End,
