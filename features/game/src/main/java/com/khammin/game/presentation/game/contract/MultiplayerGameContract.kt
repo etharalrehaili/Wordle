@@ -15,6 +15,8 @@ data class WaitingPlayer(
     val avatarColor: Long? = null,
     val avatarEmoji: String? = null,
     val isReady: Boolean = false,
+    val isAfk: Boolean = false,
+    val afkCountdown: Int? = null,
 )
 
 data class OpponentProgress(
@@ -27,6 +29,8 @@ data class OpponentProgress(
     val guessCount: Int = 0,
     val guessRows: List<GuessRow> = List(MAX_GUESSES) { GuessRow() },
     val totalPoints: Int = 0,
+    val isAfk: Boolean = false,
+    val afkCountdown: Int? = null,
 )
 
 data class MultiplayerGameUiState(
@@ -78,6 +82,8 @@ data class MultiplayerGameUiState(
     // Name of the player who won the current lobby-mode round (empty if current user won)
     val lobbyWinnerName: String = "",
     val isNoInternet: Boolean = false,
+    val isOpponentAfk: Boolean = false,
+    val opponentAfkCountdown: Int? = null,
 ) : UiState
 
 sealed interface MultiplayerGameEffect : UiEffect {

@@ -322,6 +322,8 @@ private fun RandomWordGameContent(
                             hostAvatarColor = state.opponentAvatarColor,
                             hostAvatarEmoji = state.opponentAvatarEmoji,
                             hostAvatarUrl   = state.opponentAvatarUrl,
+                            hostIsAfk        = state.opponentsProgress[state.opponentId]?.isAfk ?: state.isOpponentAfk,
+                            hostAfkCountdown = state.opponentsProgress[state.opponentId]?.afkCountdown ?: state.opponentAfkCountdown,
                             myName          = state.myName,
                             avatarColor     = state.avatarColor,
                             avatarEmoji     = state.avatarEmoji,
@@ -354,12 +356,14 @@ private fun RandomWordGameContent(
                                 ) {
                                     items(opponents) { progress ->
                                         GuestCard(
-                                            name        = progress.name,
-                                            avatarUrl   = progress.avatarUrl,
-                                            avatarColor = progress.avatarColor,
-                                            avatarEmoji = progress.avatarEmoji,
-                                            guesses     = progress.guessRows,
-                                            wordLength  = state.wordLength.takeIf { it > 0 } ?: 4,
+                                            name         = progress.name,
+                                            avatarUrl    = progress.avatarUrl,
+                                            avatarColor  = progress.avatarColor,
+                                            avatarEmoji  = progress.avatarEmoji,
+                                            isAfk        = progress.isAfk,
+                                            afkCountdown = progress.afkCountdown,
+                                            guesses      = progress.guessRows,
+                                            wordLength   = state.wordLength.takeIf { it > 0 } ?: 4,
                                         )
                                     }
                                 }
@@ -372,11 +376,13 @@ private fun RandomWordGameContent(
                         } else {
                             if (state.opponentId.isNotEmpty()) {
                                 GuestCard(
-                                    name      = state.opponentName,
-                                    avatarUrl = state.opponentAvatarUrl,
-                                    isLoading = state.isOpponentProfileLoading,
-                                    guesses   = opponentGuesses,
-                                    wordLength = state.wordLength.takeIf { it > 0 } ?: 4,
+                                    name         = state.opponentName,
+                                    avatarUrl    = state.opponentAvatarUrl,
+                                    isLoading    = state.isOpponentProfileLoading,
+                                    isAfk        = state.isOpponentAfk,
+                                    afkCountdown = state.opponentAfkCountdown,
+                                    guesses      = opponentGuesses,
+                                    wordLength   = state.wordLength.takeIf { it > 0 } ?: 4,
                                 )
                                 if (showResultButton) {
                                     ResultButton(isWin = resultIsWin, onClick = onShowResult)

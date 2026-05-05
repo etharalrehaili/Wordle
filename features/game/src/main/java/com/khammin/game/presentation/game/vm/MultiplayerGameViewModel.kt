@@ -44,10 +44,13 @@ import com.khammin.game.presentation.game.contract.Tile
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -86,6 +89,14 @@ class MultiplayerGameViewModel @Inject constructor(
                 val s = uiState.value
                 if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
+                        if (s.isAnonymous) {
+                            // Force-refresh the Firebase auth token before updating presence.
+                            // For anonymous users the WebSocket reconnect fails auth validation
+                            // repeatedly (exponential backoff ~30s) until the token is refreshed.
+                            // A forced refresh here ensures RTDB authenticates on the first attempt.
+                            android.util.Log.d("PresenceDebug", "[tokenRefresh] userType=guest | uid=${s.myUserId} | time=${System.currentTimeMillis()}")
+                            runCatching { auth.currentUser?.getIdToken(true)?.await() }
+                        }
                         presenceManager.updateForeground(s.roomId, s.myUserId, isForeground = true)
                     }
                 }
@@ -138,6 +149,7 @@ class MultiplayerGameViewModel @Inject constructor(
     private var observingOpponentId: String = ""
     private val observingGuestIds = mutableSetOf<String>()
     private val wordCache: MutableMap<Int, List<String>> = mutableMapOf()
+    private val countdownJobs = mutableMapOf<String, Job>()
 
     // ── Network connectivity monitoring ───────────────────────────────────────
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
@@ -188,6 +200,12 @@ class MultiplayerGameViewModel @Inject constructor(
                 cm.unregisterNetworkCallback(cb)
             }
         }
+        countdownJobs.values.forEach { it.cancel() }
+        countdownJobs.clear()
+        val s = uiState.value
+        if (s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
+            presenceManager.cleanup(s.roomId, s.myUserId)
+        }
     }
 
     private fun loadGame(
@@ -207,14 +225,14 @@ class MultiplayerGameViewModel @Inject constructor(
             ?: uiState.value.myUserId.takeIf { it.isNotEmpty() }
             ?: return
 
-        viewModelScope.launch {
-            presenceManager.register(roomId, myId)
-        }
-
         // Determine auth state synchronously
         val firebaseUser = auth.currentUser
         val isLoggedIn   = firebaseUser != null && !firebaseUser.isAnonymous
         val isAnonymous  = !isLoggedIn && (firebaseUser?.isAnonymous == true || myId.startsWith("guest_"))
+
+        viewModelScope.launch {
+            presenceManager.register(roomId, myId)
+        }
 
         // For guests we can resolve the fallback name instantly; logged-in name comes from Strapi below
         val guestFallbackName = if (isAnonymous) guestNameFromId(myId) else defaultMyName
@@ -421,6 +439,9 @@ class MultiplayerGameViewModel @Inject constructor(
                     observingGuestIds.add(guestId)
                     fetchGuestInfo(guestId)
                     observeGuestState(roomId, guestId)
+                    presenceManager.observeAfk(roomId, guestId, viewModelScope) { id, isAfk ->
+                        updatePlayerAfkState(id, isAfk)
+                    }
                 }
             }
 
@@ -731,6 +752,86 @@ class MultiplayerGameViewModel @Inject constructor(
                     }
                 }
                 else -> sendEffect { MultiplayerGameEffect.OpponentDisconnected }
+            }
+        }
+        presenceManager.observeAfk(roomId, userId, viewModelScope) { id, isAfk ->
+            updatePlayerAfkState(id, isAfk)
+        }
+    }
+
+    private fun updatePlayerAfkState(userId: String, isAfk: Boolean) {
+        if (!isAfk) {
+            // Player came back — cancel countdown and clear AFK state
+            countdownJobs[userId]?.cancel()
+            countdownJobs.remove(userId)
+            setState {
+                val updatedProgress = opponentsProgress[userId]?.let { c ->
+                    opponentsProgress + (userId to c.copy(isAfk = false, afkCountdown = null))
+                } ?: opponentsProgress
+                val updatedWaiting = waitingPlayers.map { p ->
+                    if (p.userId == userId) p.copy(isAfk = false, afkCountdown = null) else p
+                }
+                copy(
+                    opponentsProgress    = updatedProgress,
+                    waitingPlayers       = updatedWaiting,
+                    isOpponentAfk        = if (userId == opponentId) false else isOpponentAfk,
+                    opponentAfkCountdown = if (userId == opponentId) null else opponentAfkCountdown,
+                )
+            }
+            return
+        }
+
+        // isAfk = true — set AFK state immediately
+        setState {
+            val updatedProgress = opponentsProgress[userId]?.let { c ->
+                opponentsProgress + (userId to c.copy(isAfk = true))
+            } ?: opponentsProgress
+            val updatedWaiting = waitingPlayers.map { p ->
+                if (p.userId == userId) p.copy(isAfk = true) else p
+            }
+            copy(
+                opponentsProgress = updatedProgress,
+                waitingPlayers    = updatedWaiting,
+                isOpponentAfk     = if (userId == opponentId) true else isOpponentAfk,
+            )
+        }
+
+        // Don't start a new countdown if one is already running
+        if (countdownJobs[userId]?.isActive == true) return
+
+        countdownJobs[userId] = viewModelScope.launch {
+            for (secondsLeft in 60 downTo 0) {
+                setState {
+                    val updatedProgress = opponentsProgress[userId]?.let { c ->
+                        opponentsProgress + (userId to c.copy(afkCountdown = secondsLeft))
+                    } ?: opponentsProgress
+                    val updatedWaiting = waitingPlayers.map { p ->
+                        if (p.userId == userId) p.copy(afkCountdown = secondsLeft) else p
+                    }
+                    copy(
+                        opponentsProgress    = updatedProgress,
+                        waitingPlayers       = updatedWaiting,
+                        opponentAfkCountdown = if (userId == opponentId) secondsLeft else opponentAfkCountdown,
+                    )
+                }
+                if (secondsLeft == 0) break
+                delay(1_000L)
+            }
+            // Countdown reached 0 — remove player
+            countdownJobs.remove(userId)
+            val s = uiState.value
+            if (!s.isGameOver && s.roomId.isNotEmpty()) {
+                when {
+                    (s.isCustomWord || s.isLobbyMode) && s.isHost ->
+                        runCatching { removeGuestFromRoomUseCase(s.roomId, userId) }
+                    (s.isCustomWord || s.isLobbyMode) && !s.isHost -> {
+                        if (!s.isHostLeft) {
+                            setState { copy(isHostLeft = true) }
+                            sendEffect { MultiplayerGameEffect.HostLeftRoom }
+                        }
+                    }
+                    else -> sendEffect { MultiplayerGameEffect.OpponentDisconnected }
+                }
             }
         }
     }

@@ -32,6 +32,8 @@ fun LobbyPlayerRow(
     avatarColor: Long? = null,
     avatarEmoji: String? = null,
     avatarUrl: String? = null,
+    isAfk: Boolean = false,
+    afkCountdown: Int? = null,
 ) {
     Row(
         modifier = Modifier
@@ -44,57 +46,82 @@ fun LobbyPlayerRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            when {
-                avatarUrl != null -> AsyncImage(
-                    model = avatarUrl,
-                    contentDescription = name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(50)),
-                )
-                avatarColor != null && avatarEmoji != null ->
-                    EmojiAvatar(color = avatarColor, emoji = avatarEmoji, size = 32)
-                avatarColor != null -> {
-                    val circleColor = Color(avatarColor)
-                    Box(
+            Box(contentAlignment = Alignment.Center) {
+                when {
+                    avatarUrl != null -> AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(50)),
+                    )
+                    avatarColor != null && avatarEmoji != null ->
+                        EmojiAvatar(color = avatarColor, emoji = avatarEmoji, size = 32)
+                    avatarColor != null -> {
+                        val circleColor = Color(avatarColor)
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(circleColor.copy(alpha = 0.20f))
+                                .border(1.dp, circleColor.copy(alpha = 0.5f), RoundedCornerShape(50)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = name.take(1).uppercase(),
+                                color = circleColor,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    else -> Box(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(50))
-                            .background(circleColor.copy(alpha = 0.20f))
-                            .border(1.dp, circleColor.copy(alpha = 0.5f), RoundedCornerShape(50)),
+                            .background(badgeColor.copy(alpha = 0.15f))
+                            .border(1.dp, badgeColor.copy(alpha = 0.3f), RoundedCornerShape(50)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = name.take(1).uppercase(),
-                            color = circleColor,
+                            color = badgeColor,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                         )
                     }
                 }
-                else -> Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(badgeColor.copy(alpha = 0.15f))
-                        .border(1.dp, badgeColor.copy(alpha = 0.3f), RoundedCornerShape(50)),
-                    contentAlignment = Alignment.Center
-                ) {
+                if (isAfk) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.Black.copy(alpha = 0.45f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(text = "", fontSize = 14.sp)
+                    }
+                }
+            }
+            Column {
+                Text(
+                    text = name,
+                    color = colors.title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                if (afkCountdown != null) {
+                    val m = afkCountdown / 60
+                    val s = afkCountdown % 60
                     Text(
-                        text = name.take(1).uppercase(),
-                        color = badgeColor,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        text = "Disconnected after ${m}:${s.toString().padStart(2, '0')}",
+                        color      = Color(0xFFFF6B6B),
+                        fontSize   = 10.sp,
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
-            Text(
-                text = name,
-                color = colors.title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-            )
         }
         if (badge != null) {
             Box(

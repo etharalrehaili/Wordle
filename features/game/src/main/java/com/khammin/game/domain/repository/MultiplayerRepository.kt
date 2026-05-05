@@ -19,6 +19,8 @@ interface MultiplayerRepository {
     suspend fun registerPresence(roomId: String, userId: String)
     suspend fun updatePresenceState(roomId: String, userId: String, isForeground: Boolean)
     fun observeOpponentPresence(roomId: String, opponentId: String): Flow<Boolean>
+    fun observeIsAfk(roomId: String, userId: String): Flow<Boolean>
+    fun cleanupPresence(roomId: String, userId: String)
     suspend fun addGuestToRoom(roomId: String, guestId: String)
     suspend fun removeGuestFromRoom(roomId: String, guestId: String)
     suspend fun startRoom(roomId: String)
