@@ -93,7 +93,11 @@ class MultiplayerGameViewModel @Inject constructor(
                 // show the "You've been disconnected" sheet instead of resuming.
                 val offlineDuration = if (backgroundAt > 0L) System.currentTimeMillis() - backgroundAt else 0L
                 backgroundAt = 0L
-                if (offlineDuration > 60_000L && s.roomId.isNotEmpty() && !s.isGameOver) {
+                // Allow the kick even when isGameOver: in custom-word / lobby mode the host
+                // is a spectator whose isGameOver flips true at round end while players wait
+                // for the next round — the host can still disconnect meaningfully here.
+                val inActiveRoom = s.roomId.isNotEmpty() && (!s.isGameOver || s.isCustomWord || s.isLobbyMode)
+                if (offlineDuration > 60_000L && inActiveRoom) {
                     sendEffect { MultiplayerGameEffect.SelfDisconnected }
                     return
                 }

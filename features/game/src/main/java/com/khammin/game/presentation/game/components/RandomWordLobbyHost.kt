@@ -113,7 +113,9 @@ fun RandomWordLobbyHost(
                         avatarUrl   = avatarUrl,
                     )
                     if (waitingPlayers.isEmpty()) {
+
                         HorizontalDivider(color = colors.border, thickness = 0.5.dp)
+
                         Row(
                             modifier              = Modifier
                                 .fillMaxWidth()
@@ -130,7 +132,9 @@ fun RandomWordLobbyHost(
                         }
                     } else {
                         waitingPlayers.forEach { player ->
+
                             HorizontalDivider(color = colors.border, thickness = 0.5.dp)
+
                             LobbyPlayerRow(
                                 name        = player.name,
                                 badge       = if (player.isReady)
@@ -152,7 +156,9 @@ fun RandomWordLobbyHost(
 
         // ── Start button ───────────────────────────────────────────
         item {
+
             Spacer(Modifier.height(4.dp))
+
             GameButton(
                 label    = stringResource(R.string.lobby_start_game),
                 onClick  = onStart,
@@ -161,7 +167,9 @@ fun RandomWordLobbyHost(
                 modifier = Modifier.fillMaxWidth(),
             )
             if (!canStart) {
+
                 Spacer(Modifier.height(6.dp))
+
                 val hint = when {
                     waitingPlayers.isEmpty() -> stringResource(R.string.lobby_hint_need_players)
                     !allReady                -> stringResource(R.string.lobby_hint_wait_ready)
