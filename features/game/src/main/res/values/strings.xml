@@ -164,7 +164,6 @@
     <string name="spectator_play_again_question">Play again?</string>
     <string name="spectator_no_votes">No votes yet</string>
     <string name="spectator_vote_count">%1$d / %2$d</string>
-    <string name="lobby_disconnected_after">ينقطع الاتصال بعد %1$s:%2$s</string>
 
     <!-- Game Result -->
     <string name="result_the_word_was">The word was</string>

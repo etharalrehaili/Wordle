@@ -167,4 +167,6 @@
     <string name="spectator_result_failed">%1$s لم يخمّن الكلمة</string>
     <string name="spectator_result_back_home">العودة للرئيسية</string>
 
+    <string name="lobby_disconnected_after">ينقطع الاتصال بعد %1$s:%2$s</string>
+
 </resources>

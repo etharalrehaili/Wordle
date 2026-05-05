@@ -29,10 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.khammin.core.R
 import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.PlayerAvatar
 import com.khammin.core.presentation.components.WORD_LENGTH
@@ -174,7 +176,11 @@ fun GuestCard(
                     val m = afkCountdown / 60
                     val s = afkCountdown % 60
                     Text(
-                        text = "Disconnected after ${m}:${s.toString().padStart(2, '0')}",
+                        text = stringResource(
+                            R.string.lobby_disconnected_after,
+                            m.toString(),
+                            s.toString().padStart(2, '0')
+                        ),
                         color      = Color(0xFFFF6B6B),
                         fontSize   = 10.sp,
                         fontWeight = FontWeight.Medium,
