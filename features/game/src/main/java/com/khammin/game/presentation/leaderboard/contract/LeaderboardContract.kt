@@ -14,7 +14,8 @@ data class LeaderboardUiState(
     val error: String? = null,
     val selectedFilter: LeaderboardFilter = LeaderboardFilter.ALL_TIME,
     val language: String = "ar",
-    val noInternet: Boolean = false
+    val noInternet: Boolean = false,
+    val currentUserId: String? = null,
 ) : UiState
 
 sealed interface LeaderboardEffect : UiEffect

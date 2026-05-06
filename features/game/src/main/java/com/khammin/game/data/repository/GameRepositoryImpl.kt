@@ -32,7 +32,6 @@ class GameRepositoryImpl @Inject constructor(
                     db.wordDao().insertWords(entities)
                     return entities.map { it.text }
                 }
-                // API returned rows but no parseable text (e.g. wrong JSON shape) — drop stale cache
                 db.wordDao().deleteWords(language, wordLength)
             }
             val cached = db.wordDao().getWords(language, wordLength)

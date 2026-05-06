@@ -43,7 +43,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.buttons.GameButton
 import com.khammin.core.presentation.components.buttons.GameButtonSize
@@ -82,13 +80,6 @@ fun ChallengesScreen(
     viewModel: ChallengesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    val isGuest by produceState(initialValue = FirebaseAuth.getInstance().currentUser?.isAnonymous == true) {
-        val listener = FirebaseAuth.AuthStateListener { auth ->
-            value = auth.currentUser?.isAnonymous == true
-        }
-        FirebaseAuth.getInstance().addAuthStateListener(listener)
-        awaitDispose { FirebaseAuth.getInstance().removeAuthStateListener(listener) }
-    }
 
     ChallengesContent(
         onClose            = onClose,
@@ -99,7 +90,7 @@ fun ChallengesScreen(
         error              = state.error,
         totalPoints        = state.totalPoints,
         challenges         = state.challenges,
-        isGuest            = isGuest,
+        isGuest            = state.isGuest,
         onSignInWithGoogle = onSignInWithGoogle,
         currentLanguage    = currentLanguage,
     )

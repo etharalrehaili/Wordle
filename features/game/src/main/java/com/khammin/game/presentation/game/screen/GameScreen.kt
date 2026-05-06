@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
-
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -33,7 +32,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.khammin.core.alias.Action
+import com.khammin.core.util.AdManager
 import com.khammin.core.presentation.components.CustomSnackbarHost
 import com.khammin.core.presentation.components.GameBoard
 import com.khammin.core.presentation.components.GameKeyboard
@@ -43,7 +44,7 @@ import com.khammin.core.presentation.components.bottomsheets.GameResultsBottomSh
 import com.khammin.core.presentation.components.bottomsheets.WordleInfoBottomSheet
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.TileState
 import com.khammin.core.presentation.components.navigation.GameTopBar
 import com.khammin.core.presentation.theme.LocalWordleColors
 import com.khammin.game.R
@@ -55,7 +56,6 @@ import com.khammin.game.presentation.game.contract.GameUiState
 import com.khammin.game.presentation.game.contract.toTypes
 import com.khammin.game.presentation.game.vm.GameViewModel
 import com.khammin.game.presentation.preferences.vm.PreferencesViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,9 +71,11 @@ fun GameScreen(
     var dialogState by remember { mutableStateOf<GameDialogState>(GameDialogState.None) }
     var snackbarState by remember { mutableStateOf<SnackbarState?>(null) }
     val context = LocalContext.current
+    val activity = context as? android.app.Activity
 
     LaunchedEffect(wordLength) {
         viewModel.onEvent(GameIntent.LoadWords("ar", wordLength))
+        AdManager.preload(context)
     }
 
     LaunchedEffect(Unit) {
@@ -93,22 +95,35 @@ fun GameScreen(
         }
     }
 
-    val layoutDirection = LayoutDirection.Rtl
-    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         GameContent(
-            uiState = uiState,
-            currentLanguage = currentLanguage,
-            dialogState = dialogState,
-            snackbarState = snackbarState,
+            uiState           = uiState,
+            currentLanguage   = currentLanguage,
+            dialogState       = dialogState,
+            snackbarState     = snackbarState,
             onDismissSnackbar = { snackbarState = null },
-            onInfoClick = { dialogState = GameDialogState.Info },
-            onDismissDialog = { dialogState = GameDialogState.None },
+            onInfoClick       = { dialogState = GameDialogState.Info },
+            onDismissDialog   = { dialogState = GameDialogState.None },
             onRestart = {
                 dialogState = GameDialogState.None
                 viewModel.onEvent(GameIntent.RestartGame)
             },
-            onClose = onClose,
-            onIntent = viewModel::onEvent,
+            onClose   = onClose,
+            onIntent  = viewModel::onEvent,
+            onEarnHint = {
+                activity?.let { act ->
+                    AdManager.showHintAd(
+                        activity   = act,
+                        onRewarded = { viewModel.onEvent(GameIntent.EarnHint) },
+                        onNotReady = {
+                            snackbarState = SnackbarState(
+                                context.getString(R.string.ad_not_ready),
+                                SnackbarType.WARNING
+                            )
+                        },
+                    )
+                }
+            },
         )
     }
 }
@@ -126,9 +141,10 @@ fun GameContent(
     onDismissDialog: Action,
     onRestart: Action,
     onIntent: (GameIntent) -> Unit,
+    onEarnHint: Action = {},
 ) {
     val colors = LocalWordleColors.current
-    val infoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val infoSheetState   = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val resultSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Timer: reset when a new word is loaded, stop when the game ends
@@ -149,26 +165,29 @@ fun GameContent(
     val guessRows = uiState.board.map { row ->
         GuessRow(
             letters = row.map { tile -> if (tile.state == TileState.EMPTY) null else tile.letter },
-            types = row.map { tile -> tile.state.toTypes() }
+            types   = row.map { tile -> tile.state.toTypes() }
         )
     }
 
     val keyStates = uiState.keyboardStates.mapValues { (_, tileState) -> tileState.toTypes() }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
+        modifier            = Modifier.fillMaxSize(),
+        containerColor      = colors.background,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             GameTopBar(
-                title = timerText,
-                endIcon = Icons.Filled.Close,
-                startIcon = Icons.Filled.Info,
-                hintIcon = Icons.Filled.Lightbulb,
-                hintsRemaining = uiState.maxHints - uiState.hintsUsed,
-                onEndIconClicked = onClose,
+                title          = timerText,
+                endIcon        = Icons.Filled.Close,
+                startIcon      = Icons.Filled.Info,
+//                hintIcon       = Icons.Filled.Lightbulb,
+//                hintsRemaining = uiState.maxHints - uiState.hintsUsed,
+                onEndIconClicked   = onClose,
                 onStartIconClicked = onInfoClick,
-                onHintClicked = { onIntent(GameIntent.UseHint) },
+//                onHintClicked = {
+//                    if (uiState.hintsUsed < uiState.maxHints) onIntent(GameIntent.UseHint)
+//                    else onEarnHint()
+//                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding(),
@@ -176,11 +195,11 @@ fun GameContent(
         },
         bottomBar = {
             GameKeyboard(
-                keyStates = keyStates,
-                onKey = { char -> onIntent(GameIntent.EnterLetter(char)) },
+                keyStates  = keyStates,
+                onKey      = { char -> onIntent(GameIntent.EnterLetter(char)) },
                 onBackspace = { onIntent(GameIntent.DeleteLetter) },
-                language = AppLanguage.ARABIC,
-                modifier = Modifier
+                language   = AppLanguage.ARABIC,
+                modifier   = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .padding(bottom = 8.dp)
@@ -193,22 +212,20 @@ fun GameContent(
                 .padding(innerPadding)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-
                 GameBoard(
-                    guesses = guessRows,
+                    guesses    = guessRows,
                     currentRow = uiState.currentRow,
                     currentCol = uiState.currentCol,
                     wordLength = uiState.wordLength,
-                    modifier = Modifier
+                    modifier   = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                 )
-
             }
 
             snackbarState?.let {
                 CustomSnackbarHost(
-                    state = it,
+                    state     = it,
                     onDismiss = onDismissSnackbar,
                 )
             }
@@ -217,29 +234,29 @@ fun GameContent(
                 GameDialogState.Info -> {
                     WordleInfoBottomSheet(
                         sheetState = infoSheetState,
-                        onDismiss = onDismissDialog,
+                        onDismiss  = onDismissDialog,
                         wordLength = uiState.wordLength,
                     )
                 }
 
                 is GameDialogState.Result -> {
                     GameResultsBottomSheet(
-                        title = if (dialog.isWin) stringResource(CoreRes.string.result_win_title)
+                        title      = if (dialog.isWin) stringResource(CoreRes.string.result_win_title)
                         else stringResource(CoreRes.string.result_lose_title),
-                        answer = dialog.word,
+                        answer     = dialog.word,
                         accentColor = if (dialog.isWin) colors.correct else colors.present,
                         sheetState = resultSheetState,
-                        onRestart = onRestart,
-                        onClose   = {
+                        onRestart  = onRestart,
+                        onClose    = {
                             onDismissDialog()
                             onClose()
                         },
-                        onDismiss = onDismissDialog,
+                        onDismiss  = onDismissDialog,
                     )
                 }
 
                 GameDialogState.None -> Unit
             }
         }
-    } // Scaffold
+    }
 }

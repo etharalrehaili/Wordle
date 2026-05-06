@@ -1,13 +1,11 @@
 package com.khammin.game.presentation.game.vm
 
-import android.content.Context
 import android.net.Uri
 import com.khammin.core.util.Resource
 import com.khammin.game.domain.usecases.profile.GetGuestProfileUseCase
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.profile.SaveGuestProfileUseCase
 import com.khammin.game.domain.usecases.profile.UploadAvatarUseCase
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 data class MyProfileData(
@@ -24,7 +22,6 @@ class MultiplayerProfileLoader @Inject constructor(
     private val getGuestProfileUseCase: GetGuestProfileUseCase,
     private val saveGuestProfileUseCase: SaveGuestProfileUseCase,
     private val uploadAvatarUseCase: UploadAvatarUseCase,
-    @ApplicationContext private val context: Context,
 ) {
     /** Load profile for a logged-in (Google) user from Strapi, falling back to Firebase photo. */
     suspend fun loadLoggedInProfile(
@@ -52,7 +49,7 @@ class MultiplayerProfileLoader @Inject constructor(
         }
         val name = saved.name?.takeIf { it.isNotBlank() } ?: fallbackName
         val hostedUrl: String? = if (saved.avatarUri != null) {
-            val result = runCatching { uploadAvatarUseCase(Uri.parse(saved.avatarUri), context) }.getOrNull()
+            val result = runCatching { uploadAvatarUseCase(Uri.parse(saved.avatarUri)) }.getOrNull()
             (result as? Resource.Success)?.data
         } else null
         return MyProfileData(

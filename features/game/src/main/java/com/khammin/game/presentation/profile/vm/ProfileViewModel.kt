@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import java.io.ByteArrayOutputStream
 import com.khammin.core.mvi.BaseMviViewModel
+import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
 import com.khammin.game.R
 import com.khammin.game.data.local.GuestProfileDataStore
@@ -19,6 +20,7 @@ import com.khammin.game.data.local.LocalStatsDataStore
 import com.khammin.game.domain.model.ChallengeStatus
 import com.khammin.game.domain.repository.ChallengeDefinitionRepository
 import com.khammin.game.domain.repository.ChallengeProgressRepository
+import com.khammin.game.domain.model.ProfileUpdate
 import com.khammin.game.domain.usecases.profile.GetProfileUseCase
 import com.khammin.game.domain.usecases.profile.UpdateProfileUseCase
 import com.khammin.game.domain.usecases.profile.UploadAvatarUseCase
@@ -46,6 +48,8 @@ class ProfileViewModel @Inject constructor(
     private val guestProfileDataStore: GuestProfileDataStore,
     private val challengeProgressRepository: ChallengeProgressRepository,
     private val challengeDefinitionRepository: ChallengeDefinitionRepository,
+    private val auth: FirebaseAuth,
+    private val networkUtils: NetworkUtils,
     @ApplicationContext private val context: Context,
 ) : BaseMviViewModel<ProfileIntent, ProfileUiState, ProfileEffect>(
     initialState = ProfileUiState()
@@ -56,8 +60,8 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun observeAuthState() {
-        var wasAnonymous = FirebaseAuth.getInstance().currentUser?.isAnonymous == true
-        FirebaseAuth.getInstance().addAuthStateListener { auth ->
+        var wasAnonymous = auth.currentUser?.isAnonymous == true
+        auth.addAuthStateListener { auth ->
             val user = auth.currentUser ?: return@addAuthStateListener
             val isNowSignedIn = !user.isAnonymous
             if (wasAnonymous && isNowSignedIn) {
@@ -74,7 +78,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     private suspend fun awaitCurrentUser(): FirebaseUser? = suspendCancellableCoroutine { cont ->
-        val auth = FirebaseAuth.getInstance()
+        val auth = auth
         // Fast path — user already known.
         val current = auth.currentUser
         if (current != null) {
@@ -100,10 +104,10 @@ class ProfileViewModel @Inject constructor(
             try {
                 // On refresh, Firebase auth may still be initializing. Wait for the first
                 // definitive auth state rather than bailing out with "reason=no user".
-                val user: FirebaseUser? = if (forceRefresh && FirebaseAuth.getInstance().currentUser == null) {
+                val user: FirebaseUser? = if (forceRefresh && auth.currentUser == null) {
                     awaitCurrentUser()
                 } else {
-                    FirebaseAuth.getInstance().currentUser
+                    auth.currentUser
                 }
 
                 if (user == null) {
@@ -202,6 +206,16 @@ class ProfileViewModel @Inject constructor(
     override fun onEvent(intent: ProfileIntent) {
         when (intent) {
 
+            ProfileIntent.OnSignInWithGoogleClick -> {
+                if (networkUtils.isConnected()) {
+                    sendEffect { ProfileEffect.TriggerGoogleSignIn }
+                } else {
+                    setState { copy(showNoInternet = true) }
+                }
+            }
+
+            ProfileIntent.DismissNoInternet -> setState { copy(showNoInternet = false) }
+
             ProfileIntent.OnEditProfileClick -> setState {
                 copy(isEditMode = true, editName = name)
             }
@@ -280,7 +294,7 @@ class ProfileViewModel @Inject constructor(
 
                     val avatarUrl = if (freshState.pendingAvatarUri != null) {
                         val compressedUri = compressImageUri(context, freshState.pendingAvatarUri)
-                        val uploadResult = uploadAvatarUseCase(compressedUri, context)
+                        val uploadResult = uploadAvatarUseCase(compressedUri)
                         when (uploadResult) {
                             is Resource.Success -> uploadResult.data
                             is Resource.Error   -> {
@@ -295,11 +309,13 @@ class ProfileViewModel @Inject constructor(
                     }
 
                     val result = updateProfileUseCase(
-                        documentId    = freshState.documentId,
-                        firebaseUid   = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                        name          = trimmed,
-                        avatarUrl     = avatarUrl,
-                        language      = "en",
+                        ProfileUpdate(
+                            documentId  = freshState.documentId,
+                            firebaseUid = auth.currentUser?.uid ?: "",
+                            name        = trimmed,
+                            avatarUrl   = avatarUrl,
+                            language    = "en",
+                        )
                     )
 
                     when (result) {

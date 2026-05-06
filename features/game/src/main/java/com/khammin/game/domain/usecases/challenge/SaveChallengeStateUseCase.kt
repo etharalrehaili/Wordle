@@ -1,12 +1,10 @@
 package com.khammin.game.domain.usecases.challenge
 
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.TileState
+import com.khammin.game.domain.model.Tile
 import com.khammin.game.domain.repository.ChallengeRepository
-import com.khammin.game.presentation.game.contract.Tile
 import javax.inject.Inject
 
-// persists the current board state to DataStore after every guess.
-// Keeps progress safe if the user leaves the app.
 
 class SaveChallengeStateUseCase @Inject constructor(
     private val repository: ChallengeRepository

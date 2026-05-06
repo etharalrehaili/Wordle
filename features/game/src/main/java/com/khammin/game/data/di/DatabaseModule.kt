@@ -16,6 +16,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+private const val DATABASE_NAME = "wordle_db"
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -27,12 +29,12 @@ object DatabaseModule {
         keyManager: SqlCipherKeyManager,
         migrator: DatabaseEncryptionMigrator,
     ): AppDatabase {
-        migrator.migrateIfNeeded(context, "wordle_db")
+        migrator.migrateIfNeeded(context, DATABASE_NAME)
         val factory = keyManager.getSupportFactory()
         if (keyManager.wasKeyRecovered) {
-            context.deleteDatabase("wordle_db")
+            context.deleteDatabase(DATABASE_NAME)
         }
-        return Room.databaseBuilder(context, AppDatabase::class.java, "wordle_db")
+        return Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
             .openHelperFactory(factory)
             .addMigrations(AppDatabase.MIGRATION_3_4)
             .fallbackToDestructiveMigration(true)

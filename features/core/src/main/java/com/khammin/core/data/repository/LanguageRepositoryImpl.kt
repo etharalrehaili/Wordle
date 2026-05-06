@@ -14,6 +14,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+private const val PREFS_NAME = "settings"
+private const val KEY_LANGUAGE_CODE = "language_code"
+
 class LanguageRepositoryImpl @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val languageDataStore: DataStore<LanguageModel>
@@ -24,14 +27,14 @@ class LanguageRepositoryImpl @Inject constructor(
     @Volatile private var cached: LanguageModel? = null
 
     // Synchronous storage used by attachBaseContext (runs before DataStore is warmed up).
-    private val prefs = appContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     override fun getLanguages(): List<LanguageModel> = listOf(ENGLISH_MODEL, ARABIC_MODEL)
 
     override fun setLanguage(language: LanguageModel) {
         cached = language
         // Write synchronously so attachBaseContext can read it on the next cold start.
-        prefs.edit().putString("language_code", language.code).apply()
+        prefs.edit().putString(KEY_LANGUAGE_CODE, language.code).apply()
         // Fire-and-forget — UI consistency is guaranteed by the in-memory cache.
         CoroutineScope(Dispatchers.IO).launch {
             languageDataStore.updateData { language }

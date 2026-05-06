@@ -1,5 +1,6 @@
 package com.khammin.game.data.di
 
+import android.content.ContentResolver
 import android.content.Context
 import androidx.work.WorkManager
 import com.khammin.game.data.local.db.AppDatabase
@@ -33,8 +34,14 @@ object ProfileModule {
         retrofit.create(ProfileApiService::class.java)
 
     @Provides @Singleton
-    fun provideProfileRemoteDataSource(api: ProfileApiService): ProfileRemoteDataSource =
-        ProfileRemoteDataSourceImpl(api)
+    fun provideContentResolver(@ApplicationContext context: Context): ContentResolver =
+        context.contentResolver
+
+    @Provides @Singleton
+    fun provideProfileRemoteDataSource(
+        api: ProfileApiService,
+        contentResolver: ContentResolver,
+    ): ProfileRemoteDataSource = ProfileRemoteDataSourceImpl(api, contentResolver)
 
     @Provides @Singleton
     fun provideProfileRepository(

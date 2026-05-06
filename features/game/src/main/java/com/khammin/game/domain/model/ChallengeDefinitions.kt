@@ -1,9 +1,5 @@
 package com.khammin.game.domain.model
 
-/**
- * Static metadata for every achievement challenge.
- * Progress/status is stored in Firestore; only points, target, and difficulty live here.
- */
 object ChallengeDefinitions {
 
     // ── Stable IDs ────────────────────────────────────────────────────────────

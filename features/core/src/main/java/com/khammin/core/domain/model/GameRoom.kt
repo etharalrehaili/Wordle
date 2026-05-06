@@ -8,7 +8,7 @@ data class GameRoom(
     val word: String = "",
     val language: String = "",
     val wordLength: Int = 0,
-    val status: String = "waiting", // waiting | playing | finished
+    val status: String = RoomStatus.WAITING.value,
     val winnerId: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val leftBy: String = "",

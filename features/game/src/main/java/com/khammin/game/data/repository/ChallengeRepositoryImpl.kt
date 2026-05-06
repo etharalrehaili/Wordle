@@ -9,14 +9,14 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.firebase.auth.FirebaseAuth
+import com.khammin.core.domain.model.TileState
 import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.util.normalizeForWordle
-import com.khammin.core.presentation.components.enums.TileState
 import com.khammin.game.data.local.db.AppDatabase
 import com.khammin.game.data.local.entity.ChallengeEntity
 import com.khammin.game.data.remote.datasource.challenge.ChallengeRemoteDataSource
+import com.khammin.game.domain.model.Tile
 import com.khammin.game.domain.repository.ChallengeRepository
-import com.khammin.game.presentation.game.contract.Tile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -25,13 +25,15 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.challengeDataStore by preferencesDataStore(name = "challenge_prefs")
+private const val CHALLENGE_PREFS_STORE_NAME = "challenge_prefs"
+private val Context.challengeDataStore by preferencesDataStore(name = CHALLENGE_PREFS_STORE_NAME)
 
 @Singleton
 class ChallengeRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val remote: ChallengeRemoteDataSource,
     private val db: AppDatabase,
+    private val auth: FirebaseAuth,
 ) : ChallengeRepository {
 
     companion object {
@@ -63,7 +65,7 @@ class ChallengeRepositoryImpl @Inject constructor(
         val prefs      = context.challengeDataStore.data.first()
         val savedDate  = prefs[keyDate(language)] ?: return null
         val savedUid   = prefs[keyUid(language)]  ?: return null
-        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
+        val currentUid = auth.currentUser?.uid ?: return null
 
         if (savedUid != currentUid) return null
         if (savedDate != LocalDate.now().toString()) return null
@@ -99,7 +101,7 @@ class ChallengeRepositoryImpl @Inject constructor(
         isGameOver: Boolean,
         isWin: Boolean,
     ) {
-        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val currentUid = auth.currentUser?.uid ?: return
         context.challengeDataStore.edit { prefs ->
             prefs[keyUid(language)]        = currentUid
             prefs[keyDate(language)]       = LocalDate.now().toString()
@@ -119,7 +121,7 @@ class ChallengeRepositoryImpl @Inject constructor(
             val savedDate  = prefs[keyDate(language)]      ?: return@map false
             val savedUid   = prefs[keyUid(language)]       ?: return@map false
             val isGameOver = prefs[keyIsGameOver(language)] ?: return@map false
-            val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return@map false
+            val currentUid = auth.currentUser?.uid ?: return@map false
 
             savedUid == currentUid
                     && savedDate == LocalDate.now().toString()

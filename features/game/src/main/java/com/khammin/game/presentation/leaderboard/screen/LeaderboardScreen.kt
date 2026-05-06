@@ -42,7 +42,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.PlayerCard
 import com.khammin.core.presentation.components.PodiumPlayer
@@ -62,6 +61,9 @@ import com.khammin.game.presentation.leaderboard.contract.LeaderboardIntent
 import com.khammin.game.presentation.leaderboard.contract.LeaderboardUiState
 import com.khammin.game.presentation.leaderboard.vm.LeaderboardViewModel
 import java.time.Instant
+
+private const val ONE_WEEK_MS = 7L * 24 * 60 * 60 * 1000
+private const val ONE_MONTH_MS = 30L * 24 * 60 * 60 * 1000
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -92,7 +94,7 @@ fun LeaderboardContent(
     onClose: Action,
     onIntent: (LeaderboardIntent) -> Unit,
 ) {
-    val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+    val currentUid = uiState.currentUserId
 
     Column(
         modifier = Modifier
@@ -204,8 +206,6 @@ fun LeaderboardContent(
 
                 else -> {
                     val now = System.currentTimeMillis()
-                    val oneWeekMs = 7L * 24 * 60 * 60 * 1000
-                    val oneMonthMs = 30L * 24 * 60 * 60 * 1000
 
                     uiState.players.forEach { player ->
                     }
@@ -216,7 +216,7 @@ fun LeaderboardContent(
                             lastPlayed?.let {
                                 try {
                                     val time = Instant.parse(it).toEpochMilli()
-                                    now - time <= oneWeekMs
+                                    now - time <= ONE_WEEK_MS
                                 } catch (e: Exception) { true }
                             } ?: false
                         }
@@ -226,7 +226,7 @@ fun LeaderboardContent(
                             lastPlayed?.let {
                                 try {
                                     val time = Instant.parse(it).toEpochMilli()
-                                    now - time <= oneMonthMs
+                                    now - time <= ONE_MONTH_MS
                                 } catch (e: Exception) { true }
                             } ?: false
                         }

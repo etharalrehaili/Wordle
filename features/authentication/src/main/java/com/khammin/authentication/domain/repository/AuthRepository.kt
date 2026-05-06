@@ -1,6 +1,8 @@
 package com.khammin.authentication.domain.repository
 
+import kotlinx.coroutines.flow.Flow
+
 interface AuthRepository {
-    suspend fun updateProfile(name: String): Result<Unit>
+    fun getAuthState(): Flow<Boolean>
     fun signOut()
 }

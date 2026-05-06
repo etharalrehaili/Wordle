@@ -18,4 +18,4 @@ val LIGHT_MODEL = ThemeModel(
     name = "LIGHT"
 )
 
-fun ThemeModel.isDark() = name == "DARK"
+fun ThemeModel.isDark() = this == DARK_MODEL

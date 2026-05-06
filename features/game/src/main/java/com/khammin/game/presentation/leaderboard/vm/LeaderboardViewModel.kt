@@ -3,6 +3,7 @@ package com.khammin.game.presentation.leaderboard.vm
 import android.Manifest
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.util.NetworkUtils
 import com.khammin.core.util.Resource
@@ -14,13 +15,20 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val LEADERBOARD_LIMIT = 100
+
 @HiltViewModel
 class LeaderboardViewModel @Inject constructor(
     private val getLeaderboardUseCase: GetLeaderboardUseCase,
     private val networkUtils: NetworkUtils,
+    private val auth: FirebaseAuth,
 ) : BaseMviViewModel<LeaderboardIntent, LeaderboardUiState, LeaderboardEffect>(
     initialState = LeaderboardUiState()
 ) {
+
+    init {
+        setState { copy(currentUserId = auth.currentUser?.uid) }
+    }
 
     @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
     override fun onEvent(intent: LeaderboardIntent) {
@@ -54,7 +62,7 @@ class LeaderboardViewModel @Inject constructor(
 
             if (!isRefresh && !isRetry) setState { copy(isLoading = true, error = null, noInternet = false) }
 
-            when (val result = getLeaderboardUseCase(limit = 100, language = language)) {
+            when (val result = getLeaderboardUseCase(limit = LEADERBOARD_LIMIT, language = language)) {
                 is Resource.Success -> {
                     setState {
                         copy(

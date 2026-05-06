@@ -4,8 +4,9 @@ import com.khammin.core.mvi.UiEffect
 import com.khammin.core.mvi.UiIntent
 import com.khammin.core.mvi.UiState
 import com.khammin.core.presentation.components.MAX_GUESSES
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.TileState
 import com.khammin.core.presentation.components.enums.Types
+import com.khammin.game.domain.model.Tile
 
 data class GameUiState(
     val wordLength: Int = 4,
@@ -56,7 +57,3 @@ fun TileState.toTypes(): Types = when (this) {
     TileState.EMPTY     -> Types.DEFAULT
 }
 
-data class Tile(
-    val letter: Char = ' ',
-    val state: TileState = TileState.EMPTY
-)

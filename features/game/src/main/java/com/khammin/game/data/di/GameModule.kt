@@ -26,6 +26,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
+private const val NETWORK_TIMEOUT_SECONDS = 30L
+private const val USER_PREFERENCES_STORE_NAME = "user_preferences"
+
 @Module
 @InstallIn(SingletonComponent::class)
 object GameModule {
@@ -56,9 +59,9 @@ object GameModule {
         }
 
         val client = OkHttpClient.Builder()
-            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .connectTimeout(NETWORK_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(NETWORK_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(NETWORK_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("Authorization", "Bearer ${KeyManager.getAuthToken()}")
@@ -84,7 +87,7 @@ object GameModule {
     @Singleton
     fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(
-            produceFile = { context.preferencesDataStoreFile("user_preferences") }
+            produceFile = { context.preferencesDataStoreFile(USER_PREFERENCES_STORE_NAME) }
         )
 
     /** Provides the use case for fetching the top players leaderboard. */

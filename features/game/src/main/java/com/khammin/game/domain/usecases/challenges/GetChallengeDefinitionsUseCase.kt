@@ -8,7 +8,6 @@ import javax.inject.Inject
 class GetChallengeDefinitionsUseCase @Inject constructor(
     private val repository: ChallengeDefinitionRepository,
 ) {
-    /** Real-time stream — use in ViewModels that need to react to definition changes. */
     operator fun invoke(): Flow<List<RemoteChallengeDefinition>> =
         repository.observeDefinitions()
 }

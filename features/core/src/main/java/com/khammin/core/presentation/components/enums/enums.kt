@@ -23,11 +23,3 @@ enum class SnackbarType {
     SUCCESS, ERROR, WARNING
 }
 
-enum class TileState {
-    EMPTY,
-    FILLED,
-    CORRECT,
-    MISPLACED,
-    WRONG,
-    SIMILAR  // right position, phonetically similar letter (e.g. ه ↔ ة)
-}

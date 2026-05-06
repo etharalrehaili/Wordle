@@ -10,17 +10,21 @@ import com.khammin.core.domain.model.GameProgress
 import com.khammin.core.domain.model.LanguageModel
 import com.khammin.core.domain.model.ThemeModel
 
+private const val LANGUAGE_STORE_FILE      = "language.json"
+private const val THEME_STORE_FILE         = "theme.json"
+private const val GAME_PROGRESS_STORE_FILE = "game_progress.json"
+
 val Context.languageDataStore: DataStore<LanguageModel> by dataStore(
-    fileName   = "language.json",
+    fileName   = LANGUAGE_STORE_FILE,
     serializer = LanguageSerializer
 )
 
 val Context.themeDataStore: DataStore<ThemeModel> by dataStore(
-    fileName   = "theme.json",
+    fileName   = THEME_STORE_FILE,
     serializer = ThemeSerializer
 )
 
 val Context.gameProgressDataStore: DataStore<GameProgress> by dataStore(
-    fileName   = "game_progress.json",
+    fileName   = GAME_PROGRESS_STORE_FILE,
     serializer = GameProgressSerializer
 )

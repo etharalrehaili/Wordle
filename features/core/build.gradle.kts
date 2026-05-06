@@ -21,6 +21,12 @@ android {
         minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        buildConfigField(
+            "String",
+            "AD_UNIT_ID",
+            "\"${localProperties["AD_UNIT_ID"] ?: "ca-app-pub-3940256099942544/5224354917"}\""
+        )
+
         externalNativeBuild {
             cmake {
                 arguments(
@@ -53,6 +59,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     externalNativeBuild {

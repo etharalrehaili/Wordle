@@ -1,6 +1,7 @@
 package com.khammin.game.data.di
 
 import android.content.Context
+import com.google.firebase.auth.FirebaseAuth
 import com.khammin.game.data.local.db.AppDatabase
 import com.khammin.game.data.remote.api.ChallengeApiService
 import com.khammin.game.data.remote.datasource.challenge.ChallengeRemoteDataSource
@@ -35,6 +36,7 @@ object ChallengeModule {
         @ApplicationContext context: Context,
         remote: ChallengeRemoteDataSource,
         db: AppDatabase,
-    ): ChallengeRepository = ChallengeRepositoryImpl(context, remote, db)
+        auth: FirebaseAuth,
+    ): ChallengeRepository = ChallengeRepositoryImpl(context, remote, db, auth)
 
 }

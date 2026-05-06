@@ -25,6 +25,7 @@ data class ChallengesUiState(
     val error: String? = null,
     val totalPoints: Int = 0,
     val challenges: List<ChallengeUiItem> = emptyList(),
+    val isGuest: Boolean = false,
 ) : UiState
 
 sealed interface ChallengesIntent : UiIntent {

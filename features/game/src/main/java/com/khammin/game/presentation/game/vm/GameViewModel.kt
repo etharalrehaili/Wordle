@@ -3,7 +3,7 @@ package com.khammin.game.presentation.game.vm
 import androidx.lifecycle.viewModelScope
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.presentation.components.MAX_GUESSES
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.TileState
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
 import com.khammin.game.domain.model.GameMode
@@ -17,7 +17,7 @@ import com.khammin.game.domain.usecases.stats.RecordGameUseCase
 import com.khammin.game.presentation.game.contract.GameEffect
 import com.khammin.game.presentation.game.contract.GameIntent
 import com.khammin.game.presentation.game.contract.GameUiState
-import com.khammin.game.presentation.game.contract.Tile
+import com.khammin.game.domain.model.Tile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -45,7 +45,7 @@ class GameViewModel @Inject constructor(
             is GameIntent.SubmitGuess  -> submitGuess()
             is GameIntent.RestartGame  -> restartGame()
             is GameIntent.UseHint      -> useHint()
-            is GameIntent.EarnHint -> earnHint()
+            is GameIntent.EarnHint     -> earnHint()
         }
     }
 
@@ -297,5 +297,4 @@ class GameViewModel @Inject constructor(
         setState { copy(maxHints = maxHints + 1) }
         useHint()
     }
-
 }

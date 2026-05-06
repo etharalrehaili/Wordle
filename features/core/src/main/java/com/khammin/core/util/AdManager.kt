@@ -3,13 +3,12 @@ package com.khammin.core.util
 import android.app.Activity
 import android.content.Context
 import com.google.android.gms.ads.AdRequest
+import com.khammin.core.BuildConfig
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 
 object AdManager {
-    private const val AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
-
     private var rewardedAd: RewardedAd? = null
     private var isLoading = false
 
@@ -19,7 +18,7 @@ object AdManager {
         // Use applicationContext so the loaded RewardedAd never captures an Activity reference.
         RewardedAd.load(
             context.applicationContext,
-            AD_UNIT_ID,
+            BuildConfig.AD_UNIT_ID,
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {

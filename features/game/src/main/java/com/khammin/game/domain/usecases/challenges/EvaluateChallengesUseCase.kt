@@ -1,6 +1,5 @@
 package com.khammin.game.domain.usecases.challenges
 
-import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.game.data.local.CompletedChallengesStore
 import com.khammin.game.domain.model.ChallengeConditionType
@@ -15,31 +14,20 @@ import com.khammin.game.domain.repository.ChallengeProgressRepository
 import java.time.LocalDate
 import javax.inject.Inject
 
-private const val TAG = "ChallengeEval"
-
-/**
- * Evaluates a completed game against every active challenge definition fetched from Firestore,
- * updates the user's progress document, and returns the IDs of any challenges newly completed.
- *
- * Call once per game-over event from GameViewModel / ChallengeViewModel / MultiplayerGameViewModel.
- */
 class EvaluateChallengesUseCase @Inject constructor(
     private val progressRepository: ChallengeProgressRepository,
     private val definitionRepository: ChallengeDefinitionRepository,
     private val completedChallengesStore: CompletedChallengesStore,
+    private val auth: FirebaseAuth,
 ) {
-    /** @return list of challenge IDs that transitioned to COMPLETED in this evaluation. */
     suspend operator fun invoke(result: GameResult): List<String> {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
+        val uid = auth.currentUser?.uid ?: return emptyList()
 
         val definitions = definitionRepository.getDefinitions().filter { it.isActive }
         if (definitions.isEmpty()) return emptyList()
 
         val snapshot = progressRepository.getSnapshot(uid)
 
-        // Backfill: sync any Firestore-confirmed completions into the local store.
-        // This covers challenges completed before the local-store fix was deployed,
-        // or challenges completed on another device/session under the same UID.
         val firestoreCompleted = snapshot.challenges
             .filter { it.value.status == ChallengeStatus.COMPLETED }
             .keys
@@ -48,32 +36,20 @@ class EvaluateChallengesUseCase @Inject constructor(
         }
 
         val locallyCompleted = completedChallengesStore.getAll()
-        Log.d(TAG, "uid=$uid firestoreCompleted=$firestoreCompleted localStore=$locallyCompleted")
+        val updated          = snapshot.challenges.toMutableMap()
+        val completed        = mutableListOf<String>()
 
-        val updated   = snapshot.challenges.toMutableMap()
-        val completed = mutableListOf<String>()
-
-        // Ensure every known definition has a progress entry
         definitions.forEach { def ->
             if (def.id !in updated) updated[def.id] = UserChallenge(def.id)
         }
 
-        // ── Evaluate each definition ──────────────────────────────────────────
-
         for (def in definitions) {
             val current = updated[def.id] ?: UserChallenge(def.id)
-            Log.d(TAG, "eval ${def.id}: firestoreStatus=${current.status} inLocalStore=${def.id in locallyCompleted}")
-            // Guard: device-local store prevents re-completion after UID changes (logout →
-            // new anonymous UID) even when Firestore has no record for the new UID.
-            if (current.status == ChallengeStatus.COMPLETED || def.id in locallyCompleted) {
-                Log.d(TAG, "skip ${def.id} (already completed)")
-                continue
-            }
+            if (current.status == ChallengeStatus.COMPLETED || def.id in locallyCompleted) continue
 
             when (def.conditionType) {
 
                 ChallengeConditionType.WIN_N_GAMES_STREAK -> {
-                    // Special: resets to 0 on any loss
                     val newProgress = if (result.isWin) current.progress + 1 else 0
                     val newStatus   = when {
                         newProgress >= def.target -> ChallengeStatus.COMPLETED
@@ -85,14 +61,13 @@ class EvaluateChallengesUseCase @Inject constructor(
                 }
 
                 ChallengeConditionType.PLAY_N_CONSECUTIVE_DAYS -> {
-                    // Handled separately below (needs lastPlayedDate)
+                    // Handled separately below
                 }
 
                 ChallengeConditionType.PLAY_N_GAMES -> {
-                    // Always increment — any game outcome counts
                     val newProgress = current.progress + 1
                     val newStatus   = if (newProgress >= def.target) ChallengeStatus.COMPLETED
-                                      else ChallengeStatus.IN_PROGRESS
+                    else ChallengeStatus.IN_PROGRESS
                     if (newStatus == ChallengeStatus.COMPLETED) completed += def.id
                     updated[def.id] = current.copy(status = newStatus, progress = newProgress)
                 }
@@ -101,14 +76,13 @@ class EvaluateChallengesUseCase @Inject constructor(
                     if (result.isWin && result.gameMode == GameMode.MULTIPLAYER) {
                         val newProgress = current.progress + 1
                         val newStatus   = if (newProgress >= def.target) ChallengeStatus.COMPLETED
-                                          else ChallengeStatus.IN_PROGRESS
+                        else ChallengeStatus.IN_PROGRESS
                         if (newStatus == ChallengeStatus.COMPLETED) completed += def.id
                         updated[def.id] = current.copy(status = newStatus, progress = newProgress)
                     }
                 }
 
                 else -> {
-                    // One-shot challenges
                     if (meetsCondition(def, result)) {
                         completed += def.id
                         updated[def.id] = current.copy(
@@ -120,24 +94,19 @@ class EvaluateChallengesUseCase @Inject constructor(
             }
         }
 
-        // ── PLAY_N_CONSECUTIVE_DAYS — needs lastPlayedDate ────────────────────
         val today     = LocalDate.now().toString()
         val yesterday = LocalDate.now().minusDays(1).toString()
+        val newLastPlayedDate = today
 
-        val newLastPlayedDate: String = today
         definitions.filter { it.conditionType == ChallengeConditionType.PLAY_N_CONSECUTIVE_DAYS }
             .forEach { def ->
                 val current = updated[def.id] ?: UserChallenge(def.id)
-                Log.d(TAG, "eval consecutive ${def.id}: firestoreStatus=${current.status} inLocalStore=${def.id in locallyCompleted}")
-                if (current.status == ChallengeStatus.COMPLETED || def.id in locallyCompleted) {
-                    Log.d(TAG, "skip ${def.id} (already completed)")
-                    return@forEach
-                }
+                if (current.status == ChallengeStatus.COMPLETED || def.id in locallyCompleted) return@forEach
 
                 val newDays = when (snapshot.lastPlayedDate) {
-                    today     -> current.progress      // already counted today
-                    yesterday -> current.progress + 1  // extending streak
-                    else      -> 1                     // streak broken or first day
+                    today     -> current.progress
+                    yesterday -> current.progress + 1
+                    else      -> 1
                 }
                 val newStatus = when {
                     newDays >= def.target -> ChallengeStatus.COMPLETED
@@ -149,19 +118,15 @@ class EvaluateChallengesUseCase @Inject constructor(
             }
 
         if (completed.isNotEmpty()) {
-            Log.d(TAG, "newly completed=$completed — writing to local store")
             completedChallengesStore.markCompleted(completed)
-        } else {
-            Log.d(TAG, "no new completions this run")
         }
+
         progressRepository.saveSnapshot(
             uid,
             ChallengeSnapshot(challenges = updated, lastPlayedDate = newLastPlayedDate)
         )
         return completed
     }
-
-    // ── One-shot condition evaluator ──────────────────────────────────────────
 
     private fun meetsCondition(def: RemoteChallengeDefinition, result: GameResult): Boolean {
         val p = def.conditionParams
@@ -173,8 +138,8 @@ class EvaluateChallengesUseCase @Inject constructor(
                 val max  = (p["maxGuesses"] as? Long)?.toInt() ?: return false
                 val mode = p["gameMode"] as? String
                 result.isWin &&
-                    result.guessCount < max &&
-                    (mode == null || result.gameMode.name == mode)
+                        result.guessCount < max &&
+                        (mode == null || result.gameMode.name == mode)
             }
 
             ChallengeConditionType.WIN_EXACT_GUESSES -> {
@@ -190,8 +155,8 @@ class EvaluateChallengesUseCase @Inject constructor(
             ChallengeConditionType.WIN_NO_HINTS -> {
                 val mode = p["gameMode"] as? String
                 result.isWin &&
-                    result.hintsUsed == 0 &&
-                    (mode == null || result.gameMode.name == mode)
+                        result.hintsUsed == 0 &&
+                        (mode == null || result.gameMode.name == mode)
             }
 
             ChallengeConditionType.WIN_WORD_LENGTH -> {
@@ -202,7 +167,6 @@ class EvaluateChallengesUseCase @Inject constructor(
             ChallengeConditionType.WIN_MULTIPLAYER ->
                 result.isWin && result.gameMode == GameMode.MULTIPLAYER
 
-            // Incremental types are handled above — should never reach here
             ChallengeConditionType.PLAY_N_GAMES,
             ChallengeConditionType.WIN_N_MULTIPLAYER,
             ChallengeConditionType.WIN_N_GAMES_STREAK,

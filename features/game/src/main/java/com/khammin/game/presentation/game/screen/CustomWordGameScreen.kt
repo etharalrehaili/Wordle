@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.CustomSnackbarHost
 import com.khammin.core.presentation.components.GameBoard
@@ -67,7 +66,9 @@ import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomShe
 import com.khammin.core.presentation.components.bottomsheets.SessionLeaderboardEntry
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.RoomStatus
+import com.khammin.core.domain.model.TileState
+import com.khammin.game.domain.model.Tile
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.components.multiplayer.GuestCard
 import com.khammin.core.presentation.components.navigation.GameTopBar
@@ -162,8 +163,7 @@ fun CustomWordGameScreen(
                     roomId = roomId,
                     language = "ar",
                     isHost = isHost,
-                    myUserId = userId.takeIf { it.isNotEmpty() }
-                        ?: FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    myUserId = userId,
                     isCustomWord = true,
                     isLobbyMode = false,
                     defaultMyName = defaultMyName,
@@ -251,7 +251,7 @@ fun CustomWordGameScreen(
                 )
                 OutlinedTextField(
                     value         = newWord,
-                    onValueChange = { newWord = it.filter { c -> c.isLetter() } },
+                    onValueChange = { if (it.length <= 6) newWord = it.filter { c -> c.isLetter() } },
                     label         = { Text(stringResource(CoreRes.string.create_room_custom_hint), fontSize = 14.sp) },
                     singleLine    = true,
                     modifier      = Modifier.fillMaxWidth(),
@@ -270,7 +270,7 @@ fun CustomWordGameScreen(
                         imeAction      = ImeAction.Done,
                     ),
                     keyboardActions = KeyboardActions(onDone = {
-                        if (newWord.length >= 3) {
+                        if (newWord.length in 4..6) {
                             showNewWordSheet = false
                             showResultButton = false
                             viewModel.onEvent(MultiplayerGameIntent.PlayAgainCustomWord(newWord))
@@ -283,7 +283,7 @@ fun CustomWordGameScreen(
                         showResultButton = false
                         viewModel.onEvent(MultiplayerGameIntent.PlayAgainCustomWord(newWord))
                     },
-                    enabled  = newWord.length >= 3,
+                    enabled  = newWord.length in 4..6,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -408,7 +408,7 @@ private fun CustomWordGameContent(
                         sessionPoints     = state.sessionPoints,
                         modifier          = Modifier.fillMaxWidth().weight(1f),
                     )
-                } else if (state.roomStatus == "waiting" || (!state.isHost && state.isHostLeft)) {
+                } else if (state.roomStatus == RoomStatus.WAITING.value || (!state.isHost && state.isHostLeft)) {
                     if (state.isHost) {
                         CustomWordLobbyHost(
                             myName         = state.myName,
@@ -496,7 +496,7 @@ private fun CustomWordGameContent(
                             modifier          = Modifier.fillMaxWidth().weight(1f),
                         )
                     } else {
-                        val keyboardEnabled = state.roomStatus == "playing"
+                        val keyboardEnabled = state.roomStatus == RoomStatus.PLAYING.value
 
                         Column(
                             modifier = Modifier

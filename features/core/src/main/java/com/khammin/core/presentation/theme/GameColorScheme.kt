@@ -1,6 +1,5 @@
 package com.khammin.core.presentation.theme
 
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
@@ -104,21 +103,3 @@ val LightEmptyTile = Color(0xFFFFFFFF)
 val LogoOrange = Color(0xFFF5A623)
 val LogoTeal   = Color(0xFF2BB5C8)
 val LogoPurple = Color(0xFF8B5DB5)
-
-data class GameColorScheme(
-    // Text Colors
-    val textHeading: Color,
-
-    // Surface Colors
-    val surfaceShade4: Color,
-    val surfaceScreenBg: Color
-
-)
-
-val LocalHabitTrackerColorScheme = compositionLocalOf {
-    GameColorScheme(
-        textHeading = Color.Unspecified,
-        surfaceShade4 = Color.Unspecified,
-        surfaceScreenBg = Color.Unspecified
-    )
-}

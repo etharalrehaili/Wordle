@@ -4,9 +4,6 @@ import com.khammin.core.util.Resource
 import com.khammin.game.domain.repository.ChallengeRepository
 import javax.inject.Inject
 
-// fetches today's challenge word from the remote API (or local cache).
-// Called once when the challenge screen opens to get the word the user needs to guess.
-
 class GetDailyChallengeUseCase @Inject constructor(
     private val repo: ChallengeRepository
 ) {

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.presentation.components.buttons.GameButton
+import com.khammin.game.domain.model.pointsForGuessCount
 import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.components.multiplayer.GuestCard
 import com.khammin.core.presentation.preview.GameLightBackgroundPreview
@@ -101,14 +102,7 @@ fun SpectatorView(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(sortedProgress) { progress ->
-                    val points = if (progress.solved) when (progress.guessCount) {
-                        1    -> 100
-                        2    -> 80
-                        3    -> 60
-                        4    -> 40
-                        5    -> 20
-                        else -> 10
-                    } else 0
+                    val points = if (progress.solved) pointsForGuessCount(progress.guessCount) else 0
 
                     val statusText = when {
                         progress.solved -> stringResource(R.string.spectator_solved, String.format(

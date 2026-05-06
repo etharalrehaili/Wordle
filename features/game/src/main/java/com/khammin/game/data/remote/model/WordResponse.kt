@@ -9,7 +9,6 @@ data class Meta(
     val pagination: Pagination? = null,
 )
 
-/** Strapi v4/v5 REST: used to fetch every page when the server caps pageSize below total. */
 data class Pagination(
     val page: Int = 1,
     val pageSize: Int = 25,
@@ -17,10 +16,6 @@ data class Pagination(
     val total: Int = 0,
 )
 
-/**
- * Strapi v5: `text` / `language` / `length` on the entry.
- * Strapi v4: same fields live under [attributes] — Gson would otherwise leave [text] null.
- */
 data class WordItem(
     val id: Int,
     val documentId: String? = null,

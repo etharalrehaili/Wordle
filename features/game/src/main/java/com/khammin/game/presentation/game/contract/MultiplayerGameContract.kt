@@ -1,12 +1,14 @@
 package com.khammin.game.presentation.game.contract
 
 import com.khammin.core.domain.model.PlayerState
+import com.khammin.core.domain.model.RoomStatus
 import com.khammin.core.mvi.UiEffect
 import com.khammin.core.mvi.UiIntent
 import com.khammin.core.mvi.UiState
 import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.MAX_GUESSES
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.TileState
+import com.khammin.game.domain.model.Tile
 
 data class WaitingPlayer(
     val userId: String,
@@ -62,7 +64,7 @@ data class MultiplayerGameUiState(
     val defaultMyName: String = "You",
     val defaultGuestName: String = "Guest",
     // Multi-player custom word fields
-    val roomStatus: String = "waiting",
+    val roomStatus: String = RoomStatus.WAITING.value,
     val guestIds: List<String> = emptyList(),
     val waitingPlayers: List<WaitingPlayer> = emptyList(),
     val opponentsProgress: Map<String, OpponentProgress> = emptyMap(),

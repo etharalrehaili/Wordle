@@ -5,13 +5,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Device-level store for completed challenge IDs.
- *
- * Persists challenge completions across Firebase UID changes (guest → Google sign-in → logout).
- * This prevents the exploit where logging out resets Firestore progress and allows
- * a user to re-complete challenges (and re-earn points) on the same device.
- */
 @Singleton
 class CompletedChallengesStore @Inject constructor(
     @ApplicationContext private val context: Context,

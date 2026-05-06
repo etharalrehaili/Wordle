@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.alias.Action
 import com.khammin.core.presentation.components.CustomSnackbarHost
 import com.khammin.core.presentation.components.GameBoard
@@ -58,7 +57,9 @@ import com.khammin.core.presentation.components.bottomsheets.LeaveGameBottomShee
 import com.khammin.core.presentation.components.bottomsheets.NoInternetBottomSheet
 import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.RoomStatus
+import com.khammin.core.domain.model.TileState
+import com.khammin.game.domain.model.Tile
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.components.multiplayer.GuestCard
 import com.khammin.core.presentation.components.navigation.GameTopBar
@@ -157,8 +158,7 @@ fun RandomWordGameScreen(
                     roomId = roomId,
                     language = "ar",
                     isHost = isHost,
-                    myUserId = userId.takeIf { it.isNotEmpty() }
-                        ?: FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                    myUserId = userId,
                     isCustomWord = false,
                     isLobbyMode = isLobbyMode,
                     defaultMyName = defaultMyName,
@@ -314,7 +314,7 @@ private fun RandomWordGameContent(
                         onLeave           = { onIntent(MultiplayerGameIntent.LeaveMatch) },
                         modifier          = Modifier.fillMaxWidth().weight(1f),
                     )
-                } else if (state.isLobbyMode && state.roomStatus == "waiting") {
+                } else if (state.isLobbyMode && state.roomStatus == RoomStatus.WAITING.value) {
                     if (state.isHost) {
                         RandomWordLobbyHost(
                             myName         = state.myName,
@@ -433,7 +433,7 @@ private fun RandomWordGameContent(
                     }
 
                     val keyboardEnabled = if (state.isLobbyMode) {
-                        state.roomStatus == "playing"
+                        state.roomStatus == RoomStatus.PLAYING.value
                     } else {
                         state.opponentId.isNotEmpty()
                     }
@@ -485,10 +485,12 @@ private fun RandomWordGameContent(
     }
 }
 
+private const val GUEST_ID_SUFFIX_LENGTH = 5
+
 private fun guestNameFromId(id: String): String {
     val suffix = if (id.startsWith("guest_"))
-        id.removePrefix("guest_").take(5)
+        id.removePrefix("guest_").take(GUEST_ID_SUFFIX_LENGTH)
     else
-        id.take(5)
+        id.take(GUEST_ID_SUFFIX_LENGTH)
     return "Guest-$suffix"
 }

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val PRESENCE_DROP_TIMEOUT_MS = 120_000L
+
 class MultiplayerPresenceManager @Inject constructor(
     private val registerPresenceUseCase: RegisterPresenceUseCase,
     private val updatePresenceStateUseCase: UpdatePresenceStateUseCase,
@@ -61,7 +63,7 @@ class MultiplayerPresenceManager @Inject constructor(
                     // and restore presence via the .info/connected listener.
                     // If still offline after 2 min the app is truly closed → remove.
                     presenceDropJobs[userId] = scope.launch {
-                        delay(120_000L)
+                        delay(PRESENCE_DROP_TIMEOUT_MS)
                         onDropped(userId)
                     }
                 }

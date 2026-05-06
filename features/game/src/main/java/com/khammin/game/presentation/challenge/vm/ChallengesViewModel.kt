@@ -26,15 +26,18 @@ class ChallengesViewModel @Inject constructor(
     private val getChallengeProgressUseCase: GetChallengeProgressUseCase,
     private val getChallengeDefinitionsUseCase: GetChallengeDefinitionsUseCase,
     private val networkUtils: NetworkUtils,
+    private val auth: FirebaseAuth,
 ) : BaseMviViewModel<ChallengesIntent, ChallengesUiState, ChallengesEffect>(
     initialState = ChallengesUiState()
 ) {
     private var collectJob: Job? = null
     private var currentUid: String? = null
-    private var wasAnonymous = FirebaseAuth.getInstance().currentUser?.isAnonymous == true
+    private var wasAnonymous = auth.currentUser?.isAnonymous == true
 
-    private val authListener = FirebaseAuth.AuthStateListener { auth ->
-        val user = auth.currentUser ?: return@AuthStateListener
+    private val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val user = firebaseAuth.currentUser ?: return@AuthStateListener
+        val isNowGuest = user.isAnonymous
+        setState { copy(isGuest = isNowGuest) }
         if (wasAnonymous && !user.isAnonymous) {
             wasAnonymous = false
             currentUid = user.uid
@@ -43,14 +46,16 @@ class ChallengesViewModel @Inject constructor(
     }
 
     init {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val user = auth.currentUser
+        val uid = user?.uid
         currentUid = uid
+        setState { copy(isGuest = user?.isAnonymous == true) }
         if (uid != null) {
             startCollecting(uid)
         } else {
             setState { copy(isLoading = false) }
         }
-        FirebaseAuth.getInstance().addAuthStateListener(authListener)
+        auth.addAuthStateListener(authListener)
     }
 
     @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
@@ -148,6 +153,6 @@ class ChallengesViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
+        auth.removeAuthStateListener(authListener)
     }
 }

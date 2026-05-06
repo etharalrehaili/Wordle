@@ -170,26 +170,6 @@ private fun RowScope.LetterKey(
 }
 
 @Composable
-private fun RowScope.LabelKey(
-    label: String,
-    weight: Float,
-    keyHeight: Dp,
-    onClick: () -> Unit
-) {
-    val colors = LocalWordleColors.current
-    KeyContainer(bgColor = colors.key, weight = weight, keyHeight = keyHeight, onClick = onClick) {
-        Text(
-            text = label,
-            color = colors.title,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            letterSpacing = 0.sp
-        )
-    }
-}
-
-@Composable
 private fun RowScope.IconKey(
     icon: ImageVector,
     contentDescription: String?,

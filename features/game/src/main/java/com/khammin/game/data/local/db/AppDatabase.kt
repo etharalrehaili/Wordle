@@ -13,7 +13,7 @@ import com.khammin.game.data.local.entity.WordEntity
 
 @Database(
     entities = [WordEntity::class, ChallengeEntity::class, ProfileEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,5 +32,6 @@ abstract class AppDatabase : RoomDatabase() {
                 )
             }
         }
+
     }
 }

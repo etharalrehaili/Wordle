@@ -13,10 +13,11 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.khammin.core.domain.model.PlayerState
+import com.khammin.core.domain.model.RoomStatus
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.presentation.components.GuessRow
 import com.khammin.core.presentation.components.MAX_GUESSES
-import com.khammin.core.presentation.components.enums.TileState
+import com.khammin.core.domain.model.TileState
 import com.khammin.core.presentation.components.toGuessRows
 import com.khammin.core.util.Resource
 import com.khammin.core.util.normalizeForWordle
@@ -33,6 +34,7 @@ import com.khammin.game.domain.usecases.game.StartRoomUseCase
 import com.khammin.game.domain.usecases.game.UpdateGuestProfileUseCase
 import com.khammin.game.domain.model.GameMode
 import com.khammin.game.domain.model.GameResult
+import com.khammin.game.domain.model.pointsForGuessCount
 import com.khammin.game.domain.usecases.game.SetPlayerReadyUseCase
 import com.khammin.game.domain.usecases.game.UpdatePlayerStateUseCase
 import com.khammin.game.domain.usecases.game.ValidateWordUseCase
@@ -40,7 +42,7 @@ import com.khammin.game.presentation.game.contract.MultiplayerGameEffect
 import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
 import com.khammin.game.presentation.game.contract.MultiplayerGameUiState
 import com.khammin.game.presentation.game.contract.OpponentProgress
-import com.khammin.game.presentation.game.contract.Tile
+import com.khammin.game.domain.model.Tile
 import com.khammin.game.presentation.game.contract.WaitingPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -52,6 +54,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import kotlin.collections.mapIndexed
+
+private const val GUEST_ID_SUFFIX_LENGTH = 5
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
@@ -108,7 +113,6 @@ class MultiplayerGameViewModel @Inject constructor(
                             // For anonymous users the WebSocket reconnect fails auth validation
                             // repeatedly (exponential backoff ~30s) until the token is refreshed.
                             // A forced refresh here ensures RTDB authenticates on the first attempt.
-                            android.util.Log.d("PresenceDebug", "[tokenRefresh] userType=guest | uid=${s.myUserId} | time=${System.currentTimeMillis()}")
                             runCatching { auth.currentUser?.getIdToken(true)?.await() }
                         }
                         presenceManager.updateForeground(s.roomId, s.myUserId, isForeground = true)
@@ -118,7 +122,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 if (s.isCustomWord && !s.isHost && s.roomId.isNotEmpty() && s.myUserId.isNotEmpty()) {
                     viewModelScope.launch {
                         val room = runCatching { getRoomUseCase(s.roomId) }.getOrNull()
-                        if (room != null && room.status in listOf("waiting", "playing")
+                        if (room != null && room.status in listOf(RoomStatus.WAITING.value, RoomStatus.PLAYING.value)
                             && s.myUserId !in room.guestIds) {
                             sendEffect { MultiplayerGameEffect.ShowRejoinSheet }
                         }
@@ -396,7 +400,7 @@ class MultiplayerGameViewModel @Inject constructor(
             observingGuestIds.retainAll(keepObservingIds)
 
             // Host: all guests left during a live game
-            if (isHostOfRoom && isMultiPlayer && room.status == "playing"
+            if (isHostOfRoom && isMultiPlayer && room.status == RoomStatus.PLAYING.value
                 && room.guestIds.isEmpty() && previousGuestIds.isNotEmpty()) {
                 sendEffect { MultiplayerGameEffect.AllPlayersLeft }
             }
@@ -422,7 +426,7 @@ class MultiplayerGameViewModel @Inject constructor(
             }
 
             // ── Guest: detect when a co-guest leaves via guestIds shrinking ──
-            if (isMultiPlayer && !isHostOfRoom && room.status in listOf("waiting", "playing")) {
+            if (isMultiPlayer && !isHostOfRoom && room.status in listOf(RoomStatus.WAITING.value, RoomStatus.PLAYING.value)) {
                 val leftIds = previousGuestIds.filter { it !in room.guestIds && it != myId }
                 for (leftId in leftIds) {
                     val leftName = previousWaitingPlayers.firstOrNull { it.userId == leftId }?.name
@@ -469,7 +473,7 @@ class MultiplayerGameViewModel @Inject constructor(
             }
 
             // ── Game-end detection (1v1 non-custom only) ──────────────────────
-            if (room.status == "finished" && !uiState.value.isGameOver && !isMultiPlayer) {
+            if (room.status == RoomStatus.FINISHED.value && !uiState.value.isGameOver && !isMultiPlayer) {
                 val iWon         = room.winnerId == myId
                 val iLeft        = room.leftBy == myId
                 val opponentLeft = room.leftBy.isNotEmpty() && room.leftBy != myId
@@ -501,7 +505,7 @@ class MultiplayerGameViewModel @Inject constructor(
             }
 
             // ── Custom-word host left → notify guests regardless of their game-over state ──
-            if (room.status == "finished" && isMultiPlayer && !isHostOfRoom && !uiState.value.isHostLeft) {
+            if (room.status == RoomStatus.FINISHED.value && isMultiPlayer && !isHostOfRoom && !uiState.value.isHostLeft) {
                 setState { copy(isHostLeft = true) }
                 sendEffect { MultiplayerGameEffect.HostLeftRoom }
             }
@@ -523,14 +527,14 @@ class MultiplayerGameViewModel @Inject constructor(
                 }
             }
 
-            if (room.status == "finished" && uiState.value.isGameOver && !isMultiPlayer) {
+            if (room.status == RoomStatus.FINISHED.value && uiState.value.isGameOver && !isMultiPlayer) {
                 val opponentJustLeft = room.leftBy.isNotEmpty()
                         && room.leftBy != myId
                         && !uiState.value.opponentLeft
                 if (opponentJustLeft) setState { copy(opponentLeft = true) }
             }
 
-            if (room.status == "playing" && uiState.value.isGameOver && !isMultiPlayer) {
+            if (room.status == RoomStatus.PLAYING.value && uiState.value.isGameOver && !isMultiPlayer) {
                 setState {
                     copy(
                         isGameOver     = false,
@@ -546,12 +550,12 @@ class MultiplayerGameViewModel @Inject constructor(
                 sendEffect { MultiplayerGameEffect.DismissResultDialog }
             }
 
-            if (room.status == "restarting" && uiState.value.isGameOver) {
+            if (room.status == RoomStatus.RESTARTING.value && uiState.value.isGameOver) {
                 sendEffect { MultiplayerGameEffect.DismissResultDialog }
             }
 
             // Lobby mode: new round started → reset board for ALL players (host + guests)
-            if (room.status == "playing" && isLobbyModeRoom && uiState.value.isGameOver
+            if (room.status == RoomStatus.PLAYING.value && isLobbyModeRoom && uiState.value.isGameOver
                 && room.word.isNotEmpty() && room.word.uppercase() != previousWord) {
                 setState {
                     copy(
@@ -572,7 +576,7 @@ class MultiplayerGameViewModel @Inject constructor(
             }
 
             // Custom-word guest: host started a NEW round (word changed) → reset board
-            if (room.status == "playing" && isCustomWordRoom && !isLobbyModeRoom && !isHostOfRoom && uiState.value.isGameOver
+            if (room.status == RoomStatus.PLAYING.value && isCustomWordRoom && !isLobbyModeRoom && !isHostOfRoom && uiState.value.isGameOver
                 && room.word.isNotEmpty() && room.word.uppercase() != previousWord) {
                 setState {
                     copy(
@@ -649,14 +653,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     // that aren't already there (race: guest write may not have arrived yet).
                     val newSessionPts = s.sessionPoints.toMutableMap()
                     finalProgress.forEach { (guestId, p) ->
-                        val pts = if (p.solved) when (p.guessCount) {
-                            1    -> 100
-                            2    -> 80
-                            3    -> 60
-                            4    -> 40
-                            5    -> 20
-                            else -> 10
-                        } else 0
+                        val pts = if (p.solved) pointsForGuessCount(p.guessCount) else 0
                         // Only set if not already present — avoids double-counting when the
                         // guest's self-write arrived before this observer fired.
                         if (pts > 0 && !newSessionPts.containsKey(guestId)) {
@@ -724,9 +721,9 @@ class MultiplayerGameViewModel @Inject constructor(
 
     private fun guestNameFromId(id: String): String {
         val suffix = if (id.startsWith("guest_"))
-            id.removePrefix("guest_").take(5)
+            id.removePrefix("guest_").take(GUEST_ID_SUFFIX_LENGTH)
         else
-            id.take(5)
+            id.take(GUEST_ID_SUFFIX_LENGTH)
         return "Guest-${suffix.uppercase()}"
     }
 
@@ -1079,7 +1076,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     // ── Custom word / lobby mode: go to in-screen result lobby ─
                     setState { copy(isGameOver = true, isMyWin = solved) }
                     if (solved) {
-                        val pts = when (newRow) { 1 -> 100; 2 -> 80; 3 -> 60; 4 -> 40; 5 -> 20; else -> 10 }
+                        val pts = pointsForGuessCount(newRow)
                         val newSessionPts = s2.sessionPoints.toMutableMap()
                         newSessionPts[s2.myUserId] = (newSessionPts[s2.myUserId] ?: 0) + pts
                         setState { copy(sessionPoints = newSessionPts) }
