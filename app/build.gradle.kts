@@ -32,10 +32,20 @@ android {
         buildConfigField("String", "ONESIGNAL_APP_ID", "\"${localProperties["ONESIGNAL_APP_ID"]}\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile     = localProperties["RELEASE_STORE_FILE"]?.let { file(it) }
+            keyAlias      = localProperties["RELEASE_KEY_ALIAS"] as String?
+            storePassword = localProperties["RELEASE_STORE_PASSWORD"] as String?
+            keyPassword   = localProperties["RELEASE_KEY_PASSWORD"] as String?
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

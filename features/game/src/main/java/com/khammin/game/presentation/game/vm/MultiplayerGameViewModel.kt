@@ -253,6 +253,7 @@ class MultiplayerGameViewModel @Inject constructor(
 
         viewModelScope.launch {
             presenceManager.register(roomId, myId)
+            presenceManager.startHeartbeat(roomId, myId, viewModelScope)
         }
 
         // For guests we can resolve the fallback name instantly; logged-in name comes from Strapi below
@@ -463,7 +464,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     observingGuestIds.add(guestId)
                     fetchGuestInfo(guestId)
                     observeGuestState(roomId, guestId)
-                    presenceManager.observeAfk(roomId, guestId, viewModelScope) { id, isAfk ->
+                    presenceManager.observeHeartbeatAfk(roomId, guestId, viewModelScope) { id, isAfk ->
                         updatePlayerAfkState(id, isAfk)
                     }
                 }
@@ -785,7 +786,7 @@ class MultiplayerGameViewModel @Inject constructor(
                 else -> sendEffect { MultiplayerGameEffect.OpponentDisconnected }
             }
         }
-        presenceManager.observeAfk(roomId, userId, viewModelScope) { id, isAfk ->
+        presenceManager.observeHeartbeatAfk(roomId, userId, viewModelScope) { id, isAfk ->
             updatePlayerAfkState(id, isAfk)
         }
     }

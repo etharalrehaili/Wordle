@@ -1,6 +1,5 @@
 package com.khammin.game.presentation.game.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -70,7 +69,6 @@ fun GameScreen(
 
     // Load words when the screen is first shown or when the word length changes
     LaunchedEffect(wordLength) {
-        Log.d("GameDebug", "GameScreen LaunchedEffect — dispatching LoadWords(language=ar, wordLength=$wordLength)")
         gameViewModel.onEvent(GameIntent.LoadWords("ar", wordLength))
         AdManager.preload(context)
     }
@@ -138,23 +136,17 @@ fun GameContent(
 
     val keyStates = uiState.keyboardStates.mapValues { (_, tileState) -> tileState.toTypes() }
 
-    // Log whenever targetWord changes so we can confirm words are loaded
     LaunchedEffect(uiState.targetWord) {
-        Log.d("GameDebug", "GameContent targetWord changed — targetWord='${uiState.targetWord}', isLoading=${uiState.isLoading}, isGameOver=${uiState.isGameOver}, wordLength=${uiState.wordLength}")
         timerSeconds = 0
     }
 
     // Increment timer every second while the game is active
     LaunchedEffect(uiState.isGameOver, uiState.targetWord) {
-        Log.d("GameDebug", "Timer LaunchedEffect triggered — isGameOver=${uiState.isGameOver}, targetWord='${uiState.targetWord}'")
         if (!uiState.isGameOver && uiState.targetWord.isNotEmpty()) {
-            Log.d("GameDebug", "Timer STARTED")
             while (true) {
                 delay(1000L)
                 timerSeconds++
             }
-        } else {
-            Log.d("GameDebug", "Timer NOT started — ${if (uiState.isGameOver) "game is over" else "targetWord is empty"}")
         }
     }
 

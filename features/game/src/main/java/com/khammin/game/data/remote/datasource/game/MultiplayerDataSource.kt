@@ -32,4 +32,6 @@ interface MultiplayerDataSource {
     suspend fun updatePlayerSessionPoints(roomId: String, userId: String, pts: Int)
     suspend fun setLobbyWinner(roomId: String, winnerId: String)
     suspend fun setPlayerReady(roomId: String, userId: String, isReady: Boolean)
+    suspend fun sendHeartbeat(roomId: String, userId: String)
+    fun observeHeartbeatAfk(roomId: String, userId: String): Flow<Boolean>
 }

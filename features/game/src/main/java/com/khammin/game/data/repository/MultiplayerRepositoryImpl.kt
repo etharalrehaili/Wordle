@@ -58,4 +58,8 @@ class MultiplayerRepositoryImpl @Inject constructor(
         dataSource.setLobbyWinner(roomId, winnerId)
     override suspend fun setPlayerReady(roomId: String, userId: String, isReady: Boolean) =
         dataSource.setPlayerReady(roomId, userId, isReady)
+    override suspend fun sendHeartbeat(roomId: String, userId: String) =
+        dataSource.sendHeartbeat(roomId, userId)
+    override fun observeHeartbeatAfk(roomId: String, userId: String) =
+        dataSource.observeHeartbeatAfk(roomId, userId)
 }

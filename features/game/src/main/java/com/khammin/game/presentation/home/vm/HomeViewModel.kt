@@ -2,7 +2,6 @@ package com.khammin.game.presentation.home.vm
 
 import android.content.Context
 import android.content.res.Configuration
-import android.util.Log
 import java.util.Locale
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -329,10 +328,7 @@ class HomeViewModel @Inject constructor(
      */
     fun joinRoom(code: String, language: String = "ar", onJoined: (String, String, Boolean, Boolean) -> Unit) {
         viewModelScope.launch {
-            Log.d("JoinRoomDebug", "joinRoom() called — code='${code.trim()}'")
-
             if (!networkUtils.isConnected()) {
-                Log.d("JoinRoomDebug", "joinRoom() rejected — no internet connection")
                 setState { copy(noInternetError = true) }
                 return@launch
             }
@@ -347,60 +343,47 @@ class HomeViewModel @Inject constructor(
             val myId = auth.currentUser?.uid
                 ?: "guest_${System.currentTimeMillis()}"
 
-            Log.d("JoinRoomDebug", "joinRoom() searching Firestore for shortCode='${code.trim()}' as userId='$myId'")
-
             // Room codes are the first 6 characters of the Firestore document ID.
             val fullRoomId = findRoomByCodeUseCase(code.trim())
             if (fullRoomId == null) {
-                Log.d("JoinRoomDebug", "joinRoom() rejected — no room found matching code='${code.trim()}' (checked waiting + playing statuses)")
                 setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_not_found_hint)) }
                 return@launch
             }
 
-            Log.d("JoinRoomDebug", "joinRoom() found fullRoomId='$fullRoomId' — fetching room details")
-
             val room = getRoomUseCase(fullRoomId)
-            Log.d("JoinRoomDebug", "joinRoom() room fetched — status='${room?.status}', isLobbyMode=${room?.isLobbyMode}, isCustomWord=${room?.isCustomWord}, guestIds=${room?.guestIds}, guestId='${room?.guestId}'")
 
             when {
                 room == null -> {
-                    Log.d("JoinRoomDebug", "joinRoom() rejected — room document is null after fetch")
                     setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_not_found)) }
                     return@launch
                 }
                 room.status == RoomStatus.FINISHED.value -> {
-                    Log.d("JoinRoomDebug", "joinRoom() rejected — room status is FINISHED")
                     setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_game_ended)) }
                     return@launch
                 }
                 // Custom-word room: host + up to 3 guests = 4 total
                 room.isCustomWord && room.guestIds.size >= 3 -> {
-                    Log.d("JoinRoomDebug", "joinRoom() rejected — custom-word room is full (${room.guestIds.size}/3 guests)")
                     setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_room_full_max4)) }
                     return@launch
                 }
                 // Lobby-mode room: host + up to 2 guests = 3 total
                 room.isLobbyMode && room.guestIds.size >= 2 -> {
-                    Log.d("JoinRoomDebug", "joinRoom() rejected — lobby room is full (${room.guestIds.size}/2 guests)")
                     setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_room_full_max3)) }
                     return@launch
                 }
                 // Standard 1v1 room: already has a guest
                 !room.isCustomWord && !room.isLobbyMode && room.guestId.isNotEmpty() -> {
-                    Log.d("JoinRoomDebug", "joinRoom() rejected — 1v1 room already has a guest ('${room.guestId}')")
                     setState { copy(joinRoomLoading = false, joinRoomError = localizedContext(language).getString(R.string.join_error_room_full)) }
                     return@launch
                 }
             }
 
             // Multi-guest rooms use an array-union approach; 1v1 rooms set guestId directly.
-            Log.d("JoinRoomDebug", "joinRoom() adding player — isLobbyMode=${room.isLobbyMode}, isCustomWord=${room.isCustomWord}, roomStatus='${room.status}'")
             if (room.isCustomWord || room.isLobbyMode) {
                 addGuestToRoomUseCase(fullRoomId, myId)
             } else {
                 joinRoomUseCase(fullRoomId, myId)
             }
-            Log.d("JoinRoomDebug", "joinRoom() SUCCESS — userId='$myId' joined fullRoomId='$fullRoomId'")
             setState { copy(joinRoomLoading = false, joinRoomError = null) }
             onJoined(fullRoomId, myId, room.isCustomWord, room.isLobbyMode)
         }

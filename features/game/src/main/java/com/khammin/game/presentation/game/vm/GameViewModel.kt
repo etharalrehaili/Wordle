@@ -1,6 +1,5 @@
 package com.khammin.game.presentation.game.vm
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.khammin.core.mvi.BaseMviViewModel
 import com.khammin.core.presentation.components.MAX_GUESSES
@@ -79,22 +78,16 @@ class GameViewModel @Inject constructor(
      */
     private fun loadWords(language: String, wordLength: Int) {
         val current = uiState.value
-        Log.d("GameDebug", "loadWords() called — language=$language, wordLength=$wordLength")
-        Log.d("GameDebug", "loadWords() state — isLoading=${current.isLoading}, isGameOver=${current.isGameOver}, targetWord='${current.targetWord}', wordLength=${current.wordLength}")
-
         if (current.wordList.isNotEmpty() && current.wordLength == wordLength && current.targetWord.isNotEmpty()) {
-            Log.d("GameDebug", "loadWords() skipped — words already cached (${current.wordList.size} words, targetWord='${current.targetWord}')")
             return
         }
 
         viewModelScope.launch {
             setState { copy(isLoading = true, error = null) }
-            Log.d("GameDebug", "loadWords() fetching words from repository…")
             when (val result = getWordsUseCase(language, wordLength)) {
                 is Resource.Success -> {
                     val words    = result.data
                     val selected = words.random()
-                    Log.d("GameDebug", "loadWords() success — ${words.size} words loaded, selectedWord='${selected.text}', meaning='${selected.meaning}'")
                     setState {
                         copy(
                             isLoading         = false,
@@ -108,11 +101,9 @@ class GameViewModel @Inject constructor(
                             board             = List(MAX_GUESSES) { List(wordLength) { Tile() } }
                         )
                     }
-                    Log.d("GameDebug", "loadWords() state updated — targetWord='${selected.text.normalizeForWordle()}'")
                     gameStartTime = System.currentTimeMillis()
                 }
                 is Resource.Error -> {
-                    Log.d("GameDebug", "loadWords() error — ${result.message}")
                     setState { copy(isLoading = false, error = result.message) }
                 }
                 is Resource.Loading -> Unit
@@ -128,19 +119,9 @@ class GameViewModel @Inject constructor(
      */
     private fun enterLetter(letter: Char) {
         val state = uiState.value
-        Log.d("GameDebug", "enterLetter('$letter') — isGameOver=${state.isGameOver}, isValidating=${state.isValidating}, targetWord='${state.targetWord}', currentCol=${state.currentCol}, wordLength=${state.wordLength}")
-        if (state.isGameOver || state.isValidating) {
-            Log.d("GameDebug", "enterLetter() BLOCKED — isGameOver=${state.isGameOver}, isValidating=${state.isValidating}")
-            return
-        }
-        if (state.targetWord.isEmpty()) {
-            Log.d("GameDebug", "enterLetter() BLOCKED — targetWord is empty (words not loaded yet)")
-            return
-        }
-        if (state.currentCol >= state.wordLength) {
-            Log.d("GameDebug", "enterLetter() BLOCKED — currentCol(${state.currentCol}) >= wordLength(${state.wordLength})")
-            return
-        }
+        if (state.isGameOver || state.isValidating) return
+        if (state.targetWord.isEmpty()) return
+        if (state.currentCol >= state.wordLength) return
 
         val newBoard = state.board.updateTile(
             row  = state.currentRow,

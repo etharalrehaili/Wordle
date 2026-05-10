@@ -17,6 +17,12 @@
 }
 -dontwarn androidx.datastore.**
 
+# ── Domain models (referenced by Firestore, game module, etc.) ───────────────
+-keep class com.khammin.core.domain.model.** { *; }
+-keep class com.khammin.core.util.Resource { *; }
+-keep class com.khammin.core.util.Resource$* { *; }
+-keep class com.khammin.core.util.WordleTextKt { *; }
+
 # ── Kotlin Serialization ──────────────────────────────────────────────────────
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt

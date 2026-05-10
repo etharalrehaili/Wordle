@@ -15,8 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import leakcanary.LeakCanary
-import shark.AndroidReferenceMatchers
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -34,20 +32,7 @@ class MyApp : Application(), Configuration.Provider {
         System.loadLibrary("sqlcipher")
         FirebaseApp.initializeApp(this)
 
-        if (BuildConfig.DEBUG) {
-            LeakCanary.config = LeakCanary.config.copy(
-                referenceMatchers = AndroidReferenceMatchers.appDefaults +
-                        AndroidReferenceMatchers.ignoredInstanceField(
-                            "com.google.android.gms.dynamic.ObjectWrapper", "a"
-                        )
-            )
-        }
-
-        val appCheckFactory = if (BuildConfig.DEBUG) {
-            com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
-        } else {
-            PlayIntegrityAppCheckProviderFactory.getInstance()
-        }
+        val appCheckFactory = PlayIntegrityAppCheckProviderFactory.getInstance()
         FirebaseAppCheck.getInstance().installAppCheckProviderFactory(appCheckFactory)
 
         // OneSignal must be initialized on the main thread.
