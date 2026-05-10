@@ -1,20 +1,23 @@
 package com.khammin.game.presentation.navigation
 
 import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -77,8 +80,7 @@ fun NavGraphBuilder.navGraph(
                     launchSingleTop = true
                 }
             },
-            onThemeChanged    = onThemeChanged,
-            onLanguageChanged = onLanguageChanged,
+            onThemeChanged = onThemeChanged,
         )
     }
 
@@ -120,25 +122,8 @@ fun NavGraphBuilder.navGraph(
             if (resId != 0) context.getString(resId) else null
         }
 
-        val googleSignInClient = remember(webClientId) {
-            webClientId?.let { clientId ->
-                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(clientId)
-                    .requestEmail()
-                    .build()
-                GoogleSignIn.getClient(context, gso)
-            }
-        }
-
-        val googleSignInLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                account.idToken?.let { idToken -> homeViewModel.signInWithGoogle(idToken) }
-            } catch (_: ApiException) { }
-        }
+        val credentialManager = remember { CredentialManager.create(context) }
+        val coroutineScope    = rememberCoroutineScope()
 
         ChallengesScreen(
             onClose = {
@@ -147,7 +132,24 @@ fun NavGraphBuilder.navGraph(
                 }
             },
             onSignInWithGoogle = {
-                googleSignInClient?.let { googleSignInLauncher.launch(it.signInIntent) }
+                if (webClientId != null) coroutineScope.launch {
+                    try {
+                        val option = GetGoogleIdOption.Builder()
+                            .setFilterByAuthorizedAccounts(false)
+                            .setServerClientId(webClientId)
+                            .build()
+                        val request = GetCredentialRequest.Builder()
+                            .addCredentialOption(option)
+                            .build()
+                        val result = credentialManager.getCredential(context, request)
+                        val cred = result.credential
+                        if (cred is CustomCredential &&
+                            cred.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                            val idToken = GoogleIdTokenCredential.createFrom(cred.data).idToken
+                            homeViewModel.signInWithGoogle(idToken)
+                        }
+                    } catch (_: GetCredentialException) { }
+                }
             },
             currentLanguage = currentLanguage(),
         )
@@ -175,25 +177,8 @@ fun NavGraphBuilder.navGraph(
             if (resId != 0) context.getString(resId) else null
         }
 
-        val googleSignInClient = remember(webClientId) {
-            webClientId?.let { clientId ->
-                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(clientId)
-                    .requestEmail()
-                    .build()
-                GoogleSignIn.getClient(context, gso)
-            }
-        }
-
-        val googleSignInLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                account.idToken?.let { idToken -> homeViewModel.signInWithGoogle(idToken) }
-            } catch (_: ApiException) { }
-        }
+        val credentialManager = remember { CredentialManager.create(context) }
+        val coroutineScope    = rememberCoroutineScope()
 
         ProfileScreen(
             uiState            = state,
@@ -210,7 +195,26 @@ fun NavGraphBuilder.navGraph(
             onAvatarChanged    = { viewModel.onEvent(ProfileIntent.OnAvatarChanged(it)) },
             onSettingsClick    = { navController.navigate(Route.SettingsScreen) },
             onSignInWithGoogle      = { viewModel.onEvent(ProfileIntent.OnSignInWithGoogleClick) },
-            onSignInWithGoogleLaunch = { googleSignInClient?.let { googleSignInLauncher.launch(it.signInIntent) } },
+            onSignInWithGoogleLaunch = {
+                if (webClientId != null) coroutineScope.launch {
+                    try {
+                        val option = GetGoogleIdOption.Builder()
+                            .setFilterByAuthorizedAccounts(false)
+                            .setServerClientId(webClientId)
+                            .build()
+                        val request = GetCredentialRequest.Builder()
+                            .addCredentialOption(option)
+                            .build()
+                        val result = credentialManager.getCredential(context, request)
+                        val cred = result.credential
+                        if (cred is CustomCredential &&
+                            cred.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                            val idToken = GoogleIdTokenCredential.createFrom(cred.data).idToken
+                            homeViewModel.signInWithGoogle(idToken)
+                        }
+                    } catch (_: GetCredentialException) { }
+                }
+            },
             onDismissNoInternet     = { viewModel.onEvent(ProfileIntent.DismissNoInternet) },
             onRefresh               = { viewModel.refresh() },
         )

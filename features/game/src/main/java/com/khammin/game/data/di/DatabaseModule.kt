@@ -36,7 +36,7 @@ object DatabaseModule {
         }
         return Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
             .openHelperFactory(factory)
-            .addMigrations(AppDatabase.MIGRATION_3_4)
+            .addMigrations(AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_5_6)
             .fallbackToDestructiveMigration(true)
             .build()
     }

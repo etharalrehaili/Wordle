@@ -1,5 +1,6 @@
 package com.khammin.core.presentation.components.bottomsheets
 
+import android.media.MediaPlayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -24,11 +25,13 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +49,7 @@ import com.khammin.core.presentation.theme.GameDesignTheme.colors
 fun GameResultsBottomSheet(
     title: String,
     answer: String,
+    meaning: String? = null,
     accentColor: Color,
     onRestart: () -> Unit,
     onClose: () -> Unit = {},
@@ -55,6 +59,18 @@ fun GameResultsBottomSheet(
 
     val isWin = accentColor == colors.correct
     val resultColor = if (isWin) colors.logoGreen else colors.logoPink
+    val context = LocalContext.current
+
+    // Play the win sound effect when the sheet appears.
+    // MediaPlayer is released immediately after playback completes
+    // to avoid holding audio resources longer than needed.
+    LaunchedEffect(Unit) {
+        if (isWin) {
+            val mediaPlayer = MediaPlayer.create(context, R.raw.correct_sound)
+            mediaPlayer.setOnCompletionListener { it.release() }
+            mediaPlayer.start()
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -167,11 +183,50 @@ fun GameResultsBottomSheet(
                         }
                     }
 
+                    Spacer(Modifier.height(16.dp))
+
+                    // ── Meaning card ──────────────────────────────────────
+                    // Only shown when the word has a meaning set in Strapi.
+                    // Null-safe — words without a meaning simply skip this block.
+                    if (!meaning.isNullOrBlank()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(resultColor.copy(alpha = 0.08f))
+                                .border(
+                                    width = 1.dp,
+                                    color = resultColor.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+
+                            Text(
+                                text = stringResource(R.string.result_meaning),
+                                color     = colors.body.copy(alpha = 0.45f),
+                                fontSize  = 12.sp,
+                            )
+
+                            Spacer(Modifier.height(4.dp))
+
+                            Text(
+                                text       = meaning,
+                                color      = colors.title,
+                                fontSize   = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign  = TextAlign.Center,
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
                     Spacer(Modifier.height(20.dp))
 
                     // ── Buttons ───────────────────────────────────────────
                     GameButton(
-                        label = stringResource(R.string.game_result_play_again),
+                        label   = stringResource(R.string.game_result_play_again),
                         onClick = onRestart,
                         variant = GameButtonVariant.Primary,
                         modifier = Modifier.fillMaxWidth()
@@ -180,7 +235,7 @@ fun GameResultsBottomSheet(
                     Spacer(Modifier.height(10.dp))
 
                     GameButton(
-                        label = stringResource(R.string.game_result_close),
+                        label   = stringResource(R.string.game_result_close),
                         onClick = onClose,
                         variant = GameButtonVariant.Ghost,
                         modifier = Modifier.fillMaxWidth()
@@ -196,10 +251,10 @@ fun GameResultsBottomSheet(
 @Composable
 private fun PreviewGameOverBottomSheetLost() {
     GameResultsBottomSheet(
-        title           = "Better Luck Next Time!",
-        answer          = "GHOST",
-        accentColor     = Color(0xFFB59F3B),
-        onRestart       = {},
+        title       = "Better Luck Next Time!",
+        answer      = "GHOST",
+        accentColor = Color(0xFFB59F3B),
+        onRestart   = {},
     )
 }
 

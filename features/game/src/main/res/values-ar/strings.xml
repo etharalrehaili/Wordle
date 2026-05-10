@@ -116,7 +116,6 @@
     <string name="lobby_ready">جاهز</string>
     <string name="lobby_ready_done">جاهز!</string>
     <string name="lobby_badge_ready">جاهز</string>
-    <string name="lobby_waiting_ready">في انتظار جاهزية جميع اللاعبين…</string>
     <string name="lobby_you">أنت</string>
     <string name="lobby_badge_host">مضيف</string>
     <string name="lobby_waiting_for_players">في انتظار انتهاء جميع اللاعبين…</string>
@@ -128,12 +127,12 @@
     <string name="profile_close">إغلاق</string>
     <string name="profile_you">أنت</string>
     <string name="all_players_left_title">الغرفة فارغة</string>
-    <string name="all_players_left_subtitle">يبدو أن الجميع غادر. عُد للرئيسية وابدأ لعبة جديدة!</string>
+    <string name="all_players_left_subtitle">انتهت الجلسة! عُد للرئيسية وابدأ لعبة جديدة</string>
     <string name="host_left_title">المضيف غادر الغرفة</string>
     <string name="host_left_subtitle">أنهى المضيف الجلسة. عُد للرئيسية وابدأ لعبة جديدة!</string>
     <string name="host_left_go_home">العودة للرئيسية</string>
     <string name="lobby_round">الجولة %1$s</string>
-    <string name="lobby_you_won">فزت! 🎉</string>
+    <string name="lobby_you_won">فزت!</string>
     <string name="lobby_you_lost">خسرت!</string>
     <string name="lobby_winner_won">%1$s فاز بهذه الجولة</string>
     <string name="lobby_the_word_was">كانت الكلمة</string>
@@ -154,7 +153,6 @@
     <string name="custom_word_players_count">اللاعبون (%1$d/4)</string>
     <string name="lobby_badge_not_ready">غير جاهز</string>
     <string name="lobby_hint_enter_word">أدخل كلمة للبدء</string>
-    <string name="lobby_hint_need_players">يجب أن ينضم لاعب واحد على الأقل للبدء</string>
     <string name="lobby_hint_wait_ready">في انتظار استعداد جميع اللاعبين</string>
     <string name="lobby_hint_tap_ready">اضغط جاهز عندما تكون مستعداً للعب</string>
     <string name="lobby_guest_waiting_subtitle">سيبدأ المضيف اللعبة بمجرد استعداد الجميع</string>

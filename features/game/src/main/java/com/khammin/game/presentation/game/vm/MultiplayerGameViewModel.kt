@@ -168,6 +168,8 @@ class MultiplayerGameViewModel @Inject constructor(
     private var observingOpponentId: String = ""
     private val observingGuestIds = mutableSetOf<String>()
     private val wordCache: MutableMap<Int, List<String>> = mutableMapOf()
+    // Maps normalized word text (lowercase) → meaning, populated whenever words are fetched
+    private val meaningCache: MutableMap<String, String?> = mutableMapOf()
     private val countdownJobs = mutableMapOf<String, Job>()
 
     // ── Network connectivity monitoring ───────────────────────────────────────
@@ -299,7 +301,8 @@ class MultiplayerGameViewModel @Inject constructor(
             viewModelScope.launch {
                 val result = getWordsUseCase(language, length)
                 if (result is Resource.Success && result.data.isNotEmpty()) {
-                    wordCache[length] = result.data.filter { it.length == length }
+                    wordCache[length] = result.data.map { it.text }
+                    result.data.forEach { meaningCache[it.text.lowercase()] = it.meaning }
                 }
             }
         }
@@ -369,6 +372,7 @@ class MultiplayerGameViewModel @Inject constructor(
                     hostProfile["avatarUrl"]?.takeIf { it.isNotEmpty() } else opponentAvatarUrl
                 copy(
                     targetWord            = room.word.uppercase(),
+                    targetWordMeaning     = meaningCache[room.word.lowercase()],
                     wordLength            = room.wordLength,
                     language              = if (room.word.isNotEmpty()) detectLanguage(room.word) else language,
                     opponentId            = opponentId,
@@ -409,7 +413,8 @@ class MultiplayerGameViewModel @Inject constructor(
                 viewModelScope.launch {
                     val result = getWordsUseCase(language, room.wordLength)
                     if (result is Resource.Success && result.data.isNotEmpty()) {
-                        wordCache[room.wordLength] = result.data.filter { it.length == room.wordLength }
+                        wordCache[room.wordLength] = result.data.map { it.text }
+                        result.data.forEach { meaningCache[it.text.lowercase()] = it.meaning }
                     }
                 }
             }
@@ -537,14 +542,15 @@ class MultiplayerGameViewModel @Inject constructor(
             if (room.status == RoomStatus.PLAYING.value && uiState.value.isGameOver && !isMultiPlayer) {
                 setState {
                     copy(
-                        isGameOver     = false,
-                        opponentLeft   = false,
-                        opponentFailed = false,
-                        currentRow     = 0,
-                        currentCol     = 0,
-                        board          = List(board.size) { List(room.wordLength) { Tile() } },
-                        keyboardStates = emptyMap(),
-                        targetWord     = room.word.uppercase(),
+                        isGameOver        = false,
+                        opponentLeft      = false,
+                        opponentFailed    = false,
+                        currentRow        = 0,
+                        currentCol        = 0,
+                        board             = List(board.size) { List(room.wordLength) { Tile() } },
+                        keyboardStates    = emptyMap(),
+                        targetWord        = room.word.uppercase(),
+                        targetWordMeaning = meaningCache[room.word.lowercase()],
                     )
                 }
                 sendEffect { MultiplayerGameEffect.DismissResultDialog }
@@ -567,6 +573,7 @@ class MultiplayerGameViewModel @Inject constructor(
                         board             = List(board.size) { List(room.wordLength) { Tile() } },
                         keyboardStates    = emptyMap(),
                         targetWord        = room.word.uppercase(),
+                        targetWordMeaning = meaningCache[room.word.lowercase()],
                         roundNumber       = room.roundNumber,
                         opponentsProgress = opponentsProgress.mapValues { (_, p) ->
                             p.copy(solved = false, failed = false, guessCount = 0, guessRows = List(MAX_GUESSES) { GuessRow() })
@@ -580,15 +587,16 @@ class MultiplayerGameViewModel @Inject constructor(
                 && room.word.isNotEmpty() && room.word.uppercase() != previousWord) {
                 setState {
                     copy(
-                        isGameOver     = false,
-                        isMyWin        = false,
-                        currentRow     = 0,
-                        currentCol     = 0,
-                        board          = List(board.size) { List(room.wordLength) { Tile() } },
-                        keyboardStates = emptyMap(),
-                        targetWord     = room.word.uppercase(),
-                        roundNumber    = room.roundNumber,
-                        totalPoints    = room.totalPoints,
+                        isGameOver        = false,
+                        isMyWin           = false,
+                        currentRow        = 0,
+                        currentCol        = 0,
+                        board             = List(board.size) { List(room.wordLength) { Tile() } },
+                        keyboardStates    = emptyMap(),
+                        targetWord        = room.word.uppercase(),
+                        targetWordMeaning = meaningCache[room.word.lowercase()],
+                        roundNumber       = room.roundNumber,
+                        totalPoints       = room.totalPoints,
                     )
                 }
                 sendEffect { MultiplayerGameEffect.DismissResultDialog }
@@ -704,7 +712,11 @@ class MultiplayerGameViewModel @Inject constructor(
                     avatarEmoji = resolvedEmoji,
                 )),
                 waitingPlayers    = waitingPlayers.filter { it.userId != guestId } +
-                        WaitingPlayer(guestId, resolvedName, resolvedUrl, resolvedColor, resolvedEmoji, existing?.isReady ?: false),
+                        WaitingPlayer(guestId, resolvedName, resolvedUrl, resolvedColor, resolvedEmoji,
+                            isReady      = existing?.isReady ?: false,
+                            isAfk        = existing?.isAfk ?: false,
+                            afkCountdown = existing?.afkCountdown,
+                        ),
             )
         }
     }
@@ -868,8 +880,9 @@ class MultiplayerGameViewModel @Inject constructor(
                 val words = wordCache[length] ?: run {
                     val result = getWordsUseCase(s.language, length)
                     if (result is Resource.Success && result.data.isNotEmpty()) {
-                        wordCache[length] = result.data.filter { it.length == length }
-                        result.data.filter { it.length == length }
+                        val words = result.data.map { it.text }
+                        wordCache[length] = words
+                        words
                     } else null
                 }
                 val word = words?.randomOrNull()?.uppercase() ?: return@launch
@@ -1124,7 +1137,9 @@ class MultiplayerGameViewModel @Inject constructor(
             val words = wordCache[length] ?: run {
                 val result = getWordsUseCase(s.language, length)
                 if (result is Resource.Success && result.data.isNotEmpty()) {
-                    wordCache[length] = result.data; result.data
+                    val words = result.data.map { it.text }
+                    result.data.forEach { meaningCache[it.text.lowercase()] = it.meaning }
+                    wordCache[length] = words; words
                 } else null
             }
             val word = words?.randomOrNull()?.uppercase() ?: return@launch
@@ -1204,7 +1219,10 @@ class MultiplayerGameViewModel @Inject constructor(
             val cached = wordCache[newWordLength]
             val words = if (cached != null) cached else {
                 val result = getWordsUseCase(s.language, newWordLength)
-                val fetched = if (result is Resource.Success) result.data else null
+                val fetched = if (result is Resource.Success && result.data.isNotEmpty()) {
+                    result.data.forEach { meaningCache[it.text.lowercase()] = it.meaning }
+                    result.data.map { it.text }
+                } else null
                 if (fetched != null) wordCache[newWordLength] = fetched
                 fetched
             }

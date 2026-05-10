@@ -5,7 +5,8 @@
       "Bash(pip3 install:*)",
       "Bash(find /Users/ethar/AndroidStudioProjects/Wordle/features/game/src/main/java -name \"ProfileItem.kt\" -exec grep -n \".\" {} \\\\;)",
       "Bash(find /Users/ethar/AndroidStudioProjects/Wordle/features/core -name \"NetworkUtils.kt\" -exec grep -n \".\" {} \\\\;)",
-      "Bash(wc -l /Users/ethar/AndroidStudioProjects/Wordle/features/core/src/main/java/com/khammin/core/presentation/components/bottomsheets/*.kt)"
+      "Bash(wc -l /Users/ethar/AndroidStudioProjects/Wordle/features/core/src/main/java/com/khammin/core/presentation/components/bottomsheets/*.kt)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

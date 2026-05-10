@@ -6,6 +6,7 @@ import com.khammin.core.mvi.UiState
 import com.khammin.core.presentation.components.MAX_GUESSES
 import com.khammin.core.domain.model.TileState
 import com.khammin.core.presentation.components.enums.Types
+import com.khammin.game.data.remote.model.WordData
 import com.khammin.game.domain.model.Tile
 
 data class GameUiState(
@@ -14,7 +15,7 @@ data class GameUiState(
     val currentCol: Int = 0,
     val board: List<List<Tile>> = List(MAX_GUESSES) { List(wordLength) { Tile() } },
     val keyboardStates: Map<Char, TileState> = emptyMap(),
-    val wordList: List<String> = emptyList(),
+    val wordList: List<WordData> = emptyList(),
     val targetWord: String = "",
     val language: String = "",
     val isLoading: Boolean = false,
@@ -23,13 +24,12 @@ data class GameUiState(
     val isGameOver: Boolean = false,
     val hintsUsed: Int = 0,
     val maxHints: Int = 0,
+    val targetWordMeaning: String? = null,
 ) : UiState
 
 sealed interface GameEffect : UiEffect {
-    data class ShowGameDialog(val isWin: Boolean, val targetWord: String) : GameEffect
-    data object InvalidWord : GameEffect
+    data class ShowGameDialog(val isWin: Boolean, val targetWord: String, val meaning: String? = null) : GameEffect
     data object NotInWordList : GameEffect
-    data object RowShake : GameEffect
 }
 
 sealed class GameIntent : UiIntent {
@@ -45,7 +45,7 @@ sealed class GameIntent : UiIntent {
 sealed interface GameDialogState {
     data object None : GameDialogState
     data object Info : GameDialogState
-    data class Result(val isWin: Boolean, val word: String) : GameDialogState
+    data class Result(val isWin: Boolean, val word: String, val meaning: String? = null) : GameDialogState
 }
 
 fun TileState.toTypes(): Types = when (this) {

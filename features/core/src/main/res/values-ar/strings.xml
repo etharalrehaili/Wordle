@@ -61,6 +61,7 @@
     <string name="game_result_solved_in">تم حلها في %1$s محاولات</string>
     <string name="game_result_play_again">العب مجدداً</string>
     <string name="game_result_close">إغلاق</string>
+    <string name="result_meaning">المعنى</string>
 
     <!-- Game Top Bar -->
     <string name="top_bar_points_label">%1$s نقطة</string>
@@ -89,6 +90,7 @@
     <string name="multiplayer_room_code">رمز الغرفة</string>
     <string name="multiplayer_room_tap_copy">اضغط للنسخ</string>
     <string name="room_code_copied_label">رمز الغرفة</string>
+    <string name="room_code_copied_toast">تم النسخ</string>
 
     <!-- Join Room Bottom Sheet -->
     <string name="join_room_title">الانضمام لغرفة</string>

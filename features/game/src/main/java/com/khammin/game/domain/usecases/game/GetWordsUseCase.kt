@@ -1,13 +1,17 @@
 package com.khammin.game.domain.usecases.game
 
 import com.khammin.core.util.Resource
+import com.khammin.game.data.remote.model.WordData
 import com.khammin.game.domain.repository.GameRepository
 import javax.inject.Inject
 
 class GetWordsUseCase @Inject constructor(
     private val repo: GameRepository
 ) {
-    suspend operator fun invoke(language: String, wordLength: Int): Resource<List<String>> {
+    suspend operator fun invoke(
+        language: String,
+        wordLength: Int
+    ): Resource<List<WordData>> {
         return try {
             val words = repo.getWords(language, wordLength)
             if (words.isEmpty()) Resource.Error("No words found")

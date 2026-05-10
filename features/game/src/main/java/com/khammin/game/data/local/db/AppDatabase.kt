@@ -13,7 +13,7 @@ import com.khammin.game.data.local.entity.WordEntity
 
 @Database(
     entities = [WordEntity::class, ChallengeEntity::class, ProfileEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,5 +33,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // Added meaning column to WordEntity
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE word_table ADD COLUMN meaning TEXT"
+                )
+            }
+        }
     }
 }

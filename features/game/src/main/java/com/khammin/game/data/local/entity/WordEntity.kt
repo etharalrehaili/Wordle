@@ -8,5 +8,6 @@ data class WordEntity(
     @PrimaryKey val id: Int,
     val text: String,
     val language: String,
-    val length: Int
+    val length: Int,
+    val meaning: String? = null
 )

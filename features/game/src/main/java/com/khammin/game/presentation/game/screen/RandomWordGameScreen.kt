@@ -298,9 +298,11 @@ private fun RandomWordGameContent(
 
                 if (state.isLobbyMode && state.isGameOver) {
                     RandomWordGameOverLobby(
+                        roomId            = roomId,
                         isWin             = state.isMyWin,
                         winnerName        = state.lobbyWinnerName,
                         targetWord        = state.targetWord,
+                        meaning           = state.targetWordMeaning,
                         myName            = state.myName,
                         myAvatarColor     = state.avatarColor,
                         myAvatarEmoji     = state.avatarEmoji,
@@ -311,7 +313,7 @@ private fun RandomWordGameContent(
                         sessionPoints     = state.sessionPoints,
                         isHost            = state.isHost,
                         onPlayAgain       = { onIntent(MultiplayerGameIntent.PlayAgainLobbyMode) },
-                        onLeave           = { onIntent(MultiplayerGameIntent.LeaveMatch) },
+//                        onLeave           = { onIntent(MultiplayerGameIntent.LeaveMatch) },
                         modifier          = Modifier.fillMaxWidth().weight(1f),
                     )
                 } else if (state.isLobbyMode && state.roomStatus == RoomStatus.WAITING.value) {

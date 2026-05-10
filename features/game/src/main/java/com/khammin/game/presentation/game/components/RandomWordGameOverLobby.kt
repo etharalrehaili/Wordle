@@ -21,9 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import android.media.MediaPlayer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -38,6 +41,7 @@ import com.khammin.core.presentation.components.PlayerAvatar
 import com.khammin.core.presentation.components.buttons.GameButton
 import com.khammin.core.presentation.components.buttons.GameButtonVariant
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
+import com.khammin.core.R as CoreRes
 import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.OpponentProgress
 
@@ -54,9 +58,11 @@ private data class RankedPlayer(
 @Composable
 fun RandomWordGameOverLobby(
     modifier: Modifier = Modifier,
+    roomId: String = "",
     isWin: Boolean,
     winnerName: String,
     targetWord: String,
+    meaning: String? = null,
     myName: String,
     myAvatarColor: Long?,
     myAvatarEmoji: String?,
@@ -66,10 +72,18 @@ fun RandomWordGameOverLobby(
     opponentsProgress: Map<String, OpponentProgress>,
     sessionPoints: Map<String, Int>,
     isHost: Boolean,
-    onPlayAgain: () -> Unit,
-    onLeave: () -> Unit,
+    onPlayAgain: () -> Unit
+//    onLeave: () -> Unit,
 ) {
     val accentColor = if (isWin) colors.logoGreen else colors.logoPink
+    val context = LocalContext.current
+
+    // Play the multiplayer result sound for all players (win or lose)
+    LaunchedEffect(Unit) {
+        val mediaPlayer = MediaPlayer.create(context, CoreRes.raw.correct_sound_multiplayer)
+        mediaPlayer?.setOnCompletionListener { it.release() }
+        mediaPlayer?.start()
+    }
 
     // Build ranked leaderboard (me + all opponents), sorted by session points descending
     val me = RankedPlayer(
@@ -122,6 +136,9 @@ fun RandomWordGameOverLobby(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp,
                     )
+                    if (roomId.isNotEmpty()) {
+                        RoomCodeCard(roomId = roomId)
+                    }
                     Text(
                         text = if (isWin) stringResource(R.string.lobby_you_won)
                         else stringResource(R.string.lobby_you_lost),
@@ -168,6 +185,15 @@ fun RandomWordGameOverLobby(
                                     )
                                 }
                             }
+                        }
+                        if (!meaning.isNullOrBlank()) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = meaning,
+                                color = colors.body.copy(alpha = 0.7f),
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                            )
                         }
                     }
                 }
@@ -299,15 +325,6 @@ fun RandomWordGameOverLobby(
                         )
                     }
                 }
-            }
-
-            item {
-                GameButton(
-                    label    = stringResource(R.string.lobby_leave),
-                    onClick  = onLeave,
-                    variant  = GameButtonVariant.Ghost,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         }
     }

@@ -18,6 +18,7 @@ interface GameApiService {
         @Query("fields[0]") field0: String = "text",
         @Query("fields[1]") field1: String = "language",
         @Query("fields[2]") field2: String = "length",
+        @Query("fields[3]") field3: String = "meaning"
     ): WordResponse
 
     @POST("validate-word")

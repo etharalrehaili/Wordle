@@ -1,6 +1,7 @@
 package com.khammin.game.presentation.game.components
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +29,7 @@ fun RoomCodeCard(roomId: String) {
     val context = LocalContext.current
     val shortCode = roomId.take(6).uppercase()
     val clipLabel = stringResource(CoreRes.string.room_code_copied_label)
+    val toastMsg  = stringResource(CoreRes.string.room_code_copied_toast)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -52,6 +54,7 @@ fun RoomCodeCard(roomId: String) {
                     clipboard.setPrimaryClip(
                         android.content.ClipData.newPlainText(clipLabel, shortCode)
                     )
+                    Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
                 }
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             contentAlignment = Alignment.Center

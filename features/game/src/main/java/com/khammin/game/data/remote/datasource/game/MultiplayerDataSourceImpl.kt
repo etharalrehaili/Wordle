@@ -1,5 +1,6 @@
 package com.khammin.game.data.remote.datasource.game
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -27,6 +28,10 @@ class MultiplayerDataSourceImpl @Inject constructor(
     private val presenceStates         = ConcurrentHashMap<String, String>()
     private val connectedListeners     = ConcurrentHashMap<String, ValueEventListener>()
     private val disconnectedTimestamps = ConcurrentHashMap<String, Long>()
+    // True once .info/connected has fired TRUE for a key (guards against RTDB startup FALSE flash).
+    private val connectedOnce          = ConcurrentHashMap<String, Boolean>()
+    // Keys for which the next FALSE is intentional (goOffline call) and must not set background.
+    private val intentionalOfflineKeys = ConcurrentHashMap.newKeySet<String>()
 
     private fun userType(userId: String): String {
         if (userId.startsWith("guest_")) return "guest"
@@ -89,13 +94,18 @@ class MultiplayerDataSourceImpl @Inject constructor(
     }
 
     override suspend fun findRoomByCode(shortCode: String): String? {
-        val snapshot = rooms
-            .whereEqualTo("status", RoomStatus.WAITING.value)
-            .get()
-            .await()
-        return snapshot.documents
-            .firstOrNull { it.id.startsWith(shortCode.lowercase(), ignoreCase = true) }
-            ?.id
+        // Search both waiting and playing rooms so players can join between rounds
+        val statuses = listOf(RoomStatus.WAITING.value, RoomStatus.PLAYING.value)
+        for (status in statuses) {
+            val snapshot = rooms
+                .whereEqualTo("status", status)
+                .get()
+                .await()
+            val match = snapshot.documents
+                .firstOrNull { it.id.startsWith(shortCode.lowercase(), ignoreCase = true) }
+            if (match != null) return match.id
+        }
+        return null
     }
 
     override suspend fun getRoom(roomId: String): GameRoom? =
@@ -134,8 +144,25 @@ class MultiplayerDataSourceImpl @Inject constructor(
     }
 
     override suspend fun registerPresence(roomId: String, userId: String) {
-        val key = "$roomId/$userId"
+        val key  = "$roomId/$userId"
+        val path = "presence/$roomId/$userId"
+        val ref  = rtdb.getReference(path)
         presenceStates[key] = PresenceStatus.ONLINE.value
+        // Register onDisconnect FIRST — before setValue and before the .info/connected listener.
+        // This guarantees the server has the handler the moment the write lands, even if the
+        // connection closes before the .info/connected callback fires.
+        Log.d("PresenceDebug", "[registerPresence] registering onDisconnect().setValue('background') on path='$path' FIRST")
+        runCatching {
+            ref.onDisconnect().setValue(PresenceStatus.BACKGROUND.value)
+            Log.d("PresenceDebug", "[registerPresence] onDisconnect registered ✅")
+        }.onFailure { e ->
+            Log.e("PresenceDebug", "[registerPresence] onDisconnect registration FAILED: ${e.message}")
+        }
+        // Now write online
+        Log.d("PresenceDebug", "[registerPresence] writing 'online' to path='$path'")
+        runCatching { ref.setValue(PresenceStatus.ONLINE.value) }
+        // Then attach the connected listener to keep onDisconnect fresh across reconnections
+        Log.d("PresenceDebug", "[registerPresence] attaching .info/connected listener")
         setupConnectedPresenceListener(key, roomId, userId)
     }
 
@@ -143,54 +170,115 @@ class MultiplayerDataSourceImpl @Inject constructor(
         val key   = "$roomId/$userId"
         val state = if (isForeground) PresenceStatus.ONLINE.value else PresenceStatus.BACKGROUND.value
         presenceStates[key] = state
+        val path = "presence/$roomId/$userId"
+        val ref  = rtdb.getReference(path)
+        Log.d("PresenceDebug", "[updatePresenceState] key='$key' isForeground=$isForeground → writing state='$state' to path='$path'")
         if (isForeground) {
+            // Mark so the upcoming goOffline-triggered FALSE event is not treated as a real disconnect.
+            intentionalOfflineKeys.add(key)
+            Log.d("PresenceDebug", "[updatePresenceState] calling goOffline() — this CANCELS all server-side onDisconnect handlers")
             rtdb.goOffline()
+            Log.d("PresenceDebug", "[updatePresenceState] calling goOnline() — reconnecting to RTDB")
             rtdb.goOnline()
+            // goOffline() cancels all server-side onDisconnect handlers. Re-register before
+            // writing "online" so the server immediately has a handler — if internet drops
+            // before the .info/connected listener fires, Firebase will still write "background".
+            Log.d("PresenceDebug", "[updatePresenceState] registering onDisconnect().setValue('background') on path='$path' BEFORE writing online")
+            runCatching {
+                ref.onDisconnect().setValue(PresenceStatus.BACKGROUND.value)
+                Log.d("PresenceDebug", "[updatePresenceState] onDisconnect registered ✅")
+            }.onFailure { e ->
+                Log.e("PresenceDebug", "[updatePresenceState] onDisconnect registration FAILED: ${e.message}")
+            }
         }
-        runCatching { rtdb.getReference("presence/$roomId/$userId").setValue(state) }
+        runCatching {
+            ref.setValue(state)
+            Log.d("PresenceDebug", "[updatePresenceState] setValue('$state') queued ✅ at t=${ts()}")
+        }.onFailure { e ->
+            Log.e("PresenceDebug", "[updatePresenceState] setValue FAILED: ${e.message}")
+        }
     }
 
     override fun cleanupPresence(roomId: String, userId: String) {
         val key = "$roomId/$userId"
+        Log.d("PresenceDebug", "[cleanupPresence] removing .info/connected listener for key='$key'")
         connectedListeners.remove(key)?.let {
             rtdb.getReference(".info/connected").removeEventListener(it)
         }
         presenceStates.remove(key)
+        connectedOnce.remove(key)
+        intentionalOfflineKeys.remove(key)
     }
 
     private fun setupConnectedPresenceListener(key: String, roomId: String, userId: String) {
-        val userRef      = rtdb.getReference("presence/$roomId/$userId")
+        val path         = "presence/$roomId/$userId"
+        val userRef      = rtdb.getReference(path)
         val connectedRef = rtdb.getReference(".info/connected")
 
-        connectedListeners.remove(key)?.let { connectedRef.removeEventListener(it) }
+        connectedListeners.remove(key)?.let {
+            Log.d("PresenceDebug", "[setupListener] removing stale .info/connected listener for key='$key'")
+            connectedRef.removeEventListener(it)
+        }
+        // Fresh listener — reset "has been connected" guard so the startup FALSE flash is ignored.
+        connectedOnce.remove(key)
+
+        Log.d("PresenceDebug", "[setupListener] attaching .info/connected listener — key='$key' path='$path'")
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val isConnected = snapshot.getValue(Boolean::class.java) == true
+                val now         = ts()
                 if (!isConnected) {
-                    disconnectedTimestamps[key] = ts()
+                    disconnectedTimestamps[key] = now
+                    when {
+                        intentionalOfflineKeys.remove(key) -> {
+                            // This FALSE was triggered by goOffline() — not a real disconnect.
+                            Log.d("PresenceDebug", "[.info/connected] → FALSE (intentional goOffline) for key='$key' — ignoring")
+                        }
+                        connectedOnce[key] == true -> {
+                            // Real internet disconnect after a stable connection. Mark as background
+                            // so the next reconnect writes 'background' and the host sees AFK fast.
+                            presenceStates[key] = PresenceStatus.BACKGROUND.value
+                            Log.d("PresenceDebug", "[.info/connected] → FALSE at t=$now for key='$key' — real disconnect, marked background. onDisconnect() will fire server-side soon.")
+                        }
+                        else -> {
+                            Log.d("PresenceDebug", "[.info/connected] → FALSE at t=$now for key='$key' — RTDB startup flash, ignoring.")
+                        }
+                    }
                     return
                 }
-                disconnectedTimestamps.remove(key)
+                connectedOnce[key] = true
+                val gapMs        = disconnectedTimestamps.remove(key)?.let { now - it }
                 val stateToWrite = presenceStates[key] ?: PresenceStatus.ONLINE.value
-                userRef.onDisconnect().setValue(PresenceStatus.OFFLINE.value)
+                Log.d("PresenceDebug", "[.info/connected] → TRUE at t=$now for key='$key' gapSinceDisconnect=${gapMs?.let { "${it}ms" } ?: "n/a"} stateToWrite='$stateToWrite'")
+                Log.d("PresenceDebug", "[.info/connected] registering onDisconnect().setValue('background') on path='$path'")
+                userRef.onDisconnect().setValue(PresenceStatus.BACKGROUND.value)
+                Log.d("PresenceDebug", "[.info/connected] writing stateToWrite='$stateToWrite' to path='$path'")
                 userRef.setValue(stateToWrite)
             }
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("PresenceDebug", "[.info/connected] listener cancelled for key='$key': ${error.message}")
+            }
         }
         connectedListeners[key] = listener
         connectedRef.addValueEventListener(listener)
     }
 
     override fun observeIsAfk(roomId: String, userId: String): Flow<Boolean> = callbackFlow {
-        val ref = rtdb.getReference("presence/$roomId/$userId")
+        val path = "presence/$roomId/$userId"
+        Log.d("PresenceDebug", "[observeIsAfk] watching path='$path'")
+        val ref = rtdb.getReference(path)
         val listener = ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val raw   = snapshot.getValue(String::class.java)
-                val isAfk = raw == PresenceStatus.BACKGROUND.value || raw == PresenceStatus.OFFLINE.value
+                // null means presence node doesn't exist yet — treat as disconnected
+                val isAfk = raw == null || raw == PresenceStatus.BACKGROUND.value || raw == PresenceStatus.OFFLINE.value
+                Log.d("PresenceDebug", "[observeIsAfk] path='$path' raw='$raw' → isAfk=$isAfk at t=${ts()}")
                 trySend(isAfk)
             }
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("PresenceDebug", "[observeIsAfk] cancelled for path='$path': ${error.message}")
+            }
         })
         awaitClose { ref.removeEventListener(listener) }
     }

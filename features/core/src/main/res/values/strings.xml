@@ -61,8 +61,8 @@
     <string name="game_result_word_was">The word was</string>
     <string name="game_result_solved_in">Solved in %1$s attempts</string>
     <string name="game_result_play_again">Play Again</string>
-    <string name="game_result_second_chance">Second Chance</string>
     <string name="game_result_close">Close</string>
+    <string name="result_meaning">Meaning</string>
 
     <!-- Sign Out Bottom Sheet -->
     <string name="sign_out_title">Sign Out</string>
@@ -88,6 +88,7 @@
     <string name="multiplayer_room_code">Room Code</string>
     <string name="multiplayer_room_tap_copy">Tap to copy</string>
     <string name="room_code_copied_label">Room Code</string>
+    <string name="room_code_copied_toast">Copied!</string>
 
     <!-- Join Room Bottom Sheet -->
     <string name="join_room_title">Join Room</string>

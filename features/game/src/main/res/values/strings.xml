@@ -118,7 +118,6 @@
     <string name="lobby_ready">Ready</string>
     <string name="lobby_ready_done">Ready!</string>
     <string name="lobby_badge_ready">READY</string>
-    <string name="lobby_waiting_ready">Waiting for all players to be ready…</string>
     <string name="lobby_you">You</string>
     <string name="lobby_badge_host">HOST</string>
     <string name="profile_edit">Edit</string>
@@ -129,12 +128,12 @@
     <string name="profile_close">Close</string>
     <string name="profile_you">You</string>
     <string name="all_players_left_title">The room is empty</string>
-    <string name="all_players_left_subtitle">Looks like everyone left. Head back home and start a new game!</string>
+    <string name="all_players_left_subtitle">Session ended! Go back home and start a new game.</string>
     <string name="host_left_title">Host left the room</string>
     <string name="host_left_subtitle">The host ended the session. Head back and start a new game!</string>
     <string name="host_left_go_home">Back to Home</string>
     <string name="lobby_round">Round %1$s</string>
-    <string name="lobby_you_won">You Won! 🎉</string>
+    <string name="lobby_you_won">You Won!</string>
     <string name="lobby_you_lost">You Lost!</string>
     <string name="lobby_winner_won">%1$s won this round</string>
     <string name="lobby_the_word_was">The word was</string>
@@ -156,7 +155,6 @@
     <string name="custom_word_players_count">Players (%1$d/4)</string>
     <string name="lobby_badge_not_ready">NOT READY</string>
     <string name="lobby_hint_enter_word">Enter a word to start</string>
-    <string name="lobby_hint_need_players">Need at least 1 player to join</string>
     <string name="lobby_hint_wait_ready">Waiting for all players to be ready</string>
     <string name="lobby_hint_tap_ready">Tap Ready when you\'re set to play</string>
     <string name="lobby_guest_waiting_subtitle">The host will start the game once everyone is ready</string>

@@ -27,9 +27,12 @@ import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
@@ -64,26 +67,7 @@ fun RandomWordLobbyGuest(
 ) {
     val totalPlayers = 1 + 1 + otherPlayers.size
 
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue  = 0.85f,
-        targetValue   = 1.15f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "pulse_scale",
-    )
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue  = 0.5f,
-        targetValue   = 1f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "pulse_alpha",
-    )
-
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
     LazyColumn(
         modifier            = modifier.padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -120,93 +104,62 @@ fun RandomWordLobbyGuest(
         // ── Player list ────────────────────────────────────────────
         item {
             Column(
-                modifier            = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(
-                    modifier              = Modifier.fillMaxWidth(),
-                    verticalAlignment     = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Row(
-                        verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Outlined.Groups,
-                            contentDescription = null,
-                            tint               = colors.body.copy(alpha = 0.5f),
-                            modifier           = Modifier.size(16.dp),
-                        )
-                        WordleText(
-                            text       = String.format(Locale.US, stringResource(R.string.custom_word_players_count), totalPlayers),
-                            color      = colors.body.copy(alpha = 0.6f),
-                            fontSize   = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-
-                    if (!isReady) {
-                        Row(
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .scale(pulseScale)
-                                    .clip(CircleShape)
-                                    .background(colors.logoPink.copy(alpha = pulseAlpha)),
-                            )
-                            WordleText(
-                                text       = stringResource(R.string.lobby_badge_not_ready),
-                                color      = colors.logoPink.copy(alpha = 0.8f),
-                                fontSize   = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
-                        }
-                    }
+                    WordleText(
+                        text = String.format(
+                            Locale.US,
+                            stringResource(R.string.custom_word_players_count),
+                            totalPlayers
+                        ),
+                        color = colors.body.copy(alpha = 0.6f),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(colors.surface)
-                        .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     LobbyPlayerRow(
-                        name        = hostName.ifBlank { stringResource(R.string.lobby_badge_host) },
-                        badge       = stringResource(R.string.lobby_badge_host),
-                        badgeColor  = colors.logoBlue,
-                        avatarColor  = hostAvatarColor,
-                        avatarEmoji  = hostAvatarEmoji,
-                        avatarUrl    = hostAvatarUrl,
-                        isAfk        = hostIsAfk,
+                        name = hostName.ifBlank { stringResource(R.string.lobby_badge_host) },
+                        badge = stringResource(R.string.lobby_badge_host),
+                        badgeColor = colors.logoBlue,
+                        avatarColor = hostAvatarColor,
+                        avatarEmoji = hostAvatarEmoji,
+                        avatarUrl = hostAvatarUrl,
+                        isAfk = hostIsAfk,
                         afkCountdown = hostAfkCountdown,
                     )
-                    HorizontalDivider(color = colors.border, thickness = 0.5.dp)
                     LobbyPlayerRow(
-                        name        = myName.ifBlank { stringResource(R.string.lobby_you) },
-                        badge       = if (isReady) stringResource(R.string.lobby_badge_ready) else stringResource(R.string.lobby_badge_not_ready),
-                        badgeColor  = if (isReady) colors.logoGreen else colors.logoPink,
+                        name = myName.ifBlank { stringResource(R.string.lobby_you) },
+                        badge = if (isReady) stringResource(R.string.lobby_badge_ready)
+                        else stringResource(R.string.lobby_badge_not_ready),
+                        badgeColor = if (isReady) colors.logoGreen else colors.logoPink,
                         avatarColor = avatarColor,
                         avatarEmoji = avatarEmoji,
-                        avatarUrl   = avatarUrl,
+                        avatarUrl = avatarUrl,
+                        isAfk = false,
                     )
                     otherPlayers.forEach { player ->
-                        HorizontalDivider(color = colors.border, thickness = 0.5.dp)
                         LobbyPlayerRow(
-                            name        = player.name,
-                            badge       = if (player.isReady)
+                            name = player.name,
+                            badge = if (player.isReady)
                                 stringResource(R.string.lobby_badge_ready)
                             else
                                 stringResource(R.string.lobby_badge_not_ready),
-                            badgeColor  = if (player.isReady) colors.logoGreen else colors.logoPink,
-                            avatarColor  = player.avatarColor,
-                            avatarEmoji  = player.avatarEmoji,
-                            avatarUrl    = player.avatarUrl,
-                            isAfk        = player.isAfk,
+                            badgeColor = if (player.isReady) colors.logoGreen else colors.logoPink,
+                            avatarColor = player.avatarColor,
+                            avatarEmoji = player.avatarEmoji,
+                            avatarUrl = player.avatarUrl,
+                            isAfk = player.isAfk,
                             afkCountdown = player.afkCountdown,
                         )
                     }
@@ -235,4 +188,5 @@ fun RandomWordLobbyGuest(
             }
         }
     }
+    } // end CompositionLocalProvider
 }

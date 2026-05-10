@@ -42,6 +42,7 @@ data class MultiplayerGameUiState(
     val board: List<List<Tile>> = List(MAX_GUESSES) { List(4) { Tile() } },
     val keyboardStates: Map<Char, TileState> = emptyMap(),
     val targetWord: String = "",
+    val targetWordMeaning: String? = null,
     val roomId: String = "",
     val myUserId: String = "",
     val opponentId: String = "",

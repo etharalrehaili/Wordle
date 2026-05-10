@@ -199,7 +199,7 @@ fun CustomWordLobbyHost(
                     }
                     if (waitingPlayers.isNotEmpty() && !allReady) {
                         WordleText(
-                            text      = stringResource(R.string.lobby_waiting_ready),
+                            text      = stringResource(R.string.lobby_hint_wait_ready),
                             color     = colors.logoOrange.copy(alpha = 0.8f),
                             fontSize  = 12.sp,
                             fontWeight = FontWeight.Medium,
@@ -282,8 +282,6 @@ fun CustomWordLobbyHost(
 
                 val hint = when {
                     customWord.length !in 4..6 -> stringResource(R.string.lobby_hint_enter_word)
-                    waitingPlayers.isEmpty()   -> stringResource(R.string.lobby_hint_need_players)
-                    !allReady                  -> stringResource(R.string.lobby_hint_wait_ready)
                     else                       -> ""
                 }
                 if (hint.isNotEmpty()) {
