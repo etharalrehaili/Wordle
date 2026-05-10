@@ -68,7 +68,6 @@ import com.khammin.core.presentation.components.enums.AppLanguage
 import com.khammin.core.presentation.components.enums.SnackbarType
 import com.khammin.core.domain.model.RoomStatus
 import com.khammin.core.domain.model.TileState
-import com.khammin.game.domain.model.Tile
 import com.khammin.core.presentation.components.enums.Types
 import com.khammin.core.presentation.components.multiplayer.GuestCard
 import com.khammin.core.presentation.components.navigation.GameTopBar
@@ -88,6 +87,7 @@ import com.khammin.game.presentation.game.contract.MultiplayerGameIntent
 import com.khammin.game.presentation.game.contract.MultiplayerGameUiState
 import com.khammin.game.presentation.game.contract.toTypes
 import com.khammin.game.presentation.game.vm.MultiplayerGameViewModel
+import com.khammin.core.util.normalizeForWordle
 import com.khammin.core.R as CoreRes
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -251,7 +251,7 @@ fun CustomWordGameScreen(
                 )
                 OutlinedTextField(
                     value         = newWord,
-                    onValueChange = { if (it.length <= 6) newWord = it.filter { c -> c.isLetter() } },
+                    onValueChange = { newWord = it.filter { c -> c.isLetter() }.take(6).normalizeForWordle() },
                     label         = { Text(stringResource(CoreRes.string.create_room_custom_hint), fontSize = 14.sp) },
                     singleLine    = true,
                     modifier      = Modifier.fillMaxWidth(),

@@ -50,6 +50,7 @@ import com.khammin.core.presentation.components.text.WordleText
 import com.khammin.core.presentation.theme.GameDesignTheme.colors
 import com.khammin.game.R
 import com.khammin.game.presentation.game.contract.WaitingPlayer
+import com.khammin.core.util.normalizeForWordle
 import java.util.Locale
 
 @Composable
@@ -122,7 +123,7 @@ fun CustomWordLobbyHost(
                 OutlinedTextField(
                     value         = customWord,
                     onValueChange = { value ->
-                        customWord = value.filter { it.isLetter() }.take(6).uppercase()
+                        customWord = value.filter { it.isLetter() }.take(6).normalizeForWordle()
                     },
                     placeholder  = {
                         Text(
